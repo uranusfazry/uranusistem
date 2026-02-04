@@ -24,6 +24,7 @@
             --primary-dark: #0f172a;
             --accent-blue: #3b82f6;
             --danger-red: #ef4444;
+            --code-purple: #8b5cf6; /* Warna baru untuk fitur HTML */
         }
 
         * { box-sizing: border-box; }
@@ -172,6 +173,17 @@
         }
         .btn-edit:hover {
             background: #c7d2fe;
+        }
+
+        /* NEW: HTML Editor Button Style */
+        .btn-html-edit {
+            background: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid #d8b4fe;
+            margin-top: 5px;
+        }
+        .btn-html-edit:hover {
+            background: #d8b4fe;
         }
 
         /* NEW: Reset Button Style */
@@ -460,6 +472,16 @@
             box-shadow: 0 25px 60px rgba(0,0,0,.25);
             animation: fadeIn .25s ease;
             font-family: 'Segoe UI', sans-serif;
+            position: relative;
+        }
+
+        /* NEW: LARGE MODAL VARIANT FOR CODE EDITOR */
+        .modal-box.modal-large {
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-box h3 { margin-top: 0; color: #1e293b; }
@@ -478,6 +500,7 @@
             display: flex;
             gap: 10px;
             justify-content: flex-end;
+            margin-top: auto; /* Push to bottom in flex containers */
         }
 
         .modal-actions button {
@@ -497,8 +520,58 @@
         #editModal .modal-actions button:first-child { background: var(--accent-blue); color: white; }
         #editModal .modal-actions button:first-child:hover { background: #2563eb; }
 
+        /* NEW: HTML Editor Modal Specifics */
+        #htmlEditorModal .modal-actions button.btn-save-html { background: var(--code-purple); color: white; }
+        #htmlEditorModal .modal-actions button.btn-save-html:hover { background: #7c3aed; }
+        
+        #htmlEditorModal .modal-actions button.btn-preview-html { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        #htmlEditorModal .modal-actions button.btn-preview-html:hover { background: #c7d2fe; }
+
         .modal-actions button:last-child { background: #e2e8f0; color: #475569; }
         .modal-actions button:last-child:hover { background: #cbd5e1; }
+
+        /* NEW: CODE EDITOR STYLES */
+        .code-editor-container {
+            flex: 1;
+            margin: 15px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e; /* Dark Theme */
+        }
+
+        .code-textarea {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #d4d4d4;
+            background: #1e1e1e;
+            border: none;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .code-textarea::selection {
+            background: #264f78;
+        }
+
+        .code-toolbar {
+            padding: 8px 15px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #404040;
+            color: #ccc;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
         @keyframes fadeIn{
             from{opacity:0; transform:translateY(20px);}
@@ -796,6 +869,11 @@
                 <i class="ph ph-pencil"></i> Edit Custom Halaman
             </button>
 
+            <!-- NEW: BUTTON EDIT HTML -->
+            <button class="btn btn-html-edit" onclick="openHtmlEditSelectionModal()">
+                <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
+            </button>
+
             <!-- WRAPPED SAFE PRINT HANDLER -->
             <button class="btn btn-print" onclick="handleSafePrint(this)"><i class="ph ph-printer"></i> Download PDF (F4)</button>
 
@@ -803,7 +881,7 @@
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.2 Enterprise • Native Embed
+                v9.3 Enterprise • Native Embed • HTML Editor
             </p>
         </aside>
 
@@ -823,7 +901,6 @@
             <select id="deletePageSelect"></select>
 
             <div class="modal-actions">
-                <!-- Wrapped Delete Confirmation -->
                 <button onclick="handleConfirmDelete()">Hapus</button>
                 <button onclick="closeDeleteModal()">Batal</button>
             </div>
@@ -839,9 +916,48 @@
             <select id="editPageSelect"></select>
 
             <div class="modal-actions">
-                <!-- Wrapped Edit Confirmation -->
                 <button onclick="handleConfirmEditMode()">✅ Aktifkan Edit</button>
                 <button onclick="closeEditModal()">Batal</button>
+            </div>
+       </div>
+    </div>
+
+    <!-- NEW MODAL: HTML SELECT SYSTEM -->
+    <div id="htmlEditSelectModal" class="modal">
+       <div class="modal-box">
+            <h3><i class="ph ph-code-block" style="color:var(--code-purple)"></i> Edit HTML Halaman</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin diedit kode sumbernya:</p>
+
+            <select id="htmlPageSelect"></select>
+
+            <div class="modal-actions">
+                <button style="background:var(--code-purple); color:white;" onclick="handleOpenHtmlEditor()">Buka Editor</button>
+                <button onclick="closeHtmlEditSelectModal()">Batal</button>
+            </div>
+       </div>
+    </div>
+
+    <!-- NEW MODAL: LARGE HTML EDITOR -->
+    <div id="htmlEditorModal" class="modal">
+       <div class="modal-box modal-large">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;"><i class="ph ph-file-code"></i> Source Code Editor</h3>
+                <span id="editorPageInfo" style="font-size:0.8rem; background:#f1f5f9; padding:4px 8px; border-radius:4px; color:#64748b;">Halaman ?</span>
+            </div>
+            
+            <div class="code-editor-container">
+                <div class="code-toolbar">
+                    <span>HTML / Embed Source</span>
+                    <span style="font-size:0.7rem; opacity:0.7;">Auto-Sanitized • Monospace</span>
+                </div>
+                <!-- Textarea for Coding -->
+                <textarea id="htmlCodeInput" class="code-textarea" spellcheck="false"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-preview-html" onclick="handlePreviewHtml()">👁 Preview</button>
+                <button class="btn-save-html" onclick="handleSaveHtmlChange()">💾 Simpan Perubahan</button>
+                <button onclick="closeHtmlEditorModal()">Batal</button>
             </div>
        </div>
     </div>
@@ -857,7 +973,6 @@
             <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
 
             <div class="modal-actions" style="margin-top: 20px;">
-                <!-- Wrapped Embed Confirmation -->
                 <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
                 <button onclick="closeEmbedModal()">Batal</button>
             </div>
@@ -1510,7 +1625,7 @@
 
                     // STEP 6: Prevent Page Explosion (Check existing next page)
                     if (nextSheet && nextSheet.querySelector('.page-content')) {
-                         nextContent = nextSheet.querySelector('.page-content');
+                          nextContent = nextSheet.querySelector('.page-content');
                     } else {
                         // STEP 5: Create New Sheet using existing style
                         nextSheet = createNewCustomSheet();
@@ -2313,6 +2428,212 @@
                     window.confirm = originalConfirm; // Restore just in case reload fails
                 }, 500);
             }
+        }
+
+        // =========================================
+        // 11. NEW: HTML EDITOR LOGIC (ADDITIVE)
+        // =========================================
+        let currentEditingIndex = -1;
+
+        // 1. SELECTOR MODAL
+        function openHtmlEditSelectionModal() {
+            const dropdown = document.getElementById('htmlPageSelect');
+            if(!dropdown) return;
+            dropdown.innerHTML = '';
+            
+            const sheets = document.querySelectorAll('.sheet');
+            if(sheets.length === 0) {
+                uxToast("Tidak ada halaman.", "error");
+                return;
+            }
+
+            sheets.forEach((sheet, i)=>{
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = `Halaman ${i+1}`;
+                const content = sheet.textContent || sheet.innerText;
+                const type = sheet.dataset.pageType === 'embed' ? ' [EMBED]' : '';
+                
+                if(content.includes('LAPORAN')) title += " (Laporan)";
+                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
+                
+                option.textContent = title + type;
+                dropdown.appendChild(option);
+            });
+
+            document.getElementById('htmlEditSelectModal').style.display = 'flex';
+        }
+
+        function closeHtmlEditSelectModal() {
+            document.getElementById('htmlEditSelectModal').style.display = 'none';
+        }
+
+        // 2. OPEN EDITOR
+        function handleOpenHtmlEditor() {
+            const index = document.getElementById('htmlPageSelect').value;
+            if(index === "") return;
+
+            currentEditingIndex = parseInt(index);
+            const sheets = document.querySelectorAll('.sheet');
+            const sheet = sheets[currentEditingIndex];
+
+            if(!sheet) return;
+
+            closeHtmlEditSelectModal();
+
+            // Determine Content Source (Crucial: Protect Embeds)
+            let contentToEdit = "";
+            const isEmbed = sheet.dataset.pageType === 'embed';
+
+            if(isEmbed) {
+                // Source of truth for embed is the hidden textarea .raw-storage
+                const storage = sheet.querySelector('.raw-storage');
+                contentToEdit = storage ? storage.value : "<!-- Error: Raw Storage not found -->";
+                document.getElementById('editorPageInfo').innerText = `Halaman ${currentEditingIndex+1} (Embed Mode)`;
+            } else {
+                // Source of truth for standard page is innerHTML
+                contentToEdit = sheet.innerHTML;
+                document.getElementById('editorPageInfo').innerText = `Halaman ${currentEditingIndex+1} (Standard Mode)`;
+            }
+
+            // Load into textarea
+            const textarea = document.getElementById('htmlCodeInput');
+            
+            // Optional: Basic pretty print for readability (add newlines after block tags)
+            // But we keep it relatively raw to avoid breaking spacing
+            textarea.value = formatHtmlForEditor(contentToEdit);
+            
+            document.getElementById('htmlEditorModal').style.display = 'flex';
+        }
+
+        function closeHtmlEditorModal() {
+            document.getElementById('htmlEditorModal').style.display = 'none';
+            currentEditingIndex = -1;
+        }
+
+        // 3. LIVE PREVIEW LOGIC
+        function handlePreviewHtml() {
+            if(currentEditingIndex === -1) return;
+
+            const code = document.getElementById('htmlCodeInput').value;
+            const sheets = document.querySelectorAll('.sheet');
+            const sheet = sheets[currentEditingIndex];
+            const isEmbed = sheet.dataset.pageType === 'embed';
+
+            try {
+                // Sanitize first
+                const safeCode = cleanHTML(code);
+
+                if(isEmbed) {
+                    // For embed, we update the .embed-safe-zone wrapper
+                    let wrapper = sheet.querySelector('.embed-safe-zone');
+                    if(!wrapper) {
+                        // Recreate if missing
+                         wrapper = document.createElement('div');
+                         wrapper.className = 'embed-safe-zone';
+                         sheet.innerHTML = '';
+                         sheet.appendChild(wrapper);
+                    }
+                    wrapper.innerHTML = safeCode;
+                } else {
+                    // For standard, direct innerHTML update
+                    sheet.innerHTML = safeCode;
+                }
+
+                uxToast("Preview diperbarui", "info");
+
+                // Scroll to preview behind modal (optional, might be covered)
+                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } catch(e) {
+                uxToast("HTML Invalid. Cek tag.", "error");
+                console.error(e);
+            }
+        }
+
+        // 4. SAVE LOGIC
+        function handleSaveHtmlChange() {
+            if(currentEditingIndex === -1) return;
+
+            const code = document.getElementById('htmlCodeInput').value;
+            const sheets = document.querySelectorAll('.sheet');
+            const sheet = sheets[currentEditingIndex];
+            const isEmbed = sheet.dataset.pageType === 'embed';
+
+            try {
+                // 1. Sanitize
+                const safeCode = cleanHTML(code);
+
+                // 2. Update DOM & DB based on Type
+                if (isEmbed) {
+                    // Update DOM
+                    let wrapper = sheet.querySelector('.embed-safe-zone');
+                    if(!wrapper) {
+                         wrapper = document.createElement('div');
+                         wrapper.className = 'embed-safe-zone';
+                         sheet.innerHTML = '';
+                         sheet.appendChild(wrapper);
+                    }
+                    wrapper.innerHTML = safeCode;
+
+                    // Update Hidden Storage (DOM Source of Truth)
+                    let storage = sheet.querySelector('.raw-storage');
+                    if(!storage) {
+                        storage = document.createElement('textarea');
+                        storage.className = 'raw-storage';
+                        storage.style.display = 'none';
+                        sheet.appendChild(storage);
+                    }
+                    storage.value = safeCode;
+
+                    // Update DB (Memory)
+                    if(pagesDB[currentEditingIndex]) {
+                        pagesDB[currentEditingIndex].rawHTML = safeCode;
+                    }
+
+                } else {
+                    // Standard Page
+                    sheet.innerHTML = safeCode;
+                    
+                    // Update DB (Memory)
+                    if(pagesDB[currentEditingIndex]) {
+                        pagesDB[currentEditingIndex].html = safeCode;
+                    }
+                }
+
+                // 3. Persist to Storage
+                saveToStorage();
+
+                // 4. Re-sync Dynamic Data (Variables & Page Numbers)
+                // This ensures if user deleted <span class="data-sekolah">, it won't crash, 
+                // but if they added it back, it gets populated.
+                syncData();
+                updatePageNumbers();
+
+                uxToast("HTML Berhasil Disimpan", "success");
+                closeHtmlEditorModal();
+
+                // 5. Scroll to edited page
+                setTimeout(() => {
+                    sheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+
+            } catch(e) {
+                uxToast("Gagal menyimpan. Cek error console.", "error");
+                console.error(e);
+            }
+        }
+
+        // Helper: Basic pretty print (very simple)
+        function formatHtmlForEditor(html) {
+            // Add newlines after block closing tags for readability in textarea
+            // This is non-destructive
+            return html
+                .replace(/<\/div>/g, '</div>\n')
+                .replace(/<\/p>/g, '</p>\n')
+                .replace(/<\/tr>/g, '</tr>\n')
+                .replace(/<br>/g, '<br>\n');
         }
 
     </script>
