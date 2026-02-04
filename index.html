@@ -1,0 +1,2320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Laporan Administrasi Sekolah - Ultimate Enterprise Edition</title>
+    
+    <!-- LIBRARIES FOR PDF GENERATION -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- PHOSPHOR ICONS (Premium Icons) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* =========================================
+           1. RESET & UI SYSTEM (TAMPILAN WEB)
+           ========================================= */
+        :root {
+            --bg-app: #f8fafc;
+            --sidebar-width: 320px;
+            --paper-width: 215mm; /* Lebar F4 */
+            --paper-height: 330mm; /* Tinggi F4 */
+            --margin-doc: 20mm;
+            --primary-dark: #0f172a;
+            --accent-blue: #3b82f6;
+            --danger-red: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            color: #334155;
+        }
+
+        /* PRINT LOCK UI */
+        body.printing {
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* EXPORTING MODE */
+        body.exporting .btn-remove-page, 
+        body.exporting .no-print-in-pdf,
+        body.exporting .edit-badge {
+            display: none !important;
+        }
+
+        /* WRAPPER UTAMA */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar Control Panel */
+        aside {
+            width: var(--sidebar-width);
+            background: var(--primary-dark);
+            color: #f8fafc;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #334155;
+            overflow-y: auto;
+            z-index: 200;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        aside h2 { 
+            font-size: 1.1rem; 
+            margin-top: 0; 
+            margin-bottom: 25px;
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 15px; 
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Form Controls Styling */
+        .control-group { margin-bottom: 18px; }
+        .control-group label { 
+            display: block; 
+            font-size: 0.75rem; 
+            margin-bottom: 6px; 
+            color: #94a3b8; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .control-group input { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border-radius: 6px; 
+            border: 1px solid #475569; 
+            background: #1e293b;
+            color: white;
+            font-size: 0.9rem; 
+            transition: all 0.2s;
+        }
+        .control-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px;
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            gap: 8px;
+        }
+        .btn-add { 
+            background: #334155; 
+            color: #e2e8f0; 
+            border: 1px solid #475569;
+        }
+        .btn-add:hover { 
+            background: var(--accent-blue); 
+            color: white; 
+            border-color: var(--accent-blue);
+            transform: translateY(-1px);
+        }
+        .btn-print { 
+            background: #10b981; 
+            color: white; 
+            margin-top: 20px; 
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .btn-print:hover { 
+            background: #059669; 
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger { 
+            background: rgba(239, 68, 68, 0.1); 
+            color: #ef4444; 
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin-top: 10px;
+        }
+        .btn-danger:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #e0e7ff; 
+            color: #4338ca; 
+            border: 1px solid #c7d2fe; 
+            margin-top: 10px;
+        }
+        .btn-edit:hover {
+            background: #c7d2fe;
+        }
+
+        /* NEW: Reset Button Style */
+        .btn-reset {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px dashed #475569;
+            margin-top: 20px;
+            font-size: 0.8rem;
+        }
+        .btn-reset:hover {
+            background: rgba(255,255,255,0.05);
+            color: #cbd5e1;
+            border-color: #cbd5e1;
+        }
+        
+        .section-divider {
+            margin: 25px 0 15px 0;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            padding-left: 10px;
+        }
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: #64748b;
+            border-radius: 50%;
+        }
+
+        /* HAMBURGER MENU */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 500;
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            font-size: 24px;
+            display: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .menu-toggle:active { transform: scale(0.95); }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: transparent;
+            scroll-behavior: smooth;
+        }
+
+        /* =========================================
+           2. RESPONSIVE LOGIC
+           ========================================= */
+        
+        @media (max-width: 1024px) {
+            .menu-toggle { display: flex; }
+            aside {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100%;
+                width: 280px;
+                transform: translateX(0);
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            aside.active { left: 0; }
+            aside.active::before {
+                content: '';
+                position: fixed;
+                top: 0; left: 280px;
+                width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.5);
+                z-index: -1;
+            }
+            main { padding-top: 80px; width: 100%; }
+        }
+
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .sheet { transform: scale(0.75); transform-origin: top center; margin-bottom: -200px !important; }
+        }
+
+        @media (max-width: 768px) {
+            .sheet { transform: scale(0.55); transform-origin: top center; margin-bottom: -400px !important; }
+            main { padding-left: 0; padding-right: 0; }
+        }
+
+        @media (min-width: 1600px) {
+            main { max-width: 1800px; margin: 0 auto; }
+        }
+
+        /* =========================================
+           3. DOCUMENT STYLE (TAMPILAN KERTAS)
+           ========================================= */
+        .sheet {
+            background: white;
+            width: var(--paper-width);
+            min-height: var(--paper-height);
+            padding: var(--margin-doc);
+            margin-bottom: 40px;
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            line-height: 1.15;
+            font-size: 12pt;
+            transition: transform 0.3s ease;
+            pointer-events: auto;
+            break-inside: avoid;
+        }
+
+        /* Fitur Editable */
+        [contenteditable="true"]:hover { background-color: rgba(255, 230, 0, 0.1); outline: 1px dashed #e2e8f0; cursor: text; }
+        [contenteditable="true"]:focus { background-color: rgba(255, 245, 157, 0.3); outline: none; border-bottom: 2px solid var(--accent-blue); }
+        
+        textarea.print-safe {
+            width: 100%;
+            border: 1px dashed #cbd5e1;
+            font-family: inherit;
+            font-size: inherit;
+            resize: none;
+            background: transparent;
+            overflow: hidden;
+            min-height: 40px;
+            padding: 5px;
+            transition: border 0.2s;
+        }
+        textarea.print-safe:focus { border: 1px solid var(--accent-blue); background: #f8fafc; outline: none; }
+        
+        .text-center { text-align: center; }
+        .text-bold { font-weight: bold; }
+        .text-upper { text-transform: uppercase; }
+        .full-width { width: 100%; }
+        .mt-2 { margin-top: 10mm; }
+        .mb-2 { margin-bottom: 10mm; }
+        .text-small { font-size: 10pt; }
+
+        .kop-surat { display: flex; align-items: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; gap: 20px; }
+        .kop-img { width: 80px; height: 90px; object-fit: contain; cursor: pointer; transition: opacity 0.2s; }
+        .kop-img:hover { opacity: 0.7; }
+        .kop-text { text-align: center; flex: 1; }
+        .kop-text h3 { margin: 0; font-size: 14pt; font-weight: bold; }
+        .kop-text h2 { margin: 0; font-size: 16pt; font-weight: bold; }
+        .kop-text p { margin: 0; font-size: 10pt; }
+
+        table.dinas { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        table.dinas th, table.dinas td { border: 1px solid #000; padding: 4px 8px; vertical-align: middle; }
+        table.dinas th { background-color: #f3f4f6; text-align: center; font-weight: bold; }
+
+        table.table-padat { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 10px 0; }
+        table.table-padat th, table.table-padat td { border: 1px solid #000; padding: 2px 4px; vertical-align: middle; }
+        table.table-padat th { background-color: #f3f4f6; text-align: center; font-weight: bold; }
+        table.table-padat input { border: none; width: 100%; text-align: center; font-family: inherit; font-size: inherit; outline: none; background: transparent; }
+
+        .col-nilai-akhir { border-left: 2px solid #000 !important; border-right: 2px solid #000 !important; font-weight: bold; font-size: 1.1em; background: #fafafa; }
+
+        table.table-grid { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: fixed; margin: 10px 0; page-break-inside: auto; }
+        table.table-grid th, table.table-grid td { border: 1px solid #000; padding: 2px 0; text-align: center; vertical-align: middle; overflow: hidden; }
+        table.table-grid th { font-size: 8pt; background: #eee; }
+        table.table-grid tr { page-break-inside: avoid; }
+
+        table.list-data { width: 100%; border: none; }
+        table.list-data td { border: none; padding: 4px 0; vertical-align: top; }
+        table.list-data td:first-child { width: 200px; }
+        table.list-data td:nth-child(2) { width: 20px; text-align: center; }
+
+        .program-list { list-style: none; padding: 0; margin: 0; }
+        .program-list li { margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        input[type="checkbox"] { width: 16px; height: 16px; accent-color: #000; cursor: pointer; }
+
+        .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        .photo-card { border: 1px solid #000; padding: 5px; page-break-inside: avoid; }
+        .photo-placeholder { width: 100%; height: 200px; background: #f8fafc; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; border: 1px dashed #94a3b8; transition: background 0.2s; }
+        .photo-placeholder:hover { background: #f1f5f9; }
+        .photo-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-caption { margin-top: 5px; font-size: 10pt; min-height: 20px; border-top: 1px dotted #ccc; }
+
+        .signature-section { display: flex; justify-content: space-between; margin-top: 30px; page-break-inside: avoid; }
+        .ttd-box { width: 40%; text-align: center; }
+        .ttd-space { height: 80px; }
+
+        .cover-border {
+            border: 3px double #000;
+            height: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+
+        .page-number { position: absolute; bottom: 10mm; left: 0; right: 0; text-align: center; font-size: 9pt; color: #444; }
+
+        /* =========================================
+           4. PREMIUM EDIT MODE UI
+           ========================================= */
+        /* Visual State saat Edit Aktif */
+        .sheet.editing {
+            outline: 3px solid var(--accent-blue);
+            box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.15);
+            z-index: 100; /* Angkat layer */
+            cursor: text;
+        }
+
+        /* Hover effect pada elemen yang bisa diedit */
+        .sheet.editing [contenteditable="true"]:hover {
+            background-color: #fff7ed; /* Orange tipis premium */
+            outline: 1px dashed #fdba74;
+            border-radius: 2px;
+        }
+
+        /* Badge Indicator Floating */
+        .edit-badge {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--accent-blue);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            animation: slideDown 0.3s ease;
+            z-index: 1001;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Lock Protection: Sembunyikan kontrol lain saat edit mode */
+        .sheet.editing .sheet-controls,
+        .sheet.editing input[type="checkbox"], 
+        .sheet.editing input[type="text"],
+        .sheet.editing textarea {
+            pointer-events: none; /* Cegah interaksi elemen form asli */
+            opacity: 0.7;
+        }
+
+        /* =========================================
+           5. MODERN MODAL UI (COMMON)
+           ========================================= */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            z-index: 99999;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 340px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.25);
+            animation: fadeIn .25s ease;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .modal-box h3 { margin-top: 0; color: #1e293b; }
+        
+        .modal-box select {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0 25px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        /* Delete Modal Specifics */
+        #deleteModal .modal-actions button:first-child { background: #ef4444; color: white; }
+        #deleteModal .modal-actions button:first-child:hover { background: #dc2626; }
+
+        /* Edit Modal Specifics */
+        #editModal .modal-actions button:first-child { background: var(--accent-blue); color: white; }
+        #editModal .modal-actions button:first-child:hover { background: #2563eb; }
+
+        .modal-actions button:last-child { background: #e2e8f0; color: #475569; }
+        .modal-actions button:last-child:hover { background: #cbd5e1; }
+
+        @keyframes fadeIn{
+            from{opacity:0; transform:translateY(20px);}
+            to{opacity:1; transform:translateY(0);}
+        }
+
+        /* =========================================
+           6. PRINT QUERY
+           ========================================= */
+        @media print {
+            @page { size: 215mm 330mm; margin: 0; }
+            body { background: white; display: block; height: auto; overflow: visible; }
+            aside, .btn, .menu-toggle, .modal { display: none !important; }
+            .app-container { display: block !important; height: auto !important; overflow: visible !important; }
+            main { display: block !important; padding: 0; margin: 0; max-width: none; overflow: visible !important; }
+            .sheet { width: 100%; min-height: 330mm; margin: 0; box-shadow: none; page-break-after: always; transform: none !important; margin-bottom: 0 !important; }
+            [contenteditable="true"] { outline: none !important; background: transparent !important; border-bottom: none !important; }
+            textarea.print-safe { border: none; resize: none; padding: 0; margin: 0; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 15px; height: 15px; border: 1px solid #000; background: #fff; display: inline-block; vertical-align: middle; }
+            input[type="checkbox"]:checked { background: #000; position: relative; }
+            input[type="checkbox"]:checked:after { content: '✓'; color: #fff; font-size: 12px; position: absolute; top: -2px; left: 1px; }
+        }
+
+        /* =========================================
+           7. NEW EMBED ENGINE STYLES
+           ========================================= */
+        .embed-safe-zone {
+            width: 100%;
+            /* Pastikan konten tidak merusak layout F4 */
+            overflow: hidden; 
+            position: relative;
+            /* Reset CSS dasar agar style user tidak konflik parah */
+            font-family: initial;
+            font-size: initial;
+            line-height: initial;
+            color: initial;
+        }
+
+        /* Penanda visual di mode edit */
+        .sheet[data-page-type="embed"]::before {
+            content: "RAW HTML EMBED";
+            position: absolute;
+            top: 0; left: 0;
+            background: #f1f5f9;
+            color: #94a3b8;
+            font-size: 9px;
+            padding: 2px 5px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+
+    <!-- =========================================
+       8. NEW UX OVERLAY STYLES (ENTERPRISE UI)
+       ========================================= -->
+    <style id="ux-styles">
+        /* Scoped to prevent conflict using prefix 'ux-' */
+        
+        /* UX Toast Notification */
+        .ux-toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+        
+        .ux-toast {
+            background: white;
+            border-left: 5px solid;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+        }
+        
+        .ux-toast.visible { transform: translateX(0); }
+        .ux-toast.success { border-color: #10b981; }
+        .ux-toast.error { border-color: #ef4444; }
+        .ux-toast.info { border-color: #3b82f6; }
+        .ux-toast i { font-size: 1.4rem; }
+        .ux-toast.success i { color: #10b981; }
+        .ux-toast.error i { color: #ef4444; }
+        .ux-toast.info i { color: #3b82f6; }
+
+        /* UX Loading Overlay */
+        .ux-loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 200000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .ux-loader-overlay.active { opacity: 1; pointer-events: all; }
+        
+        .ux-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .ux-loader-text {
+            color: white;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            font-size: 1.1rem;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* UX Button Loading State */
+        .btn.ux-btn-loading {
+            position: relative;
+            color: transparent !important;
+            pointer-events: none;
+        }
+        .btn.ux-btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* UX Confirmation Modal (Replacing Native Confirm) */
+        .ux-confirm-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 100001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .ux-confirm-box {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 400px;
+            max-width: 90vw;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ux-confirm-modal.active { display: flex; }
+        .ux-confirm-modal.active .ux-confirm-box { transform: scale(1); opacity: 1; }
+        
+        .ux-confirm-icon {
+            width: 48px;
+            height: 48px;
+            background: #fee2e2;
+            color: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .ux-confirm-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 10px 0; }
+        .ux-confirm-desc { color: #64748b; margin: 0 0 25px 0; line-height: 1.5; }
+        
+        .ux-confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        
+        .ux-btn { padding: 10px 18px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+        .ux-btn-cancel { background: #f1f5f9; color: #475569; }
+        .ux-btn-cancel:hover { background: #e2e8f0; }
+        .ux-btn-confirm { background: #ef4444; color: white; }
+        .ux-btn-confirm:hover { background: #dc2626; }
+
+        /* Auto Save Indicator */
+        .ux-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 999;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ux-save-indicator.active { transform: translateX(-50%) translateY(0); }
+        .ux-save-spinner { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- HAMBURGER MENU BUTTON -->
+    <button class="menu-toggle">☰</button>
+
+    <!-- APP WRAPPER -->
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <aside>
+            <h2>
+                <i class="ph ph-buildings" style="font-size: 24px;"></i> Admin Sekolah
+            </h2>
+            
+            <div class="control-group">
+                <label>Nama Sekolah</label>
+                <input type="text" id="m_sekolah" value="UPTD SD NEGERI 1 BATULAWANG" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Alamat Sekolah</label>
+                <input type="text" id="m_alamat" value="Jl. Desa Batulawang No. 123" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Kepala Sekolah</label>
+                <input type="text" id="m_kepsek" value="NAMA KEPALA SEKOLAH" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>NIP Kepala Sekolah</label>
+                <input type="text" id="m_nip1" value="19800101 200501 1 001" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Guru PJP / Kelas</label>
+                <input type="text" id="m_guru" value="USAMAH DHIYA UL HAQ, S.Pd." oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>NIP Guru</label>
+                <input type="text" id="m_nip2" value="-" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Tanggal Surat</label>
+                <input type="text" id="m_tgl" value="Desember 2025" oninput="handleSyncData()">
+            </div>
+
+            <div class="section-divider">Laporan Kegiatan</div>
+            <!-- UPDATED ONCLICK HANDLERS TO UX WRAPPERS -->
+            <button class="btn btn-add" onclick="handleAddPage('cover', this)"><i class="ph ph-file-text"></i> Halaman Cover</button>
+            <button class="btn btn-add" onclick="handleAddPage('laporan', this)"><i class="ph ph-file-plus"></i> Laporan Kegiatan</button>
+            <button class="btn btn-add" onclick="handleAddPage('laporan_convert', this)"><i class="ph ph-file-arrow-up"></i> Laporan (Convert)</button>
+            <button class="btn btn-add" onclick="handleAddPage('foto', this)"><i class="ph ph-camera"></i> Dokumentasi Foto</button>
+            <button class="btn btn-add" onclick="handleAddPage('jadwal', this)"><i class="ph ph-calendar"></i> Jadwal Asesmen</button>
+
+            <div class="section-divider">Administrasi PJP</div>
+            <button class="btn btn-add" onclick="handleAddPage('program_semester', this)"><i class="ph ph-chart-bar"></i> Program Semester</button>
+            <button class="btn btn-add" onclick="handleAddPage('rekap_nilai', this)"><i class="ph ph-calculator"></i> Rekap Nilai Harian</button>
+            <button class="btn btn-add" onclick="handleAddPage('rekap_ujian', this)"><i class="ph ph-graduation-cap"></i> Rekap Ujian BTQ</button>
+            <button class="btn btn-add" onclick="handleAddPage('absensi_guru', this)"><i class="ph ph-users-three"></i> Absensi Guru (Grid)</button>
+            <button class="btn btn-add" onclick="handleAddPage('absensi_siswa', this)"><i class="ph ph-student"></i> Absensi Siswa (Super)</button>
+            <button class="btn btn-add" onclick="handleAddPage('hadir_ujian', this)"><i class="ph ph-pencil-simple-line"></i> Tanda Tangan Ujian</button>
+            <button class="btn btn-add" onclick="handleAddPage('custom', this)"><i class="ph ph-magic-wand"></i> Halaman Custom</button>
+            <button class="btn btn-add" style="border-style: dashed;" onclick="openEmbedModal()"><i class="ph ph-code"></i> Embed HTML / Code</button>
+
+            <div class="section-divider">Actions</div>
+            
+            <!-- BUTTON DELETE DI SIDEBAR -->
+            <button class="btn btn-danger" onclick="openDeleteModal()">
+                <i class="ph ph-trash"></i> Hapus Halaman
+            </button>
+
+            <!-- BUTTON EDIT MODE -->
+            <button class="btn btn-edit" onclick="openEditModal()">
+                <i class="ph ph-pencil"></i> Edit Custom Halaman
+            </button>
+
+            <!-- WRAPPED SAFE PRINT HANDLER -->
+            <button class="btn btn-print" onclick="handleSafePrint(this)"><i class="ph ph-printer"></i> Download PDF (F4)</button>
+
+            <!-- WRAPPED RESET HANDLER -->
+            <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
+            
+            <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
+                v9.2 Enterprise • Native Embed
+            </p>
+        </aside>
+
+        <!-- MAIN DOCUMENT AREA -->
+        <main id="document-area">
+            <!-- Halaman akan muncul di sini -->
+        </main>
+    
+    </div> <!-- End App Container -->
+
+    <!-- MODAL DELETE SYSTEM (EXISTING - PRESERVED) -->
+    <div id="deleteModal" class="modal">
+       <div class="modal-box">
+            <h3>Hapus Halaman</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin dihapus:</p>
+
+            <select id="deletePageSelect"></select>
+
+            <div class="modal-actions">
+                <!-- Wrapped Delete Confirmation -->
+                <button onclick="handleConfirmDelete()">Hapus</button>
+                <button onclick="closeDeleteModal()">Batal</button>
+            </div>
+       </div>
+    </div>
+
+    <!-- MODAL EDIT SYSTEM (EXISTING - PRESERVED) -->
+    <div id="editModal" class="modal">
+       <div class="modal-box">
+            <h3>Edit Custom Halaman</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman untuk masuk mode edit:</p>
+
+            <select id="editPageSelect"></select>
+
+            <div class="modal-actions">
+                <!-- Wrapped Edit Confirmation -->
+                <button onclick="handleConfirmEditMode()">✅ Aktifkan Edit</button>
+                <button onclick="closeEditModal()">Batal</button>
+            </div>
+       </div>
+    </div>
+
+    <!-- MODAL EMBED HTML SYSTEM (EXISTING - PRESERVED) -->
+    <div id="embedModal" class="modal">
+       <div class="modal-box" style="width: 600px; max-width: 90vw;">
+            <h3>Embed HTML Code</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">
+                Tempel kode HTML Anda di bawah. Script tag akan dihapus otomatis demi keamanan.
+            </p>
+
+            <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <!-- Wrapped Embed Confirmation -->
+                <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
+                <button onclick="closeEmbedModal()">Batal</button>
+            </div>
+       </div>
+    </div>
+
+    <!-- =========================================
+       9. NEW GLOBAL UI OVERLAYS (INJECTED)
+       ========================================= -->
+    
+    <!-- 1. Loading Overlay -->
+    <div id="uxLoader" class="ux-loader-overlay">
+        <div class="ux-spinner"></div>
+        <div class="ux-loader-text" id="uxLoaderText">Memproses data...</div>
+    </div>
+
+    <!-- 2. Toast Container -->
+    <div id="uxToastContainer" class="ux-toast-container"></div>
+
+    <!-- 3. Modern Confirmation Modal -->
+    <div id="uxConfirmModal" class="ux-confirm-modal">
+        <div class="ux-confirm-box">
+            <div class="ux-confirm-icon">
+                <i class="ph ph-warning"></i>
+            </div>
+            <h3 class="ux-confirm-title" id="uxConfirmTitle">Konfirmasi</h3>
+            <p class="ux-confirm-desc" id="uxConfirmDesc">Apakah Anda yakin ingin melakukan tindakan ini?</p>
+            <div class="ux-confirm-actions">
+                <button class="ux-btn ux-btn-cancel" id="uxBtnCancel">Batal</button>
+                <button class="ux-btn ux-btn-confirm" id="uxBtnConfirm">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Save Indicator -->
+    <div id="uxSaveIndicator" class="ux-save-indicator">
+        <div class="ux-save-spinner"></div>
+        <span>Menyimpan...</span>
+    </div>
+
+    <script>
+        // ================= GLOBAL STATE MANAGEMENT =================
+        let pagesDB = [];
+        const STORAGE_KEY = "school_pages_db";
+
+        // ================= STORAGE HELPER FUNCTIONS (HARDENED) =================
+        function saveToStorage() {
+            // Kita harus mensinkronkan DOM saat ini kembali ke pagesDB
+            // karena user mungkin telah mengedit halaman Standard.
+            
+            const sheets = document.querySelectorAll('.sheet');
+            
+            // Rebuild DB from Current DOM State
+            pagesDB = Array.from(sheets).map((sheet, index) => {
+                const isEmbed = sheet.dataset.pageType === 'embed';
+                const pageId = parseInt(sheet.dataset.id) || (Date.now() + index);
+
+                if (isEmbed) {
+                    // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
+                    // Ambil dari hidden textarea yang kita tanam saat renderPages()
+                    const rawStorage = sheet.querySelector('.raw-storage');
+                    return {
+                        id: pageId,
+                        type: 'embed',
+                        rawHTML: rawStorage ? rawStorage.value : '' // Source of Truth
+                    };
+                } else {
+                    // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
+                    return {
+                        id: pageId,
+                        type: 'standard', // atau undefined (legacy support)
+                        html: sheet.innerHTML
+                    };
+                }
+            });
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+            } catch (e) {
+                console.error("Storage Full or Error", e);
+            }
+        }
+
+        function loadFromStorage() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    pagesDB = JSON.parse(data);
+                    return true;
+                } catch (e) {
+                    console.error("Storage corrupt", e);
+                    localStorage.removeItem(STORAGE_KEY);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function resetAllPages() {
+            if(confirm("Yakin ingin mereset semua halaman dan menghapus penyimpanan?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                pagesDB = [];
+                location.reload(); 
+            }
+        }
+
+        // ================= RENDER ENGINE (UPDATED) =================
+        function renderPages() {
+            const container = document.getElementById('document-area');
+            container.innerHTML = ''; // Reset container
+
+            pagesDB.forEach(page => {
+                const sheet = document.createElement('div');
+                sheet.className = 'sheet';
+                sheet.dataset.id = page.id || Date.now(); // Maintain Identity
+
+                // A. RENDER LOGIC BASED ON TYPE
+                if (page.type === 'embed') {
+                    // --- EMBED RENDERING ---
+                    sheet.dataset.pageType = 'embed';
+
+                    // 1. Simpan Raw HTML di Hidden Textarea (Untuk Save System nanti)
+                    const rawStorage = document.createElement('textarea');
+                    rawStorage.className = 'raw-storage';
+                    rawStorage.style.display = 'none';
+                    rawStorage.value = page.rawHTML;
+                    sheet.appendChild(rawStorage);
+
+                    // 2. Buat Safe Container
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'embed-safe-zone';
+                    
+                    try {
+                        // 3. Inject HTML Only at Render Time
+                        wrapper.innerHTML = page.rawHTML;
+                        sheet.appendChild(wrapper);
+                    } catch (e) {
+                        wrapper.innerHTML = '<p style="color:red; text-align:center;">Gagal merender HTML Embed.</p>';
+                        sheet.appendChild(wrapper);
+                    }
+
+                } else {
+                    // --- STANDARD RENDERING ---
+                    // Inject langsung innerHTML (Contenteditable support)
+                    sheet.innerHTML = page.html;
+                }
+
+                // B. SYSTEM COMPONENTS (Jika belum ada)
+                // Cek apakah page number sudah ada (untuk standard page yg tersimpan full HTML)
+                if (!sheet.querySelector('.page-number')) {
+                    const pageNum = document.createElement('div');
+                    pageNum.className = 'page-number';
+                    sheet.appendChild(pageNum);
+                }
+
+                container.appendChild(sheet);
+            });
+
+            syncData(); 
+            updatePageNumbers();
+        }
+
+        // ================= AUTO SAVE ENGINE (DEBOUNCE) =================
+        let saveTimeout;
+        let paginationTimeout; // New debounce specifically for pagination
+
+        document.addEventListener("input", function(e) {
+            // Hanya trigger jika perubahan terjadi di dalam .sheet atau input/textarea
+            if(e.target.closest('.sheet') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                
+                // --- STEP 7: AUTO TRIGGER PAGINATION ---
+                // Only run if input happened inside a Custom Page content wrapper
+                if (e.target.closest('.page-content')) {
+                    clearTimeout(paginationTimeout);
+                    paginationTimeout = setTimeout(() => {
+                        autoPaginateCustomPages();
+                    }, 1000); // 1s debounce to avoid lag while typing fast
+                }
+
+                // Standard Auto Save
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveToStorage();
+                    // Additional safety: Run pagination once more after save to catch any stragglers
+                    if (e.target.closest('.page-content')) {
+                          autoPaginateCustomPages();
+                    }
+                }, 500); 
+            }
+        });
+
+        // ================= NEW EMBED ARCHITECTURE (NO IFRAME) =================
+
+        // 1. SANITIZER: Membersihkan Script Berbahaya
+        function cleanHTML(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // Hapus tag berbahaya yang tidak boleh ada di dokumen cetak
+            const bannedTags = ['script', 'iframe', 'object', 'embed', 'form']; 
+            bannedTags.forEach(tag => {
+                doc.querySelectorAll(tag).forEach(el => el.remove());
+            });
+
+            // Hapus event handler inline (onclick, onmouseover, dll)
+            const allElements = doc.body.querySelectorAll('*');
+            allElements.forEach(el => {
+                Array.from(el.attributes).forEach(attr => {
+                    if (attr.name.startsWith('on')) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+            });
+
+            return doc.body.innerHTML;
+        }
+
+        // 2. CORE: ADD EMBED PAGE
+        function addEmbedPage(userHTML) {
+            if (!userHTML || userHTML.trim() === '') {
+                alert("Kode HTML tidak boleh kosong.");
+                return;
+            }
+
+            try {
+                // Step A: Sanitize
+                const safeContent = cleanHTML(userHTML);
+
+                // Step B: Create Page Object
+                const newPage = {
+                    id: Date.now(),
+                    type: 'embed',
+                    rawHTML: safeContent // Simpan Source Asli
+                };
+
+                // Step C: Update DB & Save
+                pagesDB.push(newPage);
+                
+                // Force Update Storage (Single Source of Truth Logic)
+                // Kita update DB dulu, baru save, baru render.
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+
+                // Step D: Render UI
+                renderPages();
+
+                // Step E: UX
+                setTimeout(() => {
+                    const newSheet = document.getElementById('document-area').lastElementChild;
+                    if(newSheet) {
+                        newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+
+                if (window.innerWidth <= 1024) {
+                    sidebar.classList.remove('active');
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Gagal membuat halaman embed. Periksa kode HTML Anda.");
+            }
+        }
+
+        // Embed Modal Handlers
+        function openEmbedModal() {
+            document.getElementById('embedInput').value = ''; 
+            document.getElementById('embedModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('embedInput').focus(), 100);
+        }
+
+        function closeEmbedModal() {
+            document.getElementById('embedModal').style.display = 'none';
+        }
+
+        function confirmEmbed() {
+            const code = document.getElementById('embedInput').value;
+            
+            if(!code || code.trim().length < 5) {
+                alert("Kode HTML terlalu pendek.");
+                return;
+            }
+            
+            addEmbedPage(code);
+            closeEmbedModal();
+        }
+
+        // ================= MODIFIED SYSTEM CORE =================
+
+        function openDeleteModal(){
+            const sheets = document.querySelectorAll('.sheet');
+            if(sheets.length === 0){
+                uxToast("Tidak ada halaman untuk dihapus.", "error");
+                return;
+            }
+            refreshDeleteDropdown();
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal(){
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function refreshDeleteDropdown(){
+            const dropdown = document.getElementById('deletePageSelect');
+            if(!dropdown) return;
+
+            dropdown.innerHTML = '';
+
+            document.querySelectorAll('.sheet').forEach((sheet, i)=>{
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = "Halaman " + (i+1);
+                // Simple content detection for clearer names
+                const content = sheet.textContent || sheet.innerText;
+                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
+                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
+                else if(content.includes('JADWAL')) title += " (Jadwal)";
+                else if(content.includes('REKAP NILAI')) title += " (Nilai)";
+                else if(content.includes('ABSENSI')) title += " (Absen)";
+                else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
+                else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+                
+                option.textContent = title;
+                dropdown.appendChild(option);
+            });
+        }
+
+        function confirmDelete(){
+            const index = document.getElementById('deletePageSelect').value;
+            deletePageByIndex(parseInt(index));
+            closeDeleteModal();
+        }
+
+        function deletePageByIndex(index){
+            const sheets = document.querySelectorAll('.sheet');
+
+            if(index < 0 || index >= sheets.length){
+                return; 
+            }
+
+            const sheet = sheets[index];
+
+            sheet.style.transition = "all .25s ease";
+            sheet.style.opacity = "0";
+            sheet.style.transform = "scale(.9)";
+
+            setTimeout(()=>{
+                sheet.remove();
+                saveToStorage();
+                updatePageNumbers(); 
+            },250);
+        }
+
+        // ================= PDF ENGINE =================
+        async function safePrint(){
+            const { jsPDF } = window.jspdf;
+            const sheets = document.querySelectorAll('.sheet');
+
+            if(!sheets.length){
+                alert('Tidak ada halaman untuk didownload!');
+                return;
+            }
+
+            document.body.classList.add('exporting');
+            void document.body.offsetHeight;
+
+            try {
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [215, 330] 
+                });
+
+                for(let i=0; i<sheets.length; i++){
+                    const canvas = await html2canvas(sheets[i], {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false
+                    });
+
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+                    if(i !== 0){
+                        pdf.addPage();
+                    }
+
+                    pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
+                }
+
+                pdf.save('Laporan-Sekolah.pdf');
+
+            } catch (error) {
+                console.error("PDF Generation Error:", error);
+                alert("Gagal membuat PDF. Coba refresh halaman.");
+            } finally {
+                document.body.classList.remove('exporting');
+            }
+        }
+
+        // ================= UI LOGIC =================
+        
+        const menuToggle = document.querySelector('.menu-toggle');
+        const sidebar = document.querySelector('aside');
+        
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        // ================= DATA LOGIC =================
+        
+        function calculateScore(row) {
+            const getVal = (cls) => {
+                const el = row.querySelector('.' + cls);
+                return el ? (parseFloat(el.innerText.replace(/,/g, '.')) || 0) : 0;
+            };
+            const s1 = getVal('score-lancar');
+            const s2 = getVal('score-tajwid');
+            const s3 = getVal('score-irama');
+            const s4 = getVal('score-adab');
+            const total = s1 + s2 + s3 + s4;
+            const totalEl = row.querySelector('.score-total');
+            const finalEl = row.querySelector('.score-final');
+            if(totalEl) totalEl.innerText = total;
+            if(finalEl) finalEl.innerText = total;
+        }
+
+        function calculateExamScore(row) {
+            const getVal = (cls) => {
+                const el = row.querySelector('.' + cls);
+                return el ? (parseFloat(el.innerText.replace(/,/g, '.')) || 0) : 0;
+            };
+            const s1 = getVal('exam-lancar');
+            const s2 = getVal('exam-tajwid');
+            const s3 = getVal('exam-irama');
+            const s4 = getVal('exam-adab');
+            const total = s1 + s2 + s3 + s4;
+            const finalEl = row.querySelector('.exam-final');
+            if(finalEl) finalEl.innerText = total;
+        }
+
+        function addPage(type) {
+            const htmlContent = templates[type];
+            if (!htmlContent) return;
+
+            const newPage = {
+                id: Date.now(),
+                type: 'standard',
+                html: htmlContent
+            };
+
+            pagesDB.push(newPage);
+            renderPages();
+            saveToStorage();
+            
+            const newSheet = document.getElementById('document-area').lastElementChild;
+            if(newSheet) {
+                newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            if (window.innerWidth <= 1024) {
+                sidebar.classList.remove('active');
+            }
+        }
+
+        function updatePageNumbers() {
+            const pages = document.querySelectorAll('.page-number');
+            pages.forEach((el, index) => {
+                el.innerText = `- ${index + 1} -`;
+            });
+        }
+
+        function syncData() {
+            const map = {
+                'm_sekolah': '.data-sekolah',
+                'm_alamat': '.data-alamat',
+                'm_kepsek': '.data-kepsek',
+                'm_nip1': '.data-nip1',
+                'm_guru': '.data-guru',
+                'm_nip2': '.data-nip2',
+                'm_tgl': '.data-tgl'
+            };
+            for (const [id, selector] of Object.entries(map)) {
+                const val = document.getElementById(id).value;
+                document.querySelectorAll(selector).forEach(el => el.innerText = val);
+            }
+        }
+
+        function triggerUpload(el) { el.querySelector('input').click(); }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = input.parentElement;
+                    const img = container.querySelector('img');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    saveToStorage();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // ================= PREMIUM EDIT ENGINE =================
+
+        function toggleEditMode(sheet) {
+            document.querySelectorAll('.sheet').forEach(s => {
+                if (s !== sheet) deactivateEditMode(s);
+            });
+
+            if (sheet.classList.contains('editing')) {
+                deactivateEditMode(sheet);
+            } else {
+                activateEditMode(sheet);
+            }
+        }
+
+        function activateEditMode(sheet) {
+            sheet.classList.add('editing');
+            const badge = document.createElement('div');
+            badge.className = 'edit-badge';
+            badge.innerText = '✏️ EDITING MODE';
+            sheet.appendChild(badge);
+
+            const textElements = sheet.querySelectorAll('p, span, td, th, div, h1, h2, h3, h4, h5, h6, li, u, b, strong, em');
+            
+            textElements.forEach(el => {
+                if (
+                    el.closest('.sheet-controls') || 
+                    el.closest('.page-number') || 
+                    el.closest('.photo-placeholder') ||
+                    el.classList.contains('edit-badge') ||
+                    el.tagName === 'INPUT' || 
+                    el.tagName === 'TEXTAREA' || 
+                    el.tagName === 'SELECT' ||
+                    el.contentEditable === 'true' 
+                ) {
+                    return;
+                }
+
+                if(el.children.length === 0 || el.tagName === 'DIV' || el.tagName === 'TD'){
+                     el.setAttribute('contenteditable', 'true');
+                }
+            });
+        }
+
+        function deactivateEditMode(sheet) {
+            sheet.classList.remove('editing');
+            const badge = sheet.querySelector('.edit-badge');
+            if(badge) badge.remove();
+
+            const editableElements = sheet.querySelectorAll('[contenteditable="true"]');
+            editableElements.forEach(el => {
+                if(['P','H1','H2','H3','H4','H5','H6','SPAN','LI','DIV'].includes(el.tagName)){
+                     el.removeAttribute('contenteditable');
+                }
+            });
+            saveToStorage();
+        }
+
+        function openEditModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if(sheets.length === 0) {
+                uxToast("Belum ada halaman untuk diedit.", "error");
+                return;
+            }
+            
+            const dropdown = document.getElementById('editPageSelect');
+            dropdown.innerHTML = '';
+
+            sheets.forEach((sheet, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = "Halaman " + (i+1);
+                const content = sheet.textContent || sheet.innerText;
+                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
+                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
+                
+                option.textContent = title;
+                dropdown.appendChild(option);
+            });
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function confirmEditMode() {
+            const index = document.getElementById('editPageSelect').value;
+            const sheets = document.querySelectorAll('.sheet');
+            
+            if(sheets[index]) {
+                toggleEditMode(sheets[index]);
+                sheets[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            closeEditModal();
+        }
+
+        document.addEventListener('dblclick', function(e) {
+            const sheet = e.target.closest('.sheet');
+            if (sheet && 
+                !e.target.closest('.sheet-controls') && 
+                e.target.tagName !== 'INPUT' && 
+                e.target.tagName !== 'TEXTAREA') {
+                toggleEditMode(sheet);
+            }
+        });
+
+        // ================= AUTO PAGINATION FEATURE =================
+        // STEP 2: Create Pagination Function
+        function autoPaginateCustomPages() {
+            const sheets = document.getElementsByClassName('sheet'); // Live collection
+            const MM_TO_PX = 3.78; // Conversion approx 1mm to px (96DPI)
+            const MAX_HEIGHT_PX = 330 * MM_TO_PX; // 330mm ~ 1247px
+            const LIMIT = MAX_HEIGHT_PX - 20; // Safe buffer
+
+            // STEP 3: Detect Overflow
+            for (let i = 0; i < sheets.length; i++) {
+                const sheet = sheets[i];
+                const content = sheet.querySelector('.page-content');
+                if (!content) continue; // Skip non-custom pages
+
+                // Check if current sheet height exceeds F4 Paper Height
+                // Note: sheet.scrollHeight includes overflowing content
+                while (sheet.scrollHeight > (MAX_HEIGHT_PX + 5)) {
+                    
+                    // STEP 4: Move Content Safely
+                    const lastChild = content.lastElementChild;
+                    
+                    // Prevent infinite loops if element is too big or it's the only child
+                    if (!lastChild || content.children.length <= 1) {
+                        break; 
+                    }
+
+                    // Find or create next sheet
+                    let nextSheet = sheet.nextElementSibling;
+                    let nextContent;
+
+                    // STEP 6: Prevent Page Explosion (Check existing next page)
+                    if (nextSheet && nextSheet.querySelector('.page-content')) {
+                         nextContent = nextSheet.querySelector('.page-content');
+                    } else {
+                        // STEP 5: Create New Sheet using existing style
+                        nextSheet = createNewCustomSheet();
+                        sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
+                        nextContent = nextSheet.querySelector('.page-content');
+                    }
+
+                    // Move last element to the TOP of the next page
+                    if (nextContent.firstChild) {
+                        nextContent.insertBefore(lastChild, nextContent.firstChild);
+                    } else {
+                        nextContent.appendChild(lastChild);
+                    }
+                }
+            }
+            // STEP 8: Update Page Numbers
+            updatePageNumbers();
+        }
+
+        function createNewCustomSheet() {
+            const div = document.createElement('div');
+            div.className = 'sheet';
+            div.dataset.id = Date.now() + Math.random(); // Unique ID
+            
+            // Use standard custom template structure
+            div.innerHTML = templates.custom; 
+            
+            // Clean content to start fresh (keep structure, remove placeholder text)
+            const content = div.querySelector('.page-content');
+            if(content) content.innerHTML = ''; 
+            
+            return div;
+        }
+
+        // ================= TEMPLATES =================
+
+        const getKop = () => `
+            <div class="kop-surat">
+                <div class="kop-img" onclick="triggerUpload(this)" title="Klik untuk ganti logo">
+                    <img src="https://via.placeholder.com/100x120?text=LOGO" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
+                    <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
+                </div>
+                <div class="kop-text">
+                    <h3>PEMERINTAH KOTA BANJAR</h3>
+                    <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
+                    <h2 class="data-sekolah">UPTD SD NEGERI 1 BATULAWANG</h2>
+                    <p class="data-alamat">Alamat Sekolah Here</p>
+                    <p>Email: sdn1batulawang@banjarkota.go.id</p>
+                </div>
+            </div>
+        `;
+
+        const getTTD = (jabatan = "Guru PJP PAI") => `
+            <div class="signature-section">
+                <div class="ttd-box">
+                    <p>Mengetahui,<br>Kepala Sekolah</p>
+                    <div class="ttd-space"></div>
+                    <p class="text-bold text-upper"><u class="data-kepsek">NAMA KEPALA</u></p>
+                    <p>NIP. <span class="data-nip1">...</span></p>
+                </div>
+                <div class="ttd-box">
+                    <p>Banjar, <span contenteditable="true" class="data-tgl">...</span><br>${jabatan}</p>
+                    <div class="ttd-space"></div>
+                    <p class="text-bold text-upper"><u class="data-guru">NAMA GURU</u></p>
+                    <p>NIP. <span class="data-nip2">...</span></p>
+                </div>
+            </div>
+        `;
+
+        const get31DaysHeader = () => {
+            let cols = '';
+            for(let i=1; i<=31; i++) { cols += `<th>${i}</th>`; }
+            return cols;
+        };
+
+        const get31DaysCells = () => {
+            let cols = '';
+            for(let i=1; i<=31; i++) { cols += `<td contenteditable="true"></td>`; }
+            return cols;
+        };
+
+        const templates = {
+            // STEP 1: Add Content Wrapper for Custom Page
+            custom: `
+                <div style="min-height: 100%; display: flex; flex-direction: column;">
+                    <div class="text-center text-bold" style="margin-bottom: 20px; font-size: 14pt;">CUSTOM PAGE</div>
+                    <div class="page-content" contenteditable="true" style="flex: 1; outline: none; border: 1px dashed #e2e8f0; padding: 10px;">
+                        <p>Silakan ketik atau tempel konten Anda di sini...</p>
+                        <p>&nbsp;</p>
+                        <p>&nbsp;</p>
+                    </div>
+                    <div class="page-number"></div>
+                </div>
+            `,
+            laporan_convert: `
+                ${getKop()}
+                <div class="text-center" style="margin-bottom:20px;">
+                    <h3 class="text-bold" style="text-decoration: underline;">LAPORAN PELAKSANAAN KEGIATAN</h3>
+                    <p>Nomor: 421.2/...../SD/..../2025</p>
+                </div>
+
+                <div style="margin-bottom: 15px; text-align: justify;">
+                    <p class="text-bold">A. PENDAHULUAN</p>
+                    <div contenteditable="true" style="margin-left: 20px;">
+                        <p>Puji syukur ke hadirat Allah SWT, berkat rahmat dan karunia-Nya, kami dapat menyelesaikan penyusunan laporan kegiatan ini. Laporan ini disusun sebagai bentuk pertanggungjawaban atas pelaksanaan tugas dinas di lingkungan <span class="data-sekolah">...</span>.</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <p class="text-bold">B. DATA PELAKSANA</p>
+                    <table class="list-data" style="margin-left: 20px;">
+                        <tr><td width="150">Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
+                        <tr><td>NIP</td><td>:</td><td class="data-nip2">...</td></tr>
+                        <tr><td>Jabatan</td><td>:</td><td>Guru PJP PAI</td></tr>
+                        <tr><td>Unit Kerja</td><td>:</td><td class="data-sekolah">...</td></tr>
+                    </table>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <p class="text-bold">C. HASIL KEGIATAN</p>
+                    <table class="dinas">
+                        <thead>
+                            <tr>
+                                <th width="5%">No</th>
+                                <th width="30%">Nama Kegiatan</th>
+                                <th width="20%">Waktu</th>
+                                <th width="45%">Hasil / Output</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td contenteditable="true">Bimbingan Baca Tulis Al-Qur'an (BTQ)</td>
+                                <td contenteditable="true">Setiap Hari Senin-Jumat (13.00 - 14.00)</td>
+                                <td contenteditable="true">Siswa mampu membaca Iqra jilid 4-6 dengan lancar.</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">2</td>
+                                <td contenteditable="true">Pembinaan Akhlak Mulia</td>
+                                <td contenteditable="true">Insidental / Terintegrasi</td>
+                                <td contenteditable="true">Peningkatan kedisiplinan siswa dalam beribadah.</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center">3</td>
+                                <td contenteditable="true">Evaluasi Hafalan Juz Amma</td>
+                                <td contenteditable="true">Akhir Bulan</td>
+                                <td contenteditable="true">80% siswa tuntas hafalan target semester.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-bottom: 15px; text-align: justify;">
+                    <p class="text-bold">D. PENUTUP</p>
+                    <div contenteditable="true" style="margin-left: 20px;">
+                        <p>Demikian laporan ini kami buat dengan sebenar-benarnya untuk dapat dipergunakan sebagaimana mestinya. Kami menyadari masih banyak kekurangan dalam pelaksanaan kegiatan ini, oleh karena itu saran dan masukan sangat kami harapkan.</p>
+                    </div>
+                </div>
+
+                <div style="flex:1"></div>
+                ${getTTD()}
+                <div class="page-number"></div>
+            `,
+            cover: `
+                <div class="cover-border">
+                    <div class="mt-2">
+                        <h2 class="text-bold">LAPORAN KEGIATAN</h2>
+                        <h2 class="text-bold">GURU PENAMBAHAN JAM PELAJARAN PAI</h2>
+                        <h3 class="text-bold">TAHUN PELAJARAN 2025/2026</h3>
+                    </div>
+                    <div>
+                        <h3 class="text-bold data-sekolah">UPTD SD NEGERI 1 BATULAWANG</h3>
+                        <h3 class="text-bold text-upper data-tgl">BULAN ...</h3>
+                    </div>
+                    <div style="width:150px; height:180px; margin:0 auto; cursor:pointer;" onclick="triggerUpload(this)" title="Klik Ganti Logo">
+                        <img src="https://via.placeholder.com/150x180?text=LOGO+BESAR" style="width:100%; height:100%; object-fit:contain;">
+                        <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
+                    </div>
+                    <div>
+                        <p>DISUSUN OLEH :</p>
+                        <h3 class="text-bold text-upper data-guru">NAMA GURU</h3>
+                        <p class="data-nip2">NIP</p>
+                    </div>
+                    <div class="mb-2">
+                        <h3 class="text-bold">PEMERINTAH KOTA BANJAR</h3>
+                        <h3 class="text-bold">DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
+                        <h3 class="text-bold">TAHUN 2025</h3>
+                    </div>
+                </div>
+                <div class="page-number"></div>
+            `,
+
+            laporan: `
+                ${getKop()}
+                <div class="text-center" style="margin-bottom:20px;">
+                    <h3 class="text-bold" style="text-decoration: underline;">LAPORAN KEGIATAN TENAGA PENDIDIK PJP PAI</h3>
+                </div>
+                <div style="margin-bottom:20px;">
+                    <table class="list-data">
+                        <tr><td>Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
+                        <tr><td>Sekolah</td><td>:</td><td class="data-sekolah">...</td></tr>
+                        <tr><td>Kelas</td><td>:</td><td contenteditable="true">VI (Enam)</td></tr>
+                    </table>
+                </div>
+                <div class="text-bold">DETAIL KEGIATAN:</div>
+                <table class="list-data">
+                    <tr><td>Jumlah Peserta Didik</td><td>:</td><td contenteditable="true">30 Siswa</td></tr>
+                    <tr><td>Tempat Pelaksanaan</td><td>:</td><td contenteditable="true" class="data-sekolah">...</td></tr>
+                    <tr><td>Tanggal Pelaksanaan</td><td>:</td><td contenteditable="true">1 - 31 Desember 2025</td></tr>
+                    <tr><td>Waktu</td><td>:</td><td contenteditable="true">13.00 - 14.00 WIB</td></tr>
+                    <tr><td>Materi</td><td>:</td><td contenteditable="true">Pembahasan Baca Tulis Al-Qur'an dan Hafalan Juz Amma</td></tr>
+                    <tr><td>Kondisi Awal</td><td>:</td><td contenteditable="true">Sebagian siswa belum lancar membaca huruf hijaiyah bersambung.</td></tr>
+                    <tr><td>Perkembangan</td><td>:</td><td contenteditable="true">80% siswa mulai lancar membaca, 20% perlu bimbingan khusus.</td></tr>
+                </table>
+                <div style="flex:1"></div>
+                ${getTTD()}
+                <div class="page-number"></div>
+            `,
+
+            foto: `
+                <div class="text-center text-bold" style="margin-bottom:15px; border-bottom:1px solid #000; padding-bottom:10px;">
+                    <h3>LAPORAN DOKUMENTASI KEGIATAN</h3>
+                    <p class="data-tgl" style="font-size:10pt; font-weight:normal;">...</p>
+                </div>
+                <div class="photo-grid">
+                    ${Array(6).fill(0).map((_, i) => `
+                    <div class="photo-card">
+                        <div class="photo-placeholder" onclick="triggerUpload(this)">
+                            <img src="" alt="Klik Upload" style="display:none;">
+                            <span style="color:#999; font-size:10pt;">+ Foto ${i+1}</span>
+                            <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
+                        </div>
+                        <div class="photo-caption" contenteditable="true">Kegiatan Siswa ${i+1}...</div>
+                    </div>`).join('')}
+                </div>
+                <div class="page-number"></div>
+            `,
+
+            jadwal: `
+                ${getKop()}
+                <div class="text-center" style="margin-bottom:20px;">
+                    <h3 class="text-bold">JADWAL ASESMEN SUMATIF<br>AKHIR SEMESTER GANJIL</h3>
+                </div>
+                <table class="dinas">
+                    <thead>
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="20%">Hari / Tanggal</th>
+                            <th width="10%">Jam Ke</th>
+                            <th width="15%">Pukul</th>
+                            <th width="35%">Mata Pelajaran</th>
+                            <th width="15%">Ket</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array(5).fill(0).map((_, i) => `
+                        <tr>
+                            <td class="text-center">${i+1}</td>
+                            <td contenteditable="true">Senin, ...</td>
+                            <td class="text-center" contenteditable="true">1</td>
+                            <td class="text-center" contenteditable="true">07.30 - 09.00</td>
+                            <td contenteditable="true">PAI & Budi Pekerti</td>
+                            <td contenteditable="true"></td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                <p style="font-size:10pt; margin-top:10px;" contenteditable="true">* Jadwal dapat berubah sewaktu-waktu.</p>
+                <div style="flex:1"></div>
+                ${getTTD()}
+                <div class="page-number"></div>
+            `,
+
+            rekap_nilai: `
+                <div class="text-center text-bold" style="margin-bottom:15px; text-transform:uppercase; line-height:1.5;">
+                    <h3>REKAP NILAI HARIAN BTQ SISWA KELAS V (LIMA)</h3>
+                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
+                    <h3>KECAMATAN PATARUMAN</h3>
+                    <h3>KOTA BANJAR</h3>
+                </div>
+
+                <table class="table-padat">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" width="4%">No</th>
+                            <th rowspan="2" width="10%">NISN</th>
+                            <th rowspan="2" width="20%">Nama Siswa</th>
+                            <th colspan="4">Komponen Penilaian</th>
+                            <th rowspan="2" width="5%">Jml</th>
+                            <th rowspan="2" width="5%">NA</th>
+                            <th rowspan="2" width="15%">Deskripsi</th>
+                            <th colspan="3" width="9%">Absensi</th>
+                        </tr>
+                        <tr>
+                            <th width="6%">Lancar (30)</th>
+                            <th width="6%">Tajwid (40)</th>
+                            <th width="6%">Irama (20)</th>
+                            <th width="6%">Adab (10)</th>
+                            <th width="3%">S</th>
+                            <th width="3%">I</th>
+                            <th width="3%">A</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array(20).fill(0).map((_, i) => `
+                        <tr oninput="calculateScore(this)">
+                            <td class="text-center">${i+1}</td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true">Nama Siswa ${i+1}</td>
+                            <!-- Score Inputs -->
+                            <td contenteditable="true" class="text-center score-lancar">0</td>
+                            <td contenteditable="true" class="text-center score-tajwid">0</td>
+                            <td contenteditable="true" class="text-center score-irama">0</td>
+                            <td contenteditable="true" class="text-center score-adab">0</td>
+                            <!-- Auto Calc -->
+                            <td class="text-center text-bold score-total" style="background:#f1f5f9;">0</td>
+                            <td class="text-center text-bold score-final" style="background:#f1f5f9;">0</td>
+                            <!-- Ket -->
+                            <td contenteditable="true" style="font-size:8pt;">Sangat Baik</td>
+                            <!-- Absen -->
+                            <td contenteditable="true" class="text-center">-</td>
+                            <td contenteditable="true" class="text-center">-</td>
+                            <td contenteditable="true" class="text-center">-</td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div style="margin-top:20px; text-align:right;">
+                    <div style="display:inline-block; width:200px; text-align:center;">
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
+                        <p>Guru BTQ</p>
+                        <br><br><br>
+                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
+                    </div>
+                </div>
+                <div class="page-number"></div>
+            `,
+
+            absensi_guru: `
+                ${getKop()}
+                <div class="text-center text-bold text-upper" style="margin-bottom:20px;">
+                    <h3>DAFTAR HADIR GURU PJP PAI</h3>
+                    <h3>KEGIATAN PEMBINAAN BACA TULIS AL QURAN</h3>
+                    <h3 class="data-tgl">BULAN ...</h3>
+                </div>
+
+                <table class="table-grid">
+                    <thead>
+                        <tr>
+                            <th width="40px" rowspan="2">No</th>
+                            <th width="200px" rowspan="2">Nama Guru / NIP</th>
+                            <th colspan="31">Tanggal</th>
+                        </tr>
+                        <tr>
+                            ${get31DaysHeader()}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-center">1</td>
+                            <td style="text-align:left; padding-left:5px;">
+                                <span class="text-bold text-upper data-guru">Nama Guru</span><br>
+                                NIP. <span class="data-nip2">-</span>
+                            </td>
+                            ${get31DaysCells()}
+                        </tr>
+                         <tr>
+                            <td class="text-center">2</td>
+                             <td style="text-align:left; padding-left:5px;">
+                                <span class="text-bold text-upper data-kepsek">Nama Kepala</span><br>
+                                NIP. <span class="data-nip1">-</span>
+                            </td>
+                            ${get31DaysCells()}
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="flex:1"></div>
+                ${getTTD()}
+                <div class="page-number"></div>
+            `,
+
+            absensi_siswa: `
+                <div class="text-center text-bold text-upper" style="margin-bottom:15px;">
+                    <h3>DAFTAR HADIR SISWA</h3>
+                    <h3>KEGIATAN PEMBINAAN BACA TULIS AL QURAN</h3>
+                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
+                </div>
+
+                <table class="table-grid">
+                    <thead>
+                        <tr>
+                            <th width="30px" rowspan="2">No</th>
+                            <th width="150px" rowspan="2">Nama Siswa</th>
+                            <th colspan="31">Tanggal</th>
+                        </tr>
+                        <tr>
+                            ${get31DaysHeader()}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Array(25).fill(0).map((_, i) => `
+                        <tr>
+                            <td class="text-center">${i+1}</td>
+                            <td contenteditable="true" style="text-align:left; padding-left:4px; white-space:nowrap; overflow:hidden;">Nama Siswa ${i+1}</td>
+                            ${get31DaysCells()}
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div style="flex:1"></div>
+                 <div style="margin-top:20px; text-align:right;">
+                    <div style="display:inline-block; width:200px; text-align:center;">
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
+                        <p>Guru BTQ</p>
+                        <br><br><br>
+                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
+                    </div>
+                </div>
+                <div class="page-number"></div>
+            `,
+
+            program_semester: `
+                ${getKop()}
+                <div class="text-center text-bold text-upper" style="margin-bottom:15px; border-bottom:1px solid #000; padding-bottom:10px;">
+                    <h3>PROGRAM KEGIATAN SEMESTER</h3>
+                    <h3>TENAGA PENDIDIK PELAKSANA PENAMBAHAN JAM PELAJARAN (PJP)</h3>
+                    <h3>PENDIDIKAN AGAMA ISLAM (PAI)</h3>
+                    <h3>SEMESTER GANJIL TAHUN PELAJARAN 2025/2026</h3>
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <table class="list-data">
+                        <tr><td>Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
+                        <tr><td>Sekolah</td><td>:</td><td class="data-sekolah">...</td></tr>
+                    </table>
+                </div>
+
+                <div class="text-bold" style="margin-bottom:5px;">I. PELAKSANAAN PEMBELAJARAN</div>
+                <div style="margin-left:20px; margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px;"><input type="checkbox" checked> Bimbingan Klasikal</label>
+                    <label style="display:block;"><input type="checkbox"> Bimbingan Individual</label>
+                </div>
+
+                <div class="text-bold" style="margin-bottom:5px;">II. TEMPAT PELAKSANAAN</div>
+                <div style="margin-left:20px; margin-bottom:10px;">
+                    <label style="display:inline-block; margin-right:20px;"><input type="checkbox" checked> Sekolah</label>
+                    <label style="display:inline-block; margin-right:20px;"><input type="checkbox"> Masjid / Madrasah</label>
+                    <label style="display:inline-block;"><input type="checkbox"> Lainnya: <span contenteditable="true" style="border-bottom:1px dotted #000; min-width:100px; display:inline-block;">...</span></label>
+                </div>
+                <div style="margin-left:20px; margin-bottom:15px;">
+                    <span style="font-size:10pt;">Alasan Pemilihan Tempat:</span>
+                    <textarea class="print-safe" rows="2">Tempat kondusif dan sarana memadai.</textarea>
+                </div>
+
+                <div class="text-bold" style="margin-bottom:5px;">III. WAKTU PELAKSANAAN</div>
+                <div style="margin-left:20px; margin-bottom:15px;">
+                    <p style="margin:0;">• Durasi: 1 jam (60 menit) per hari.</p>
+                    <p style="margin:0;">• Hari: Senin s.d Jumat</p>
+                    <p style="margin:5px 0;">• Pukul <span contenteditable="true" style="font-weight:bold;">13.00</span> s.d <span contenteditable="true" style="font-weight:bold;">14.00</span> WIB</p>
+                    <p style="margin:0;">• Kelas: <span contenteditable="true">V (Lima)</span></p>
+                    <div style="margin-top:5px;">
+                         <span style="font-size:10pt;">Alasan / Saran Waktu:</span>
+                         <textarea class="print-safe" rows="2">Dilaksanakan setelah jam pelajaran reguler.</textarea>
+                    </div>
+                </div>
+
+                <div class="text-bold" style="margin-bottom:5px;">IV. DAFTAR MATERI DAN PELAKSANAANNYA</div>
+                <table class="dinas">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" width="40%">Materi</th>
+                            <th colspan="6">Bulan Pelaksanaan (2025)</th>
+                        </tr>
+                        <tr>
+                            <th width="10%">Jul</th><th width="10%">Agt</th><th width="10%">Sep</th>
+                            <th width="10%">Okt</th><th width="10%">Nov</th><th width="10%">Des</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true">Membaca Al-Qur'an / Iqra</td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">Menulis Huruf Hijaiyah</td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true">Hafalan Surat Pendek</td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                            <td class="text-center"><input type="checkbox"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="text-bold" style="margin-top:15px; margin-bottom:5px;">V. CATATAN KEGIATAN</div>
+                <div contenteditable="true" style="border:1px solid #ccc; padding:10px; min-height:80px; font-size:10pt;">
+                    • Metode Pembelajaran: Ceramah, Demonstrasi, Drill<br>
+                    • Media: Buku Iqra, Juz Amma, Papan Tulis<br>
+                    • Evaluasi: Tes Lisan Harian
+                </div>
+
+                <div style="flex:1"></div>
+                ${getTTD()}
+                <div class="page-number"></div>
+            `,
+
+            rekap_ujian: `
+                ${getKop()}
+                <div class="text-center text-bold text-upper" style="margin-bottom:20px;">
+                    <h3>REKAPITULASI HASIL UJIAN BACA TULIS AL-QURAN</h3>
+                    <h3>KELAS V SEMESTER 1</h3>
+                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
+                </div>
+
+                <table class="dinas">
+                    <thead>
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="25%">Nama Siswa</th>
+                            <th width="10%">Kelancaran (30)</th>
+                            <th width="10%">Tajwid Makhorij (40)</th>
+                            <th width="10%">Irama Tartil (20)</th>
+                            <th width="10%">Adab (10)</th>
+                            <th width="10%" class="col-nilai-akhir">Nilai Akhir</th>
+                            <th width="20%">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         ${Array(20).fill(0).map((_, i) => `
+                        <tr oninput="calculateExamScore(this)">
+                            <td class="text-center">${i+1}</td>
+                            <td contenteditable="true">Nama Siswa ${i+1}</td>
+                            <td contenteditable="true" class="text-center exam-lancar">0</td>
+                            <td contenteditable="true" class="text-center exam-tajwid">0</td>
+                            <td contenteditable="true" class="text-center exam-irama">0</td>
+                            <td contenteditable="true" class="text-center exam-adab">0</td>
+                            <td class="text-center col-nilai-akhir exam-final">0</td>
+                            <td contenteditable="true" class="text-center">LULUS</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+
+                <div style="flex:1"></div>
+                ${getTTD()}
+                <div class="page-number"></div>
+            `,
+
+            hadir_ujian: `
+                <div class="text-center text-bold text-upper" style="margin-bottom:20px; padding-top:20px;">
+                    <h3>DAFTAR HADIR UJIAN BTQ SISWA KELAS V</h3>
+                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
+                    <h3>TAHUN PELAJARAN 2025/2026</h3>
+                </div>
+
+                <table class="dinas">
+                    <thead>
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="15%">NISN</th>
+                            <th width="35%">Nama Siswa</th>
+                            <th width="45%">Tanda Tangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         ${Array(20).fill(0).map((_, i) => `
+                        <tr>
+                            <td class="text-center" style="height:35px;">${i+1}</td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true">Nama Siswa ${i+1}</td>
+                            <td style="vertical-align:top; font-size:9pt; color:#ccc;">${i+1}....................</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+
+                <div style="flex:1"></div>
+                 <div style="margin-top:20px; text-align:right;">
+                    <div style="display:inline-block; width:200px; text-align:center;">
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
+                        <p>Penguji</p>
+                        <br><br><br>
+                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
+                    </div>
+                </div>
+                <div class="page-number"></div>
+            `
+        };
+
+        // Init Default Page
+        window.onload = function() {
+            if (!loadFromStorage()) {
+                addPage('cover');
+                addPage('laporan');
+            } else {
+                renderPages();
+            }
+        }
+
+    </script>
+    
+    <!-- =========================================
+       10. NEW UX LOGIC (NON-DESTRUCTIVE)
+       ========================================= -->
+    <script id="ux-logic">
+        // --- UX HELPER FUNCTIONS ---
+
+        function uxToast(message, type = 'success') {
+            const container = document.getElementById('uxToastContainer');
+            const toast = document.createElement('div');
+            
+            // Icon Logic
+            let iconClass = 'ph-check-circle';
+            if(type === 'error') iconClass = 'ph-warning-circle';
+            if(type === 'info') iconClass = 'ph-info';
+
+            toast.className = `ux-toast ${type}`;
+            toast.innerHTML = `
+                <i class="ph ${iconClass}"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            
+            // Trigger Animation
+            requestAnimationFrame(() => toast.classList.add('visible'));
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        function uxShowLoader(text = "Memproses...") {
+            const loader = document.getElementById('uxLoader');
+            document.getElementById('uxLoaderText').innerText = text;
+            loader.classList.add('active');
+        }
+
+        function uxHideLoader() {
+            const loader = document.getElementById('uxLoader');
+            loader.classList.remove('active');
+        }
+
+        function uxBtnLoad(btn, start = true) {
+            if(!btn) return;
+            if (start) {
+                btn.classList.add('ux-btn-loading');
+                btn.dataset.originalText = btn.innerText;
+            } else {
+                btn.classList.remove('ux-btn-loading');
+            }
+        }
+
+        function uxConfirm(title, desc) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('uxConfirmModal');
+                const titleEl = document.getElementById('uxConfirmTitle');
+                const descEl = document.getElementById('uxConfirmDesc');
+                const btnConfirm = document.getElementById('uxBtnConfirm');
+                const btnCancel = document.getElementById('uxBtnCancel');
+
+                titleEl.innerText = title;
+                descEl.innerText = desc;
+                
+                modal.classList.add('active');
+
+                const cleanup = () => {
+                    modal.classList.remove('active');
+                    btnConfirm.removeEventListener('click', onConfirm);
+                    btnCancel.removeEventListener('click', onCancel);
+                };
+
+                const onConfirm = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                const onCancel = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                btnConfirm.addEventListener('click', onConfirm);
+                btnCancel.addEventListener('click', onCancel);
+            });
+        }
+
+        // --- UX SAVING INDICATOR HOOK ---
+        const saveIndicator = document.getElementById('uxSaveIndicator');
+        let hideSaveIndicatorTimeout;
+
+        // Override existing listener logic via new listener
+        document.addEventListener('input', (e) => {
+            if(e.target.closest('.sheet') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                saveIndicator.classList.add('active');
+                clearTimeout(hideSaveIndicatorTimeout);
+                
+                hideSaveIndicatorTimeout = setTimeout(() => {
+                    saveIndicator.classList.remove('active');
+                }, 1500);
+            }
+        });
+
+        // --- WRAPPER FUNCTIONS (THE EXTEND STRATEGY) ---
+
+        // Wrapper for Add Page
+        function handleAddPage(type, btn) {
+            uxBtnLoad(btn, true);
+            setTimeout(() => {
+                try {
+                    addPage(type);
+                    uxToast("Halaman berhasil ditambahkan");
+                } catch(e) {
+                    uxToast("Gagal menambah halaman", "error");
+                    console.error(e);
+                } finally {
+                    uxBtnLoad(btn, false);
+                }
+            }, 300); // Fake delay for UX feel
+        }
+
+        // Wrapper for Print
+        async function handleSafePrint(btn) {
+            uxShowLoader("Menyiapkan PDF...");
+            uxBtnLoad(btn, true);
+            
+            try {
+                // Wait small delay to allow UI to render loader
+                await new Promise(r => setTimeout(r, 100));
+                
+                await safePrint();
+                uxToast("PDF Berhasil Diunduh!", "success");
+            } catch (e) {
+                uxToast("Gagal membuat PDF", "error");
+            } finally {
+                uxHideLoader();
+                uxBtnLoad(btn, false);
+            }
+        }
+
+        // Wrapper for Sync Data
+        function handleSyncData() {
+            syncData();
+            // No toast needed for realtime sync, maybe just log or small indicator
+        }
+
+        // Wrapper for Delete Confirmation
+        async function handleConfirmDelete() {
+            // No async logic needed for delete execution, but good for UI consistency
+            try {
+                confirmDelete();
+                uxToast("Halaman dihapus", "info");
+            } catch(e) {
+                uxToast("Gagal menghapus", "error");
+            }
+        }
+
+        // Wrapper for Embed Confirmation
+        function handleConfirmEmbed() {
+            confirmEmbed();
+            // Toasts handled inside validation logic or we can add here if successful
+        }
+
+        // Wrapper for Edit Mode
+        function handleConfirmEditMode() {
+            confirmEditMode();
+            uxToast("Mode Edit Diaktifkan", "info");
+        }
+
+        // Wrapper for Reset All (The Trickiest One)
+        async function handleResetAllPages() {
+            const confirmed = await uxConfirm(
+                "Reset Semua Data?", 
+                "Tindakan ini akan menghapus semua halaman dan data tersimpan. Tidak bisa dibatalkan."
+            );
+
+            if (confirmed) {
+                // TRICK: Override window.confirm temporarily so the original function doesn't popup a second native alert
+                const originalConfirm = window.confirm;
+                window.confirm = () => true; 
+                
+                uxShowLoader("Mereset Sistem...");
+                
+                setTimeout(() => {
+                    resetAllPages(); // This calls reload, so loader stays until reload
+                    window.confirm = originalConfirm; // Restore just in case reload fails
+                }, 500);
+            }
+        }
+
+    </script>
+</body>
+</html>
