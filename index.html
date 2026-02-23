@@ -24,7 +24,7 @@
             --primary-dark: #0f172a;
             --accent-blue: #3b82f6;
             --danger-red: #ef4444;
-            --code-purple: #8b5cf6;
+            --code-purple: #8b5cf6; /* Warna baru untuk fitur HTML */
         }
 
         * { box-sizing: border-box; }
@@ -44,18 +44,10 @@
             user-select: none;
         }
 
-        /* EXPORTING MODE OPTIMIZATION (CSS KILL SWITCH) */
-        body.exporting * {
-            animation: none !important;
-            transition: none !important;
-            box-shadow: none !important;
-            /* Speed up rendering by removing fancy effects */
-        }
-        
+        /* EXPORTING MODE */
         body.exporting .btn-remove-page, 
         body.exporting .no-print-in-pdf,
-        body.exporting .edit-badge,
-        body.exporting .sheet::before { /* Sembunyikan label embed */
+        body.exporting .edit-badge {
             display: none !important;
         }
 
@@ -631,12 +623,6 @@
             opacity: 0.5;
             pointer-events: none;
         }
-        
-        .sheet[data-embed-mode="full"]::before {
-            content: "FULL IFRAME EMBED";
-            background: #e0e7ff;
-            color: #4338ca;
-        }
     </style>
 
     <!-- =========================================
@@ -687,7 +673,7 @@
         .ux-loader-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.85); /* Lebih gelap untuk fokus */
+            background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(8px);
             z-index: 200000;
             display: flex;
@@ -888,14 +874,14 @@
                 <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
             </button>
 
-            <!-- 🚨 UPDATED BUTTON TO USE NEW SAFE PRINT PRO 🚨 -->
-            <button class="btn btn-print" onclick="safePrintPro()"><i class="ph ph-printer"></i> Download PDF (F4)</button>
+            <!-- WRAPPED SAFE PRINT HANDLER -->
+            <button class="btn btn-print" onclick="handleSafePrint(this)"><i class="ph ph-printer"></i> Download PDF (F4)</button>
 
             <!-- WRAPPED RESET HANDLER -->
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.5 Enterprise • Pro Print Engine
+                v9.3 Enterprise • Native Embed • HTML Editor
             </p>
         </aside>
 
@@ -976,30 +962,15 @@
        </div>
     </div>
 
-    <!-- MODAL EMBED HTML SYSTEM (UPDATED) -->
+    <!-- MODAL EMBED HTML SYSTEM (EXISTING - PRESERVED) -->
     <div id="embedModal" class="modal">
        <div class="modal-box" style="width: 600px; max-width: 90vw;">
-            <h3>Embed HTML / Code</h3>
-            
-            <div style="margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                <label style="font-weight:bold; font-size:0.8rem; display:block; margin-bottom:5px;">Mode Embed:</label>
-                <div style="display:flex; gap:15px;">
-                    <label style="display:flex; align-items:center; font-size:0.9rem; cursor:pointer;">
-                        <input type="radio" name="embedMode" value="safe" checked>
-                        <span style="margin-left:5px;">🛡️ Safe (Text/HTML Only)</span>
-                    </label>
-                    <label style="display:flex; align-items:center; font-size:0.9rem; cursor:pointer;">
-                        <input type="radio" name="embedMode" value="full">
-                        <span style="margin-left:5px;">🚀 Full (JS/CSS/Canvas)</span>
-                    </label>
-                </div>
-            </div>
-
+            <h3>Embed HTML Code</h3>
             <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">
-                Tempel kode HTML, CSS, atau JavaScript Anda di bawah ini.
+                Tempel kode HTML Anda di bawah. Script tag akan dihapus otomatis demi keamanan.
             </p>
 
-            <textarea id="embedInput" style="width:100%; height:250px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<style>h1 { color: red; }</style>&#10;<h1>Hello World</h1>"></textarea>
+            <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
 
             <div class="modal-actions" style="margin-top: 20px;">
                 <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
@@ -1063,12 +1034,9 @@
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
                     // Ambil dari hidden textarea yang kita tanam saat renderPages()
                     const rawStorage = sheet.querySelector('.raw-storage');
-                    const mode = sheet.dataset.embedMode || 'safe';
-                    
                     return {
                         id: pageId,
                         type: 'embed',
-                        mode: mode, // Save Embed Mode (Safe/Full)
                         rawHTML: rawStorage ? rawStorage.value : '' // Source of Truth
                     };
                 } else {
@@ -1104,12 +1072,14 @@
         }
 
         function resetAllPages() {
-            localStorage.removeItem(STORAGE_KEY);
-            pagesDB = [];
-            location.reload(); 
+            if(confirm("Yakin ingin mereset semua halaman dan menghapus penyimpanan?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                pagesDB = [];
+                location.reload(); 
+            }
         }
 
-        // ================= RENDER ENGINE (UPDATED FOR FULL EMBED) =================
+        // ================= RENDER ENGINE (UPDATED) =================
         function renderPages() {
             const container = document.getElementById('document-area');
             container.innerHTML = ''; // Reset container
@@ -1123,7 +1093,6 @@
                 if (page.type === 'embed') {
                     // --- EMBED RENDERING ---
                     sheet.dataset.pageType = 'embed';
-                    sheet.dataset.embedMode = page.mode || 'safe';
 
                     // 1. Simpan Raw HTML di Hidden Textarea (Untuk Save System nanti)
                     const rawStorage = document.createElement('textarea');
@@ -1137,34 +1106,8 @@
                     wrapper.className = 'embed-safe-zone';
                     
                     try {
-                        if (page.mode === 'full') {
-                            // === FULL MODE: SANDBOXED IFRAME ===
-                            const iframe = document.createElement("iframe");
-                            iframe.style.width = "100%";
-                            // Default height for F4 minus margins, adjusted dynamically
-                            iframe.style.height = "330mm"; 
-                            iframe.style.border = "none";
-                            // ALLOW SCRIPTS AND SAME ORIGIN BUT BLOCK TOP NAVIGATION
-                            iframe.sandbox = "allow-scripts allow-same-origin allow-popups allow-forms";
-                            iframe.srcdoc = page.rawHTML;
-                            
-                            // Optional: Auto Height Logic
-                            iframe.onload = () => {
-                                try {
-                                    const h = iframe.contentWindow.document.body.scrollHeight;
-                                    if(h > 100) { 
-                                         iframe.style.height = h + "px";
-                                    }
-                                } catch (e) {
-                                    // Cross-origin might block this, ignore
-                                }
-                            };
-
-                            wrapper.appendChild(iframe);
-                        } else {
-                            // === SAFE MODE: DIRECT INJECTION (SANITIZED) ===
-                            wrapper.innerHTML = page.rawHTML;
-                        }
+                        // 3. Inject HTML Only at Render Time
+                        wrapper.innerHTML = page.rawHTML;
                         sheet.appendChild(wrapper);
                     } catch (e) {
                         wrapper.innerHTML = '<p style="color:red; text-align:center;">Gagal merender HTML Embed.</p>';
@@ -1221,9 +1164,9 @@
             }
         });
 
-        // ================= NEW EMBED ARCHITECTURE =================
+        // ================= NEW EMBED ARCHITECTURE (NO IFRAME) =================
 
-        // 1. SANITIZER: Membersihkan Script Berbahaya (For Safe Mode)
+        // 1. SANITIZER: Membersihkan Script Berbahaya
         function cleanHTML(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
@@ -1247,40 +1190,29 @@
             return doc.body.innerHTML;
         }
 
-        // 2. CORE: ADD EMBED PAGE (UPDATED)
-        function addEmbedPage(userHTML, mode = 'safe') {
+        // 2. CORE: ADD EMBED PAGE
+        function addEmbedPage(userHTML) {
             if (!userHTML || userHTML.trim() === '') {
                 alert("Kode HTML tidak boleh kosong.");
                 return;
             }
 
             try {
-                let finalContent = userHTML;
-
-                if (mode === 'safe') {
-                    // Safe Mode: Sanitize Aggressively
-                    finalContent = cleanHTML(userHTML);
-                } else if (mode === 'full') {
-                    // Full Mode: Minimal Security Check
-                    if (userHTML.includes('window.top') || userHTML.includes('window.parent')) {
-                        alert("Security Alert: Script mengandung akses window.top yang dilarang.");
-                        return;
-                    }
-                    // No sanitation, trust the Sandbox Iframe
-                }
+                // Step A: Sanitize
+                const safeContent = cleanHTML(userHTML);
 
                 // Step B: Create Page Object
                 const newPage = {
                     id: Date.now(),
                     type: 'embed',
-                    mode: mode,
-                    rawHTML: finalContent // Simpan Source Asli/Sanitized
+                    rawHTML: safeContent // Simpan Source Asli
                 };
 
                 // Step C: Update DB & Save
                 pagesDB.push(newPage);
                 
                 // Force Update Storage (Single Source of Truth Logic)
+                // Kita update DB dulu, baru save, baru render.
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
 
                 // Step D: Render UI
@@ -1307,8 +1239,6 @@
         // Embed Modal Handlers
         function openEmbedModal() {
             document.getElementById('embedInput').value = ''; 
-            // Reset radio to safe
-            document.querySelector('input[name="embedMode"][value="safe"]').checked = true;
             document.getElementById('embedModal').style.display = 'flex';
             setTimeout(() => document.getElementById('embedInput').focus(), 100);
         }
@@ -1317,16 +1247,15 @@
             document.getElementById('embedModal').style.display = 'none';
         }
 
-        function handleConfirmEmbed() {
+        function confirmEmbed() {
             const code = document.getElementById('embedInput').value;
-            const mode = document.querySelector('input[name="embedMode"]:checked').value;
             
             if(!code || code.trim().length < 5) {
                 alert("Kode HTML terlalu pendek.");
                 return;
             }
             
-            addEmbedPage(code, mode);
+            addEmbedPage(code);
             closeEmbedModal();
         }
 
@@ -1366,7 +1295,6 @@
                 else if(content.includes('ABSENSI')) title += " (Absen)";
                 else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
                 else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
-                else if(sheet.dataset.pageType === 'embed') title += " (Embed)";
                 
                 option.textContent = title;
                 dropdown.appendChild(option);
@@ -1399,138 +1327,49 @@
             },250);
         }
 
-        // =========================================================
-        // 🔥 ENTERPRISE PDF PRINT ENGINE (UPGRADED)
-        // =========================================================
-        
-        async function safePrint() {
+        // ================= PDF ENGINE =================
+        async function safePrint(){
             const { jsPDF } = window.jspdf;
-            const originalSheets = document.querySelectorAll('.sheet');
+            const sheets = document.querySelectorAll('.sheet');
 
-            if (!originalSheets.length) {
-                uxToast('Tidak ada halaman untuk didownload!', 'error');
+            if(!sheets.length){
+                alert('Tidak ada halaman untuk didownload!');
                 return;
             }
 
-            // 1. LOCK UI & SHOW LOADER
             document.body.classList.add('exporting');
-            uxShowLoader("Mempersiapkan PDF Engine...");
-            await new Promise(r => setTimeout(r, 200)); // UI Breath
-
-            // 2. WAIT FOR FONTS (STEP 7)
-            try {
-                await document.fonts.ready;
-            } catch (e) { console.warn("Font loading wait skipped"); }
-
-            // 3. CREATE OFF-SCREEN CONTAINER (STEP 1)
-            const printRoot = document.createElement("div");
-            printRoot.id = "print-root";
-            printRoot.style.position = "fixed";
-            printRoot.style.left = "-99999px"; // Offscreen
-            printRoot.style.top = "0";
-            printRoot.style.zIndex = "-1";
-            document.body.appendChild(printRoot);
+            void document.body.offsetHeight;
 
             try {
                 const pdf = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
-                    format: [215, 330] // F4
+                    format: [215, 330] 
                 });
 
-                // LOOP SETIAP HALAMAN
-                for (let i = 0; i < originalSheets.length; i++) {
-                    const originalSheet = originalSheets[i];
-                    
-                    // Update Loader
-                    document.getElementById('uxLoaderText').innerText = `Merender Halaman ${i + 1}/${originalSheets.length}...`;
-                    await new Promise(r => setTimeout(r, 50)); // Allow UI update
-
-                    // A. CLONE SHEET (STEP 1)
-                    const clonedSheet = originalSheet.cloneNode(true);
-                    
-                    // Reset Scale/Transform pada Clone agar hasil print 1:1
-                    clonedSheet.style.transform = "none";
-                    clonedSheet.style.margin = "0";
-                    clonedSheet.style.boxShadow = "none";
-                    
-                    printRoot.appendChild(clonedSheet);
-
-                    // B. IFRAME FLATTENER (STEP 2: IFRAME -> DIV)
-                    // Cari semua iframe di clone
-                    const clonedIframes = clonedSheet.querySelectorAll('iframe');
-                    const originalIframes = originalSheet.querySelectorAll('iframe');
-
-                    clonedIframes.forEach((cloneIframe, idx) => {
-                        const realIframe = originalIframes[idx];
-                        if (realIframe) {
-                            try {
-                                // Ambil konten dari iframe ASLI (Live DOM)
-                                // Note: Ini hanya bekerja jika Same-Origin atau srcdoc.
-                                const iframeDoc = realIframe.contentDocument;
-                                if (iframeDoc && iframeDoc.documentElement) {
-                                    const htmlContent = iframeDoc.documentElement.outerHTML;
-
-                                    // Buat DIV Pengganti
-                                    const replacementDiv = document.createElement('div');
-                                    replacementDiv.innerHTML = htmlContent;
-                                    
-                                    // Set Style dasar agar layout mirip
-                                    replacementDiv.style.width = "100%";
-                                    replacementDiv.style.height = realIframe.style.height || "100%";
-                                    replacementDiv.style.overflow = "hidden";
-                                    replacementDiv.style.position = "relative";
-                                    
-                                    // STEP 3: COPY COMPUTED STYLE (SCALED DOWN FOR PERF)
-                                    // Kita hanya copy style container utama iframe agar background/color terbawa
-                                    const computed = window.getComputedStyle(realIframe);
-                                    replacementDiv.style.backgroundColor = computed.backgroundColor;
-                                    
-                                    // Replace Iframe dengan Div
-                                    cloneIframe.parentNode.replaceChild(replacementDiv, cloneIframe);
-                                }
-                            } catch (e) {
-                                console.warn("Cross-origin iframe blocked, skipping", e);
-                            }
-                        }
-                    });
-
-                    // C. RENDER CLONE (STEP 6, 8)
-                    // Gunakan setting optimal
-                    const canvas = await html2canvas(clonedSheet, {
-                        scale: 1.2, // STEP 5: Scale turun dari 2 ke 1.2
+                for(let i=0; i<sheets.length; i++){
+                    const canvas = await html2canvas(sheets[i], {
+                        scale: 2,
                         useCORS: true,
-                        backgroundColor: "#ffffff", // STEP 8
-                        logging: false,
-                        imageTimeout: 0,
-                        allowTaint: true
+                        logging: false
                     });
 
-                    // D. ADD TO PDF (STEP 6: JPEG Quality)
-                    const imgData = canvas.toDataURL('image/jpeg', 0.75); // Quality 0.75
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
-                    if (i !== 0) {
+                    if(i !== 0){
                         pdf.addPage();
                     }
 
                     pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
-
-                    // Clean up clone immediately to save memory
-                    printRoot.innerHTML = ''; 
                 }
 
-                // E. SAVE FILE
-                pdf.save('Laporan-Sekolah-Enterprise.pdf');
-                uxToast("PDF Berhasil Dibuat!", "success");
+                pdf.save('Laporan-Sekolah.pdf');
 
             } catch (error) {
-                console.error("PDF Error:", error);
-                uxToast("Gagal membuat PDF. Cek console.", "error");
+                console.error("PDF Generation Error:", error);
+                alert("Gagal membuat PDF. Coba refresh halaman.");
             } finally {
-                // F. CLEANUP (STEP 9)
-                document.body.removeChild(printRoot);
                 document.body.classList.remove('exporting');
-                uxHideLoader();
             }
         }
 
@@ -2522,19 +2361,46 @@
             }, 300); // Fake delay for UX feel
         }
 
+        // Wrapper for Print
+        async function handleSafePrint(btn) {
+            uxShowLoader("Menyiapkan PDF...");
+            uxBtnLoad(btn, true);
+            
+            try {
+                // Wait small delay to allow UI to render loader
+                await new Promise(r => setTimeout(r, 100));
+                
+                await safePrint();
+                uxToast("PDF Berhasil Diunduh!", "success");
+            } catch (e) {
+                uxToast("Gagal membuat PDF", "error");
+            } finally {
+                uxHideLoader();
+                uxBtnLoad(btn, false);
+            }
+        }
+
         // Wrapper for Sync Data
         function handleSyncData() {
             syncData();
+            // No toast needed for realtime sync, maybe just log or small indicator
         }
 
         // Wrapper for Delete Confirmation
         async function handleConfirmDelete() {
+            // No async logic needed for delete execution, but good for UI consistency
             try {
                 confirmDelete();
                 uxToast("Halaman dihapus", "info");
             } catch(e) {
                 uxToast("Gagal menghapus", "error");
             }
+        }
+
+        // Wrapper for Embed Confirmation
+        function handleConfirmEmbed() {
+            confirmEmbed();
+            // Toasts handled inside validation logic or we can add here if successful
         }
 
         // Wrapper for Edit Mode
@@ -2551,190 +2417,16 @@
             );
 
             if (confirmed) {
+                // TRICK: Override window.confirm temporarily so the original function doesn't popup a second native alert
                 const originalConfirm = window.confirm;
                 window.confirm = () => true; 
                 
                 uxShowLoader("Mereset Sistem...");
                 
                 setTimeout(() => {
-                    resetAllPages(); 
-                    window.confirm = originalConfirm; 
+                    resetAllPages(); // This calls reload, so loader stays until reload
+                    window.confirm = originalConfirm; // Restore just in case reload fails
                 }, 500);
-            }
-        }
-        
-        // =========================================
-        // 11. ENTERPRISE PRO ENGINE (ADD-ON)
-        // =========================================
-
-        function waitForImages(element) {
-            const imgs = element.querySelectorAll('img');
-            const promises = Array.from(imgs).map(img => {
-                if (img.complete) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve; // Continue even if error
-                });
-            });
-            return Promise.all(promises);
-        }
-
-        function waitForFonts() {
-            return document.fonts.ready;
-        }
-
-        async function stabilizeLayout() {
-             await new Promise(r => requestAnimationFrame(r));
-             await new Promise(r => setTimeout(r, 100)); // Small tick
-        }
-
-        // --- THE NEW PRO ENGINE ---
-        async function safePrintPro() {
-            // 1. UI START
-            document.body.classList.add('exporting');
-            uxShowLoader("Menyiapkan High-Res Render...");
-            
-            try {
-                const { jsPDF } = window.jspdf;
-                const originalSheets = document.querySelectorAll('.sheet');
-
-                if (originalSheets.length === 0) {
-                     uxToast('Tidak ada halaman.', 'error');
-                     return;
-                }
-
-                // 2. RESOURCE WAIT
-                uxShowLoader("Memuat Aset & Font...");
-                await waitForFonts();
-                await stabilizeLayout();
-
-                // 3. SETUP PDF
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: [215, 330] // F4
-                });
-
-                // 4. HIDDEN CLONE CONTAINER (The "Clean Room")
-                let ghostContainer = document.getElementById('ghost-render-zone');
-                if (!ghostContainer) {
-                    ghostContainer = document.createElement('div');
-                    ghostContainer.id = 'ghost-render-zone';
-                    ghostContainer.style.position = 'absolute';
-                    ghostContainer.style.top = '-99999px';
-                    ghostContainer.style.left = '-99999px';
-                    ghostContainer.style.width = '215mm'; // Force exact width
-                    document.body.appendChild(ghostContainer);
-                }
-                ghostContainer.innerHTML = ''; // Clean start
-
-                // 5. ITERATE PAGES
-                for (let i = 0; i < originalSheets.length; i++) {
-                    const originalSheet = originalSheets[i];
-                    
-                    // UI Feedback
-                    const progress = Math.round(((i + 1) / originalSheets.length) * 100);
-                    document.getElementById('uxLoaderText').innerText = `Rendering Halaman ${i+1} dari ${originalSheets.length} (${progress}%)`;
-                    await new Promise(r => setTimeout(r, 10)); // Yield UI
-
-                    // --- STEP A: CLONE ---
-                    const clone = originalSheet.cloneNode(true);
-                    
-                    // Remove edit UI artifacts from clone
-                    clone.classList.remove('editing');
-                    const badges = clone.querySelectorAll('.edit-badge');
-                    badges.forEach(b => b.remove());
-
-                    // --- STEP B: FLATTEN INPUTS (Fixes Empty Inputs in PDF) ---
-                    const inputs = clone.querySelectorAll('input, textarea, select');
-                    inputs.forEach(input => {
-                        if (input.type === 'checkbox' || input.type === 'radio') {
-                             // Checkboxes handled by CSS/HTML attribute usually, but explicit set helps
-                             if (input.checked) input.setAttribute('checked', 'checked');
-                        } else {
-                            // Convert text inputs/textareas to SPAN for perfect rendering
-                            const span = document.createElement('span');
-                            span.className = 'print-flattened-input';
-                            span.style.fontFamily = 'inherit';
-                            span.style.fontSize = 'inherit';
-                            span.style.fontWeight = 'inherit';
-                            span.style.whiteSpace = 'pre-wrap'; // Preserve newlines
-                            span.textContent = input.value;
-                            
-                            if (input.tagName === 'TEXTAREA') {
-                                span.style.display = 'block';
-                                span.style.minHeight = input.style.minHeight || '20px';
-                            }
-                            
-                            input.parentNode.replaceChild(span, input);
-                        }
-                    });
-
-                    // --- STEP C: FLATTEN IFRAMES ---
-                    const iframes = clone.querySelectorAll('iframe');
-                    if (iframes.length > 0) {
-                        // We need to fetch original iframe content to replicate in clone
-                        const origIframes = originalSheet.querySelectorAll('iframe');
-                        iframes.forEach((ifr, idx) => {
-                             const orig = origIframes[idx];
-                             const div = document.createElement('div');
-                             div.style.width = '100%';
-                             div.style.height = ifr.style.height || '300px';
-                             div.style.overflow = 'hidden';
-                             div.style.border = '1px solid #eee';
-                             div.style.background = '#fff';
-                             
-                             try {
-                                 // Try to grab content
-                                 if (orig.contentDocument && orig.contentDocument.body) {
-                                     div.innerHTML = orig.contentDocument.body.innerHTML;
-                                 } else {
-                                     div.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">(Konten Embed Eksternal - Tidak dapat dirender langsung)</div>';
-                                 }
-                             } catch(e) {
-                                  div.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">(Konten Terproteksi)</div>';
-                             }
-                             ifr.parentNode.replaceChild(div, ifr);
-                        });
-                    }
-
-                    ghostContainer.appendChild(clone);
-                    
-                    // Wait for clone images
-                    await waitForImages(clone);
-
-                    // --- STEP D: RENDER ---
-                    const canvas = await html2canvas(clone, {
-                        scale: 2, // High Res
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff',
-                        windowWidth: 1200 // Force standard desktop width context
-                    });
-
-                    const imgData = canvas.toDataURL('image/jpeg', 0.85); // Compress slightly
-                    
-                    if (i > 0) pdf.addPage();
-                    pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
-                    
-                    // Cleanup clone memory immediately
-                    ghostContainer.innerHTML = '';
-                }
-
-                pdf.save(`Laporan_Sekolah_Pro_${Date.now()}.pdf`);
-                uxToast("Download Berhasil!", "success");
-
-            } catch (err) {
-                console.error("Pro Engine Failed:", err);
-                uxToast("Mode Pro Gagal, beralih ke Mode Standard...", "warning");
-                // FALLBACK TO OLD ENGINE
-                safePrint(); 
-            } finally {
-                document.body.classList.remove('exporting');
-                uxHideLoader();
-                // Nuke ghost container
-                const gc = document.getElementById('ghost-render-zone');
-                if(gc) gc.innerHTML = '';
             }
         }
 
@@ -2828,40 +2520,24 @@
             const sheets = document.querySelectorAll('.sheet');
             const sheet = sheets[currentEditingIndex];
             const isEmbed = sheet.dataset.pageType === 'embed';
-            // New: Check embed mode (full vs safe)
-            const embedMode = sheet.dataset.embedMode || 'safe';
 
             try {
+                // Sanitize first
+                const safeCode = cleanHTML(code);
+
                 if(isEmbed) {
                     // For embed, we update the .embed-safe-zone wrapper
                     let wrapper = sheet.querySelector('.embed-safe-zone');
                     if(!wrapper) {
+                        // Recreate if missing
                          wrapper = document.createElement('div');
                          wrapper.className = 'embed-safe-zone';
                          sheet.innerHTML = '';
                          sheet.appendChild(wrapper);
                     }
-                    
-                    if (embedMode === 'full') {
-                        // Re-render iframe
-                        wrapper.innerHTML = ''; // Clear old iframe
-                        const iframe = document.createElement("iframe");
-                        iframe.style.width = "100%";
-                        iframe.style.height = "330mm";
-                        iframe.style.border = "none";
-                        iframe.sandbox = "allow-scripts allow-same-origin allow-popups allow-forms";
-                        iframe.srcdoc = code;
-                        wrapper.appendChild(iframe);
-                    } else {
-                         // Safe mode preview
-                         const safeCode = cleanHTML(code);
-                         wrapper.innerHTML = safeCode;
-                    }
-
+                    wrapper.innerHTML = safeCode;
                 } else {
                     // For standard, direct innerHTML update
-                    // Standard pages are always sanitized for stability
-                    const safeCode = cleanHTML(code);
                     sheet.innerHTML = safeCode;
                 }
 
@@ -2884,14 +2560,10 @@
             const sheets = document.querySelectorAll('.sheet');
             const sheet = sheets[currentEditingIndex];
             const isEmbed = sheet.dataset.pageType === 'embed';
-            const embedMode = sheet.dataset.embedMode || 'safe';
 
             try {
-                // 1. Sanitize (Conditional)
-                let finalCode = code;
-                if (!isEmbed || embedMode === 'safe') {
-                    finalCode = cleanHTML(code);
-                }
+                // 1. Sanitize
+                const safeCode = cleanHTML(code);
 
                 // 2. Update DOM & DB based on Type
                 if (isEmbed) {
@@ -2903,19 +2575,7 @@
                          sheet.innerHTML = '';
                          sheet.appendChild(wrapper);
                     }
-                    
-                    if (embedMode === 'full') {
-                        wrapper.innerHTML = '';
-                        const iframe = document.createElement("iframe");
-                        iframe.style.width = "100%";
-                        iframe.style.height = "330mm";
-                        iframe.style.border = "none";
-                        iframe.sandbox = "allow-scripts allow-same-origin allow-popups allow-forms";
-                        iframe.srcdoc = finalCode;
-                        wrapper.appendChild(iframe);
-                    } else {
-                        wrapper.innerHTML = finalCode;
-                    }
+                    wrapper.innerHTML = safeCode;
 
                     // Update Hidden Storage (DOM Source of Truth)
                     let storage = sheet.querySelector('.raw-storage');
@@ -2925,27 +2585,29 @@
                         storage.style.display = 'none';
                         sheet.appendChild(storage);
                     }
-                    storage.value = finalCode;
+                    storage.value = safeCode;
 
                     // Update DB (Memory)
                     if(pagesDB[currentEditingIndex]) {
-                        pagesDB[currentEditingIndex].rawHTML = finalCode;
+                        pagesDB[currentEditingIndex].rawHTML = safeCode;
                     }
 
                 } else {
                     // Standard Page
-                    sheet.innerHTML = finalCode;
+                    sheet.innerHTML = safeCode;
                     
                     // Update DB (Memory)
                     if(pagesDB[currentEditingIndex]) {
-                        pagesDB[currentEditingIndex].html = finalCode;
+                        pagesDB[currentEditingIndex].html = safeCode;
                     }
                 }
 
                 // 3. Persist to Storage
                 saveToStorage();
 
-                // 4. Re-sync Dynamic Data
+                // 4. Re-sync Dynamic Data (Variables & Page Numbers)
+                // This ensures if user deleted <span class="data-sekolah">, it won't crash, 
+                // but if they added it back, it gets populated.
                 syncData();
                 updatePageNumbers();
 
