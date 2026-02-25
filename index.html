@@ -917,6 +917,106 @@
             }
         }
     </style>
+
+    <!-- =========================================
+         NEW: CANVAS DRAG & ZOOM STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="canvas-mode-styles">
+        /* 1. Global Variables for Panning & Zooming */
+        :root {
+            --pan-x: 0px;
+            --pan-y: 0px;
+            --user-zoom: 1;
+            --responsive-scale: 1;
+        }
+
+        /* Ambil alih skala responsif ke variabel agar bisa digabungkan dengan zoom */
+        @media (min-width: 769px) and (max-width: 1200px) {
+            :root { --responsive-scale: 0.75; }
+        }
+        @media (max-width: 768px) {
+            :root { --responsive-scale: 0.55; }
+        }
+
+        /* Terapkan kombinasi Transform (Pan + Scale) ke semua kertas */
+        main#document-area .sheet {
+            transform: translate(var(--pan-x), var(--pan-y)) scale(calc(var(--responsive-scale) * var(--user-zoom))) !important;
+            transform-origin: top center;
+            will-change: transform; /* Smooth performance */
+        }
+
+        /* 2. Visual Cursor Indicators */
+        main#document-area {
+            cursor: grab;
+            overflow: auto; /* Biarkan scrollbar aktif jika user ingin scroll native */
+        }
+        main#document-area.is-dragging {
+            cursor: grabbing;
+        }
+
+        /* Pengecualian cursor agar fungsi ketik & klik tidak terganggu */
+        main#document-area input,
+        main#document-area textarea,
+        main#document-area select,
+        main#document-area [contenteditable="true"],
+        main#document-area .photo-placeholder,
+        main#document-area .kop-img {
+            cursor: text;
+        }
+        main#document-area button,
+        main#document-area input[type="checkbox"],
+        main#document-area .photo-placeholder,
+        main#document-area .kop-img {
+            cursor: pointer;
+        }
+        main#document-area .sheet.editing {
+            cursor: text; /* Saat mode premium edit aktif, kembalikan kursor ke teks */
+        }
+
+        /* 3. Floating Canvas UI Controls */
+        .canvas-ui-controls {
+            position: fixed;
+            bottom: 30px;
+            left: calc(var(--sidebar-width) + 30px);
+            background: #0f172a;
+            padding: 8px 15px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 999;
+            color: #fff;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #334155;
+            user-select: none;
+        }
+        @media (max-width: 1024px) {
+            .canvas-ui-controls {
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: 20px;
+            }
+        }
+        .canvas-ui-controls button {
+            background: #1e293b;
+            border: 1px solid #475569;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 35px; height: 35px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .canvas-ui-controls button:hover { background: var(--accent-blue); border-color: var(--accent-blue); transform: translateY(-2px); }
+        .canvas-ui-controls span { font-size: 0.9rem; font-weight: bold; font-family: monospace; width: 45px; text-align: center; }
+        .canvas-ui-controls .btn-reset-view { width: auto; border-radius: 12px; padding: 0 12px; font-size: 0.85rem; }
+
+        /* Sembunyikan navigasi saat print */
+        @media print { .canvas-ui-controls { display: none !important; } }
+        body.exporting .canvas-ui-controls { display: none !important; }
+    </style>
 </head>
 <body>
 
@@ -1026,6 +1126,14 @@
         </main>
     
     </div> <!-- End App Container -->
+
+    <!-- FLOATING CANVAS CONTROLS (ZOOM & PAN RESET) -->
+    <div class="canvas-ui-controls no-print-in-pdf">
+        <button onclick="zoomOutCanvas()" title="Zoom Out (-)"><i class="ph ph-magnifying-glass-minus"></i></button>
+        <span id="zoom-indicator">100%</span>
+        <button onclick="zoomInCanvas()" title="Zoom In (+)"><i class="ph ph-magnifying-glass-plus"></i></button>
+        <button class="btn-reset-view" onclick="resetCanvasView()"><i class="ph ph-arrows-in"></i> Reset Posisi</button>
+    </div>
 
     <!-- MODAL DELETE SYSTEM (EXISTING - PRESERVED) -->
     <div id="deleteModal" class="modal">
@@ -2732,14 +2840,26 @@
             }, 300); // Fake delay for UX feel
         }
 
-        // Wrapper for Print
+        // Wrapper for Print (DIPERBARUI UNTUK MENCEGAH BUG TRANSFORM CANVAS)
         async function handleSafePrint(btn) {
             uxShowLoader("Menyiapkan PDF...");
             uxBtnLoad(btn, true);
             
+            // 1. Simpan state Canvas Drag & Zoom sementara
+            const oldPanX = typeof panX !== 'undefined' ? panX : 0;
+            const oldPanY = typeof panY !== 'undefined' ? panY : 0;
+            const oldZoom = typeof zoomScale !== 'undefined' ? zoomScale : 1;
+            
+            // 2. Netralkan Transform Canvas secara instan agar PDF membaca ukuran asli F4
+            if(typeof applyCanvasTransform === 'function') {
+                document.documentElement.style.setProperty('--pan-x', '0px');
+                document.documentElement.style.setProperty('--pan-y', '0px');
+                document.documentElement.style.setProperty('--user-zoom', '1');
+            }
+            
             try {
-                // Wait small delay to allow UI to render loader
-                await new Promise(r => setTimeout(r, 100));
+                // Tunggu 150ms agar browser merender posisi netral terlebih dahulu
+                await new Promise(r => setTimeout(r, 150));
                 
                 await safePrint();
                 uxToast("PDF Berhasil Diunduh!", "success");
@@ -2748,6 +2868,14 @@
             } finally {
                 uxHideLoader();
                 uxBtnLoad(btn, false);
+                
+                // 3. Kembalikan Posisi Canvas ke semula setelah PDF selesai (Mulus & Aman)
+                if(typeof applyCanvasTransform === 'function') {
+                    panX = oldPanX; 
+                    panY = oldPanY; 
+                    zoomScale = oldZoom;
+                    applyCanvasTransform();
+                }
             }
         }
 
@@ -3414,6 +3542,160 @@
             
             uxToast("Halaman diturunkan 1 tingkat", "info");
         }
+    </script>
+
+    <!-- =========================================
+       17. NEW: CANVAS DRAG & ZOOM ENGINE (ADDITIVE)
+       ========================================= -->
+    <script id="canvas-drag-zoom-logic">
+        const docArea = document.getElementById('document-area');
+        
+        // State Variables
+        let panX = 0;
+        let panY = 0;
+        let zoomScale = 1;
+        let isDraggingCanvas = false;
+        let startX, startY;
+
+        // Variables for Pinch Zoom (Mobile)
+        let initialPinchDistance = null;
+        let initialZoomBeforePinch = 1;
+
+        // Terapkan properti ke CSS Variable (Sangat Efisien)
+        function applyCanvasTransform() {
+            document.documentElement.style.setProperty('--pan-x', `${panX}px`);
+            document.documentElement.style.setProperty('--pan-y', `${panY}px`);
+            document.documentElement.style.setProperty('--user-zoom', zoomScale);
+            
+            const zoomIndicator = document.getElementById('zoom-indicator');
+            if(zoomIndicator) zoomIndicator.innerText = Math.round(zoomScale * 100) + '%';
+        }
+
+        // Fungi UI Button
+        function resetCanvasView() {
+            panX = 0; panY = 0; zoomScale = 1;
+            applyCanvasTransform();
+            // Kembalikan scroll native ke tengah atas
+            docArea.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            uxToast("Tampilan kanvas dikembalikan ke normal", "info");
+        }
+        
+        function zoomInCanvas() {
+            zoomScale = Math.min(zoomScale + 0.1, 3); // Max 3x (300%)
+            applyCanvasTransform();
+        }
+        
+        function zoomOutCanvas() {
+            zoomScale = Math.max(zoomScale - 0.1, 0.3); // Min 0.3x (30%)
+            applyCanvasTransform();
+        }
+
+        // Pengecekan Aman: Jangan Drag kalau user sedang ngeklik Teks/Input!
+        function isInteractiveElement(el) {
+            if(!el) return false;
+            const tag = el.tagName;
+            // Elemen Form
+            if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') return true;
+            // Area Ketik Text
+            if(el.isContentEditable || el.closest('[contenteditable="true"]')) return true;
+            // Elemen Sistem & Upload
+            if(el.closest('.btn') || el.closest('.sheet-controls') || el.closest('.page-controls') || el.closest('.photo-placeholder') || el.closest('.kop-img')) return true;
+            
+            return false;
+        }
+
+        // --- 1. MOUSE EVENTS (DESKTOP DRAG) ---
+        docArea.addEventListener('mousedown', (e) => {
+            if (isInteractiveElement(e.target)) return;
+            if (e.button !== 0) return; // Hanya klik kiri mouse
+
+            isDraggingCanvas = true;
+            docArea.classList.add('is-dragging');
+            
+            // Kalkulasi titik awal offset kursor dengan posisi pan yang tersimpan
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingCanvas) return;
+            e.preventDefault(); // Mencegah user memblok/menyorot teks tanpa sengaja saat dragging
+            
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            applyCanvasTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDraggingCanvas = false;
+            docArea.classList.remove('is-dragging');
+        });
+
+        // --- 2. CTRL + SCROLL WHEEL (DESKTOP ZOOM) ---
+        docArea.addEventListener('wheel', (e) => {
+            // Hanya bekerja jika menahan tombol Ctrl (Windows) atau Cmd (Mac)
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault(); // Cegah browser me-zoom seluruh window web
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                zoomScale = Math.max(0.3, Math.min(zoomScale + delta, 3));
+                applyCanvasTransform();
+            }
+        }, { passive: false }); // WAJIB passive: false agar preventDefault bekerja
+
+        // --- 3. TOUCH EVENTS (MOBILE PAN & PINCH ZOOM) ---
+        docArea.addEventListener('touchstart', (e) => {
+            // Jika sentuh teks dengan 1 jari, biarkan user ngetik/scroll biasa
+            if (isInteractiveElement(e.target) && e.touches.length === 1) return;
+            
+            if (e.touches.length === 1) {
+                // Initiatiate Pan
+                isDraggingCanvas = true;
+                startX = e.touches[0].clientX - panX;
+                startY = e.touches[0].clientY - panY;
+            } else if (e.touches.length === 2) {
+                // Initiate Pinch Zoom
+                isDraggingCanvas = false; // Matikan pan saat sedang zoom
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialZoomBeforePinch = zoomScale;
+            }
+        }, { passive: false });
+
+        docArea.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isDraggingCanvas) {
+                // Single Touch = Menggeser Kanvas
+                e.preventDefault(); // Cegah layar ngescroll (Native pull-to-refresh) saat lagi geser lembar
+                panX = e.touches[0].clientX - startX;
+                panY = e.touches[0].clientY - startY;
+                applyCanvasTransform();
+            } else if (e.touches.length === 2) {
+                // Two Touches = Pinch Zoom
+                e.preventDefault();
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                if (initialPinchDistance) {
+                    const scaleChange = dist / initialPinchDistance;
+                    zoomScale = Math.max(0.3, Math.min(initialZoomBeforePinch * scaleChange, 3));
+                    applyCanvasTransform();
+                }
+            }
+        }, { passive: false });
+
+        docArea.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                initialPinchDistance = null; // Reset pinch
+            }
+            if (e.touches.length === 0) {
+                isDraggingCanvas = false; // Lepas layar sepenuhnya
+            }
+        });
+        
+        // Render awal variabel CSS
+        applyCanvasTransform();
     </script>
 </body>
 </html>
