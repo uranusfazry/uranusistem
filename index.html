@@ -8,10 +8,10 @@
     <!-- LIBRARIES FOR PDF GENERATION -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- NEW: LIBRARIES FOR ZIP EXPORT/IMPORT -->
+    <!-- LIBRARIES FOR ZIP EXPORT/IMPORT -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- PHOSPHOR ICONS (Premium Icons) -->
+    <!-- PHOSPHOR ICONS -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
@@ -21,13 +21,13 @@
         :root {
             --bg-app: #f8fafc;
             --sidebar-width: 320px;
-            --paper-width: 215mm; /* Lebar F4 */
-            --paper-height: 330mm; /* Tinggi F4 */
+            --paper-width: 215mm; 
+            --paper-height: 330mm; 
             --margin-doc: 20mm;
             --primary-dark: #0f172a;
             --accent-blue: #3b82f6;
             --danger-red: #ef4444;
-            --code-purple: #8b5cf6; /* Warna baru untuk fitur HTML */
+            --code-purple: #8b5cf6;
         }
 
         * { box-sizing: border-box; }
@@ -41,20 +41,17 @@
             color: #334155;
         }
 
-        /* PRINT LOCK UI */
         body.printing {
             pointer-events: none;
             user-select: none;
         }
 
-        /* EXPORTING MODE */
         body.exporting .btn-remove-page, 
         body.exporting .no-print-in-pdf,
         body.exporting .edit-badge {
             display: none !important;
         }
 
-        /* WRAPPER UTAMA */
         .app-container {
             display: flex;
             width: 100%;
@@ -63,7 +60,6 @@
             position: relative;
         }
 
-        /* Sidebar Control Panel */
         aside {
             width: var(--sidebar-width);
             background: var(--primary-dark);
@@ -92,7 +88,6 @@
             gap: 10px;
         }
 
-        /* Form Controls Styling */
         .control-group { margin-bottom: 18px; }
         .control-group label { 
             display: block; 
@@ -121,7 +116,6 @@
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
         
-        /* Buttons */
         .btn {
             display: flex;
             align-items: center;
@@ -176,22 +170,16 @@
             border: 1px solid #c7d2fe; 
             margin-top: 10px;
         }
-        .btn-edit:hover {
-            background: #c7d2fe;
-        }
+        .btn-edit:hover { background: #c7d2fe; }
 
-        /* NEW: HTML Editor Button Style */
         .btn-html-edit {
             background: #f3e8ff;
             color: #7e22ce;
             border: 1px solid #d8b4fe;
             margin-top: 5px;
         }
-        .btn-html-edit:hover {
-            background: #d8b4fe;
-        }
+        .btn-html-edit:hover { background: #d8b4fe; }
 
-        /* NEW: Reset Button Style */
         .btn-reset {
             background: transparent;
             color: #94a3b8;
@@ -227,7 +215,6 @@
             border-radius: 50%;
         }
 
-        /* HAMBURGER MENU */
         .menu-toggle {
             position: fixed;
             top: 20px;
@@ -249,7 +236,6 @@
         }
         .menu-toggle:active { transform: scale(0.95); }
 
-        /* Main Workspace */
         main {
             flex: 1;
             overflow-y: auto;
@@ -264,7 +250,6 @@
         /* =========================================
            2. RESPONSIVE LOGIC
            ========================================= */
-        
         @media (max-width: 1024px) {
             .menu-toggle { display: flex; }
             aside {
@@ -316,12 +301,11 @@
             color: #000;
             line-height: 1.15;
             font-size: 12pt;
-            transition: transform 0.3s ease;
+            transition: width 0.4s ease, min-height 0.4s ease, transform 0.3s ease !important;
             pointer-events: auto;
             break-inside: avoid;
         }
 
-        /* Fitur Editable */
         [contenteditable="true"]:hover { background-color: rgba(255, 230, 0, 0.1); outline: 1px dashed #e2e8f0; cursor: text; }
         [contenteditable="true"]:focus { background-color: rgba(255, 245, 157, 0.3); outline: none; border-bottom: 2px solid var(--accent-blue); }
         
@@ -390,6 +374,13 @@
         .signature-section { display: flex; justify-content: space-between; margin-top: 30px; page-break-inside: avoid; }
         .ttd-box { width: 40%; text-align: center; }
         .ttd-space { height: 80px; }
+        
+        .nama-ttd {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+            padding-bottom: 2px;
+        }
 
         .cover-border {
             border: 3px double #000;
@@ -408,37 +399,52 @@
         .sheet.landscape {
             width: 330mm !important;
             min-height: 215mm !important;
-            padding: 20mm 25mm !important; /* Margin kiri & kanan diperlebar */
+            padding: 20mm 25mm !important;
         }
 
         @media print {
             .sheet.landscape {
                 width: 100% !important;
                 min-height: 215mm !important;
-                padding: 20mm 25mm !important; /* Mempertahankan margin di versi PDF */
+                padding: 20mm 25mm !important;
                 page-break-after: always;
             }
+        }
+
+        /* OVERRIDES & FIXES */
+        .cover-border .text-upper, .cover-border h1, .cover-border h2, .cover-border h3, .cover-border p, .cover-border span { text-transform: none !important; }
+        .data-guru, .data-kepsek, .signature-section .text-upper, .text-upper .data-guru, .text-upper .data-kepsek { text-transform: none !important; }
+        
+        body, .sheet, .cover-border, table, td, th, input, textarea, select, .embed-safe-zone, .embed-safe-zone * { font-family: "Times New Roman", Times, serif !important; }
+        .sheet img, .embed-safe-zone img { max-width: 100%; height: auto; }
+        .logo-img { width: 80px; height: auto; }
+
+        body.global-landscape .sheet {
+            width: 330mm !important;
+            min-height: 215mm !important;
+            padding: 20mm 25mm !important;
+        }
+        body.global-landscape table.table-grid, body.global-landscape table.table-padat, body.global-landscape table.dinas, body.global-landscape table.list-data, body.global-landscape p, body.global-landscape div { font-size: 10.5pt !important; line-height: 1.15 !important; }
+        body.global-landscape table.table-grid th, body.global-landscape table.table-grid td { padding: 2px 1px !important; }
+
+        @media print {
+            body.global-landscape .sheet { width: 100% !important; min-height: 215mm !important; margin: 0 !important; page-break-after: always; }
         }
 
         /* =========================================
            4. PREMIUM EDIT MODE UI
            ========================================= */
-        /* Visual State saat Edit Aktif */
         .sheet.editing {
             outline: 3px solid var(--accent-blue);
             box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.15);
-            z-index: 100; /* Angkat layer */
+            z-index: 100; 
             cursor: text;
         }
-
-        /* Hover effect pada elemen yang bisa diedit */
         .sheet.editing [contenteditable="true"]:hover {
-            background-color: #fff7ed; /* Orange tipis premium */
+            background-color: #fff7ed;
             outline: 1px dashed #fdba74;
             border-radius: 2px;
         }
-
-        /* Badge Indicator Floating */
         .edit-badge {
             position: absolute;
             top: -15px;
@@ -456,18 +462,13 @@
             animation: slideDown 0.3s ease;
             z-index: 1001;
         }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Lock Protection: Sembunyikan kontrol lain saat edit mode */
+        @keyframes slideDown { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .sheet.editing .sheet-controls,
         .sheet.editing input[type="checkbox"], 
         .sheet.editing input[type="text"],
         .sheet.editing textarea {
-            pointer-events: none; /* Cegah interaksi elemen form asli */
+            pointer-events: none; 
             opacity: 0.7;
         }
 
@@ -484,7 +485,6 @@
             backdrop-filter: blur(6px);
             z-index: 99999;
         }
-
         .modal-box {
             background: white;
             padding: 30px;
@@ -495,8 +495,6 @@
             font-family: 'Segoe UI', sans-serif;
             position: relative;
         }
-
-        /* NEW: LARGE MODAL VARIANT FOR CODE EDITOR */
         .modal-box.modal-large {
             width: 90%;
             max-width: 1200px;
@@ -504,100 +502,28 @@
             display: flex;
             flex-direction: column;
         }
-
         .modal-box h3 { margin-top: 0; color: #1e293b; }
+        .modal-box select { width: 100%; padding: 12px; margin: 15px 0 25px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: auto; }
+        .modal-actions button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
         
-        .modal-box select {
-            width: 100%;
-            padding: 12px;
-            margin: 15px 0 25px 0;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: auto; /* Push to bottom in flex containers */
-        }
-
-        .modal-actions button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        /* Delete Modal Specifics */
         #deleteModal .modal-actions button:first-child { background: #ef4444; color: white; }
         #deleteModal .modal-actions button:first-child:hover { background: #dc2626; }
-
-        /* Edit Modal Specifics */
         #editModal .modal-actions button:first-child { background: var(--accent-blue); color: white; }
         #editModal .modal-actions button:first-child:hover { background: #2563eb; }
-
-        /* NEW: HTML Editor Modal Specifics */
         #htmlEditorModal .modal-actions button.btn-save-html { background: var(--code-purple); color: white; }
         #htmlEditorModal .modal-actions button.btn-save-html:hover { background: #7c3aed; }
-        
         #htmlEditorModal .modal-actions button.btn-preview-html { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
         #htmlEditorModal .modal-actions button.btn-preview-html:hover { background: #c7d2fe; }
-
         .modal-actions button:last-child { background: #e2e8f0; color: #475569; }
         .modal-actions button:last-child:hover { background: #cbd5e1; }
 
-        /* NEW: CODE EDITOR STYLES */
-        .code-editor-container {
-            flex: 1;
-            margin: 15px 0;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            background: #1e1e1e; /* Dark Theme */
-        }
+        .code-editor-container { flex: 1; margin: 15px 0; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; background: #1e1e1e; }
+        .code-textarea { flex: 1; width: 100%; padding: 20px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; line-height: 1.5; color: #d4d4d4; background: #1e1e1e; border: none; resize: none; outline: none; white-space: pre; overflow: auto; }
+        .code-textarea::selection { background: #264f78; }
+        .code-toolbar { padding: 8px 15px; background: #2d2d2d; border-bottom: 1px solid #404040; color: #ccc; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
 
-        .code-textarea {
-            flex: 1;
-            width: 100%;
-            padding: 20px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            color: #d4d4d4;
-            background: #1e1e1e;
-            border: none;
-            resize: none;
-            outline: none;
-            white-space: pre;
-            overflow: auto;
-        }
-
-        .code-textarea::selection {
-            background: #264f78;
-        }
-
-        .code-toolbar {
-            padding: 8px 15px;
-            background: #2d2d2d;
-            border-bottom: 1px solid #404040;
-            color: #ccc;
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        @keyframes fadeIn{
-            from{opacity:0; transform:translateY(20px);}
-            to{opacity:1; transform:translateY(0);}
-        }
+        @keyframes fadeIn{ from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
 
         /* =========================================
            6. PRINT QUERY
@@ -617,305 +543,39 @@
             input[type="checkbox"]:checked:after { content: '✓'; color: #fff; font-size: 12px; position: absolute; top: -2px; left: 1px; }
         }
 
-        /* =========================================
-           7. NEW EMBED ENGINE STYLES
-           ========================================= */
-        .embed-safe-zone {
-            width: 100%;
-            /* Pastikan konten tidak merusak layout F4 */
-            overflow: hidden; 
-            position: relative;
-            /* Reset CSS dasar agar style user tidak konflik parah */
-            font-family: initial;
-            font-size: initial;
-            line-height: initial;
-            color: initial;
-        }
-
-        /* Penanda visual di mode edit */
-        .sheet[data-page-type="embed"]::before {
-            content: "RAW HTML EMBED";
-            position: absolute;
-            top: 0; left: 0;
-            background: #f1f5f9;
-            color: #94a3b8;
-            font-size: 9px;
-            padding: 2px 5px;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-    </style>
-
-    <!-- =========================================
-       8. NEW UX OVERLAY STYLES (ENTERPRISE UI)
-       ========================================= -->
-    <style id="ux-styles">
-        /* Scoped to prevent conflict using prefix 'ux-' */
+        .embed-safe-zone { width: 100%; overflow: hidden; position: relative; font-family: initial; font-size: initial; line-height: initial; color: initial; }
+        .sheet[data-page-type="embed"]::before { content: "RAW HTML EMBED"; position: absolute; top: 0; left: 0; background: #f1f5f9; color: #94a3b8; font-size: 9px; padding: 2px 5px; opacity: 0.5; pointer-events: none; }
         
-        /* UX Toast Notification */
-        .ux-toast-container {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 100000;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            pointer-events: none;
-        }
-        
-        .ux-toast {
-            background: white;
-            border-left: 5px solid;
-            padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 300px;
-            transform: translateX(120%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            pointer-events: auto;
-            font-family: 'Segoe UI', sans-serif;
-            font-size: 0.95rem;
-        }
-        
+        /* UX Toast & Loaders */
+        .ux-toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 100000; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
+        .ux-toast { background: white; border-left: 5px solid; padding: 16px 20px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; min-width: 300px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: auto; font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; }
         .ux-toast.visible { transform: translateX(0); }
-        .ux-toast.success { border-color: #10b981; }
-        .ux-toast.error { border-color: #ef4444; }
-        .ux-toast.info { border-color: #3b82f6; }
-        .ux-toast i { font-size: 1.4rem; }
-        .ux-toast.success i { color: #10b981; }
-        .ux-toast.error i { color: #ef4444; }
-        .ux-toast.info i { color: #3b82f6; }
-
-        /* UX Loading Overlay */
-        .ux-loader-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(8px);
-            z-index: 200000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
+        .ux-toast.success { border-color: #10b981; } .ux-toast.error { border-color: #ef4444; } .ux-toast.info { border-color: #3b82f6; }
+        .ux-toast i { font-size: 1.4rem; } .ux-toast.success i { color: #10b981; } .ux-toast.error i { color: #ef4444; } .ux-toast.info i { color: #3b82f6; }
+        
+        .ux-loader-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 200000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .ux-loader-overlay.active { opacity: 1; pointer-events: all; }
-        
-        .ux-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        .ux-loader-text {
-            color: white;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            font-size: 1.1rem;
-        }
-
+        .ux-spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
+        .ux-loader-text { color: white; font-weight: 500; letter-spacing: 0.5px; font-size: 1.1rem; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* UX Button Loading State */
-        .btn.ux-btn-loading {
-            position: relative;
-            color: transparent !important;
-            pointer-events: none;
-        }
-        .btn.ux-btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        /* UX Confirmation Modal (Replacing Native Confirm) */
-        .ux-confirm-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            z-index: 100001;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .ux-confirm-box {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            width: 400px;
-            max-width: 90vw;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transform: scale(0.9);
-            opacity: 0;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .ux-confirm-modal.active { display: flex; }
-        .ux-confirm-modal.active .ux-confirm-box { transform: scale(1); opacity: 1; }
         
-        .ux-confirm-icon {
-            width: 48px;
-            height: 48px;
-            background: #fee2e2;
-            color: #ef4444;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        
+        .btn.ux-btn-loading { position: relative; color: transparent !important; pointer-events: none; }
+        .btn.ux-btn-loading::after { content: ''; position: absolute; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        .ux-confirm-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 100001; display: none; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; }
+        .ux-confirm-box { background: white; padding: 30px; border-radius: 16px; width: 400px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); transform: scale(0.9); opacity: 0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .ux-confirm-modal.active { display: flex; } .ux-confirm-modal.active .ux-confirm-box { transform: scale(1); opacity: 1; }
+        .ux-confirm-icon { width: 48px; height: 48px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; }
         .ux-confirm-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 10px 0; }
         .ux-confirm-desc { color: #64748b; margin: 0 0 25px 0; line-height: 1.5; }
-        
         .ux-confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
-        
         .ux-btn { padding: 10px 18px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
-        .ux-btn-cancel { background: #f1f5f9; color: #475569; }
-        .ux-btn-cancel:hover { background: #e2e8f0; }
-        .ux-btn-confirm { background: #ef4444; color: white; }
-        .ux-btn-confirm:hover { background: #dc2626; }
+        .ux-btn-cancel { background: #f1f5f9; color: #475569; } .ux-btn-cancel:hover { background: #e2e8f0; }
+        .ux-btn-confirm { background: #ef4444; color: white; } .ux-btn-confirm:hover { background: #dc2626; }
 
-        /* Auto Save Indicator */
-        .ux-save-indicator {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #0f172a;
-            color: #e2e8f0;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 999;
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .ux-save-indicator { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: #0f172a; color: #e2e8f0; padding: 8px 16px; border-radius: 30px; font-size: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 999; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; gap: 8px; }
         .ux-save-indicator.active { transform: translateX(-50%) translateY(0); }
         .ux-save-spinner { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    </style>
-
-    <!-- =========================================
-         NEW OVERRIDE STYLES (NON-DESTRUCTIVE)
-         Memenuhi semua instruksi override tanpa menghapus/merusak style lama
-         ========================================= -->
-    <style id="custom-override-styles">
-        /* 1. OVERRIDE COVER TANPA HAPUS CODE LAMA */
-        .cover-border .text-upper {
-            text-transform: none !important;
-        }
-
-        .cover-border h1,
-        .cover-border h2,
-        .cover-border h3,
-        .cover-border p,
-        .cover-border span {
-            text-transform: none !important;
-        }
-
-        /* 2. MEMASTIKAN NAMA GURU & KEPSEK TIDAK OTOMATIS KAPITAL DI SELURUH HALAMAN (TERMASUK TTD) */
-        .data-guru,
-        .data-kepsek,
-        .signature-section .text-upper,
-        .text-upper .data-guru,
-        .text-upper .data-kepsek {
-            text-transform: none !important;
-        }
-
-        /* 3. FONT GLOBAL TIMES NEW ROMAN */
-        body,
-        .sheet,
-        .cover-border,
-        table,
-        td,
-        th,
-        input,
-        textarea,
-        select,
-        .embed-safe-zone,
-        .embed-safe-zone * {
-            font-family: "Times New Roman", Times, serif !important;
-        }
-
-        /* 4. GAMBAR EKSTERNAL & RESPONSIF (FITUR EMBED HTML) */
-        .sheet img,
-        .embed-safe-zone img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        .logo-img {
-            width: 80px;
-            height: auto;
-        }
-
-        /* 5. FORMAT TANDA TANGAN RESMI (TANPA UNDERLINE DI KOMA/TITIK) */
-        .nama-ttd {
-            display: inline-block;
-            border-bottom: 1px solid #000;
-            font-weight: bold;
-            padding-bottom: 2px;
-        }
-
-        /* 6. FITUR ORIENTASI GLOBAL (LANDSCAPE / PORTRAIT) */
-        .sheet {
-            /* Smooth transition untuk perpindahan orientasi tanpa merusak efek lama */
-            transition: width 0.4s ease, min-height 0.4s ease, transform 0.3s ease !important;
-        }
-
-        body.global-landscape .sheet {
-            width: 330mm !important;
-            min-height: 215mm !important;
-            padding: 20mm 25mm !important;
-        }
-
-        /* Supaya saat tinggi kertas menciut jadi 215mm, konten tabel tidak tumpah/overflow */
-        body.global-landscape table.table-grid,
-        body.global-landscape table.table-padat,
-        body.global-landscape table.dinas,
-        body.global-landscape table.list-data,
-        body.global-landscape p,
-        body.global-landscape div {
-            font-size: 10.5pt !important;
-            line-height: 1.15 !important;
-        }
-        
-        body.global-landscape table.table-grid th, 
-        body.global-landscape table.table-grid td {
-            padding: 2px 1px !important; 
-        }
-
-        /* Reset untuk print mode dalam state landscape */
-        @media print {
-            body.global-landscape .sheet {
-                width: 100% !important;
-                min-height: 215mm !important;
-                margin: 0 !important;
-                page-break-after: always;
-            }
-        }
     </style>
 </head>
 <body>
@@ -932,7 +592,7 @@
                 <i class="ph ph-buildings" style="font-size: 24px;"></i> Admin Sekolah
             </h2>
 
-            <!-- FITUR BARU: TOGGLE ORIENTASI KERTAS GLOBAL -->
+            <!-- TOGGLE ORIENTASI KERTAS GLOBAL -->
             <div class="control-group">
                 <label><i class="ph ph-arrows-out-line-horizontal"></i> Orientasi Global</label>
                 <select id="global_orientation" onchange="changeOrientation(this.value)">
@@ -941,7 +601,7 @@
                 </select>
             </div>
 
-            <!-- FITUR BARU: MANAJEMEN HALAMAN TINGKAT LANJUT -->
+            <!-- MANAJEMEN HALAMAN TINGKAT LANJUT -->
             <div class="section-divider">Manajemen Halaman</div>
             
             <div class="control-group" style="background:#1e293b; padding:10px; border-radius:8px; margin-bottom:10px;">
@@ -969,7 +629,6 @@
             <button class="btn btn-add" onclick="handleAddPage('rekap_nilai', this)"><i class="ph ph-calculator"></i> Rekap Nilai Harian</button>
             <button class="btn btn-add" onclick="handleAddPage('rekap_ujian', this)"><i class="ph ph-graduation-cap"></i> Rekap Ujian BTQ</button>
             
-            <!-- TEMPLATE BARU DITAMBAHKAN DI SINI -->
             <button class="btn btn-add" onclick="handleAddPage('setoran_hafalan_juz30', this)">
                 <i class="ph ph-book-open"></i> Setoran Hafalan Juz 30
             </button>
@@ -982,59 +641,48 @@
 
             <div class="section-divider">Actions</div>
             
-            <!-- BUTTON DELETE DI SIDEBAR -->
             <button class="btn btn-danger" onclick="openDeleteModal()">
                 <i class="ph ph-trash"></i> Hapus Halaman
             </button>
 
-            <!-- BUTTON EDIT MODE -->
             <button class="btn btn-edit" onclick="openEditModal()">
                 <i class="ph ph-pencil"></i> Edit Custom Halaman
             </button>
 
-            <!-- NEW: BUTTON EDIT HTML -->
-            <button class="btn btn-html-edit" onclick="openHtmlEditSelectionModal()">
+            <button class="btn-html-edit" onclick="openHtmlEditSelectionModal()">
                 <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
             </button>
 
             <div class="section-divider">Data Management</div>
 
-            <!-- FITUR BARU: EXPORT & IMPORT ZIP -->
             <button class="btn btn-add" style="background:#4f46e5; border-color:#4338ca;" onclick="exportToZip()">
                 <i class="ph ph-package"></i> Export ZIP (Dengan Gambar)
             </button>
             <button class="btn btn-add" style="background:#0284c7; border-color:#3730a3;" onclick="importFromZipTrigger()">
                 <i class="ph ph-file-zip"></i> Import ZIP
             </button>
-            <!-- Hidden input file untuk sistem Load ZIP -->
             <input type="file" id="zipLoader" accept=".zip" style="display:none;" onchange="processZipImport(event)">
 
-            <!-- WRAPPED SAFE PRINT HANDLER -->
             <button class="btn btn-print" onclick="handleSafePrint(this)"><i class="ph ph-printer"></i> Download PDF (F4)</button>
 
-            <!-- WRAPPED RESET HANDLER -->
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.3 Enterprise • Native Embed • HTML Editor
+                v10.0 Enterprise • Native Embed • HTML Editor (Clean)
             </p>
         </aside>
 
         <!-- MAIN DOCUMENT AREA -->
-        <main id="document-area">
-            <!-- Halaman akan muncul di sini -->
-        </main>
+        <main id="document-area"></main>
     
     </div> <!-- End App Container -->
 
-    <!-- MODAL DELETE SYSTEM (EXISTING - PRESERVED) -->
+    <!-- MODAL DELETE SYSTEM -->
     <div id="deleteModal" class="modal">
        <div class="modal-box">
             <h3>Hapus Halaman</h3>
             <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin dihapus:</p>
-
             <select id="deletePageSelect"></select>
-
             <div class="modal-actions">
                 <button onclick="handleConfirmDelete()">Hapus</button>
                 <button onclick="closeDeleteModal()">Batal</button>
@@ -1042,14 +690,12 @@
        </div>
     </div>
 
-    <!-- MODAL EDIT SYSTEM (EXISTING - PRESERVED) -->
+    <!-- MODAL EDIT SYSTEM -->
     <div id="editModal" class="modal">
        <div class="modal-box">
             <h3>Edit Custom Halaman</h3>
             <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman untuk masuk mode edit:</p>
-
             <select id="editPageSelect"></select>
-
             <div class="modal-actions">
                 <button onclick="handleConfirmEditMode()">✅ Aktifkan Edit</button>
                 <button onclick="closeEditModal()">Batal</button>
@@ -1057,14 +703,12 @@
        </div>
     </div>
 
-    <!-- NEW MODAL: HTML SELECT SYSTEM -->
+    <!-- MODAL HTML SELECT SYSTEM -->
     <div id="htmlEditSelectModal" class="modal">
        <div class="modal-box">
             <h3><i class="ph ph-code-block" style="color:var(--code-purple)"></i> Edit HTML Halaman</h3>
             <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin diedit kode sumbernya:</p>
-
             <select id="htmlPageSelect"></select>
-
             <div class="modal-actions">
                 <button style="background:var(--code-purple); color:white;" onclick="handleOpenHtmlEditor()">Buka Editor</button>
                 <button onclick="closeHtmlEditSelectModal()">Batal</button>
@@ -1072,7 +716,7 @@
        </div>
     </div>
 
-    <!-- NEW MODAL: LARGE HTML EDITOR -->
+    <!-- MODAL LARGE HTML EDITOR -->
     <div id="htmlEditorModal" class="modal">
        <div class="modal-box modal-large">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1085,7 +729,6 @@
                     <span>HTML / Embed Source</span>
                     <span style="font-size:0.7rem; opacity:0.7;">Auto-Sanitized • Monospace</span>
                 </div>
-                <!-- Textarea for Coding -->
                 <textarea id="htmlCodeInput" class="code-textarea" spellcheck="false"></textarea>
             </div>
 
@@ -1097,16 +740,14 @@
        </div>
     </div>
 
-    <!-- MODAL EMBED HTML SYSTEM (EXISTING - PRESERVED) -->
+    <!-- MODAL EMBED HTML SYSTEM -->
     <div id="embedModal" class="modal">
        <div class="modal-box" style="width: 600px; max-width: 90vw;">
             <h3>Embed HTML Code</h3>
             <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">
                 Tempel kode HTML Anda di bawah. Script tag akan dihapus otomatis demi keamanan.
             </p>
-
             <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
-
             <div class="modal-actions" style="margin-top: 20px;">
                 <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
                 <button onclick="closeEmbedModal()">Batal</button>
@@ -1114,25 +755,15 @@
        </div>
     </div>
 
-    <!-- =========================================
-       9. NEW GLOBAL UI OVERLAYS (INJECTED)
-       ========================================= -->
-    
-    <!-- 1. Loading Overlay -->
+    <!-- UX OVERLAYS -->
     <div id="uxLoader" class="ux-loader-overlay">
         <div class="ux-spinner"></div>
         <div class="ux-loader-text" id="uxLoaderText">Memproses data...</div>
     </div>
-
-    <!-- 2. Toast Container -->
     <div id="uxToastContainer" class="ux-toast-container"></div>
-
-    <!-- 3. Modern Confirmation Modal -->
     <div id="uxConfirmModal" class="ux-confirm-modal">
         <div class="ux-confirm-box">
-            <div class="ux-confirm-icon">
-                <i class="ph ph-warning"></i>
-            </div>
+            <div class="ux-confirm-icon"><i class="ph ph-warning"></i></div>
             <h3 class="ux-confirm-title" id="uxConfirmTitle">Konfirmasi</h3>
             <p class="ux-confirm-desc" id="uxConfirmDesc">Apakah Anda yakin ingin melakukan tindakan ini?</p>
             <div class="ux-confirm-actions">
@@ -1141,8 +772,6 @@
             </div>
         </div>
     </div>
-
-    <!-- 4. Save Indicator -->
     <div id="uxSaveIndicator" class="ux-save-indicator">
         <div class="ux-save-spinner"></div>
         <span>Menyimpan...</span>
@@ -1153,41 +782,31 @@
         let pagesDB = [];
         const STORAGE_KEY = "school_pages_db";
 
-        // ================= STORAGE HELPER FUNCTIONS (HARDENED) =================
+        // ================= STORAGE HELPER FUNCTIONS =================
         function saveToStorage() {
-            // Kita harus mensinkronkan DOM saat ini kembali ke pagesDB
-            // karena user mungkin telah mengedit halaman Standard.
-            
-            // TRICK: Paksa value input masuk ke attribute agar terbaca saat innerHTML di-clone
             document.querySelectorAll('.sheet input[type="text"], .sheet input[type="number"]').forEach(el => el.setAttribute('value', el.value));
             document.querySelectorAll('.sheet textarea').forEach(el => el.innerHTML = el.value);
             document.querySelectorAll('.sheet input[type="checkbox"]').forEach(el => el.checked ? el.setAttribute('checked', 'checked') : el.removeAttribute('checked'));
 
             const sheets = document.querySelectorAll('.sheet');
             
-            // Rebuild DB from Current DOM State
             pagesDB = Array.from(sheets).map((sheet, index) => {
                 const isEmbed = sheet.dataset.pageType === 'embed';
                 const pageId = parseInt(sheet.dataset.id) || (Date.now() + index);
-                
-                // NEW: Tangkap orientasi per halaman dari class
                 const isLandscape = sheet.classList.contains('landscape');
 
                 if (isEmbed) {
-                    // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
-                    // Ambil dari hidden textarea yang kita tanam saat renderPages()
                     const rawStorage = sheet.querySelector('.raw-storage');
                     return {
                         id: pageId,
                         type: 'embed',
-                        rawHTML: rawStorage ? rawStorage.value : '', // Source of Truth
+                        rawHTML: rawStorage ? rawStorage.value : '',
                         orientation: isLandscape ? 'landscape' : 'portrait'
                     };
                 } else {
-                    // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
                     return {
                         id: pageId,
-                        type: 'standard', // atau undefined (legacy support)
+                        type: 'standard',
                         html: sheet.innerHTML,
                         orientation: isLandscape ? 'landscape' : 'portrait'
                     };
@@ -1217,63 +836,48 @@
         }
 
         function resetAllPages() {
-            if(confirm("Yakin ingin mereset semua halaman dan menghapus penyimpanan?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                pagesDB = [];
-                location.reload(); 
-            }
+            localStorage.removeItem(STORAGE_KEY);
+            pagesDB = [];
+            location.reload(); 
         }
 
-        // ================= RENDER ENGINE (UPDATED) =================
+        // ================= RENDER ENGINE =================
         function renderPages() {
             const container = document.getElementById('document-area');
-            container.innerHTML = ''; // Reset container
+            container.innerHTML = '';
 
             pagesDB.forEach((page, index) => {
                 const sheet = document.createElement('div');
                 sheet.className = 'sheet';
-                sheet.dataset.id = page.id || Date.now(); // Maintain Identity
+                sheet.dataset.id = page.id || Date.now();
 
-                // A. RENDER LOGIC BASED ON TYPE
                 if (page.type === 'embed') {
-                    // --- EMBED RENDERING ---
                     sheet.dataset.pageType = 'embed';
-
-                    // 1. Simpan Raw HTML di Hidden Textarea (Untuk Save System nanti)
                     const rawStorage = document.createElement('textarea');
                     rawStorage.className = 'raw-storage';
                     rawStorage.style.display = 'none';
                     rawStorage.value = page.rawHTML;
                     sheet.appendChild(rawStorage);
 
-                    // 2. Buat Safe Container
                     const wrapper = document.createElement('div');
                     wrapper.className = 'embed-safe-zone';
-                    
                     try {
-                        // 3. Inject HTML Only at Render Time
                         wrapper.innerHTML = page.rawHTML;
                         sheet.appendChild(wrapper);
                     } catch (e) {
                         wrapper.innerHTML = '<p style="color:red; text-align:center;">Gagal merender HTML Embed.</p>';
                         sheet.appendChild(wrapper);
                     }
-
                 } else {
-                    // --- STANDARD RENDERING ---
-                    // Inject langsung innerHTML (Contenteditable support)
                     sheet.innerHTML = page.html;
                 }
 
-                // NEW: Terapkan orientasi per halaman yang tersimpan di DB
                 if (page.orientation === 'landscape' || sheet.querySelector('.landscape-marker')) {
                     sheet.classList.add('landscape');
                 } else {
                     sheet.classList.remove('landscape');
                 }
 
-                // B. SYSTEM COMPONENTS (Jika belum ada)
-                // Cek apakah page number sudah ada (untuk standard page yg tersimpan full HTML)
                 if (!sheet.querySelector('.page-number')) {
                     const pageNum = document.createElement('div');
                     pageNum.className = 'page-number';
@@ -1283,33 +887,26 @@
                 container.appendChild(sheet);
             });
 
-            syncData(); 
             updatePageNumbers();
-            updateAllPageSelectors(); // Sinkronisasi otomatis dropdown di sidebar
+            updateAllPageSelectors();
         }
 
-        // ================= AUTO SAVE ENGINE (DEBOUNCE) =================
+        // ================= AUTO SAVE ENGINE =================
         let saveTimeout;
-        let paginationTimeout; // New debounce specifically for pagination
+        let paginationTimeout;
 
         document.addEventListener("input", function(e) {
-            // Hanya trigger jika perubahan terjadi di dalam .sheet atau input/textarea
             if(e.target.closest('.sheet') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                
-                // --- STEP 7: AUTO TRIGGER PAGINATION ---
-                // Only run if input happened inside a Custom Page content wrapper
                 if (e.target.closest('.page-content')) {
                     clearTimeout(paginationTimeout);
                     paginationTimeout = setTimeout(() => {
                         autoPaginateCustomPages();
-                    }, 1000); // 1s debounce to avoid lag while typing fast
+                    }, 1000);
                 }
 
-                // Standard Auto Save
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
                     saveToStorage();
-                    // Additional safety: Run pagination once more after save to catch any stragglers
                     if (e.target.closest('.page-content')) {
                          autoPaginateCustomPages();
                     }
@@ -1317,79 +914,56 @@
             }
         });
 
-        // ================= NEW EMBED ARCHITECTURE (NO IFRAME) =================
-
-        // 1. SANITIZER: Membersihkan Script Berbahaya
+        // ================= EMBED ARCHITECTURE =================
         function cleanHTML(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
 
-            // Hapus tag berbahaya yang tidak boleh ada di dokumen cetak
             const bannedTags = ['script', 'iframe', 'object', 'embed', 'form']; 
             bannedTags.forEach(tag => {
                 doc.querySelectorAll(tag).forEach(el => el.remove());
             });
 
-            // Hapus event handler inline (onclick, onmouseover, dll)
             const allElements = doc.body.querySelectorAll('*');
             allElements.forEach(el => {
                 Array.from(el.attributes).forEach(attr => {
+                    // Safe guard to prevent our own auto calculation scripts from being purged on edit
                     if (attr.name.startsWith('on')) {
-                        el.removeAttribute(attr.name);
+                        const val = attr.value;
+                        const allowed = ['calculateScore(this)', 'calculateExamScore(this)', 'calculateSetoranRow(this)', 'triggerUpload(this)', 'previewImage(this)'];
+                        if (!allowed.includes(val)) {
+                            el.removeAttribute(attr.name);
+                        }
                     }
                 });
             });
-
             return doc.body.innerHTML;
         }
 
-        // 2. CORE: ADD EMBED PAGE
         function addEmbedPage(userHTML) {
-            if (!userHTML || userHTML.trim() === '') {
-                alert("Kode HTML tidak boleh kosong.");
-                return;
-            }
-
             try {
-                // Step A: Sanitize
                 const safeContent = cleanHTML(userHTML);
-
-                // Step B: Create Page Object
                 const newPage = {
                     id: Date.now(),
                     type: 'embed',
-                    rawHTML: safeContent // Simpan Source Asli
+                    rawHTML: safeContent
                 };
-
-                // Step C: Update DB & Save
                 pagesDB.push(newPage);
-                
-                // Force Update Storage (Single Source of Truth Logic)
-                // Kita update DB dulu, baru save, baru render.
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
-
-                // Step D: Render UI
                 renderPages();
 
-                // Step E: UX
                 setTimeout(() => {
                     const newSheet = document.getElementById('document-area').lastElementChild;
-                    if(newSheet) {
-                        newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
+                    if(newSheet) newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
 
-                if (window.innerWidth <= 1024) {
-                    sidebar.classList.remove('active');
-                }
-
+                if (window.innerWidth <= 1024) sidebar.classList.remove('active');
             } catch (err) {
                 console.error(err);
                 alert("Gagal membuat halaman embed. Periksa kode HTML Anda.");
             }
         }
 
-        // Embed Modal Handlers
         function openEmbedModal() {
             document.getElementById('embedInput').value = ''; 
             document.getElementById('embedModal').style.display = 'flex';
@@ -1400,97 +974,86 @@
             document.getElementById('embedModal').style.display = 'none';
         }
 
-        function confirmEmbed() {
+        function handleConfirmEmbed() {
             const code = document.getElementById('embedInput').value;
-            
             if(!code || code.trim().length < 5) {
                 alert("Kode HTML terlalu pendek.");
                 return;
             }
-            
             addEmbedPage(code);
             closeEmbedModal();
         }
 
-        // ================= MODIFIED SYSTEM CORE =================
-
-        function openDeleteModal(){
+        // ================= SYSTEM CORE UI UPDATE =================
+        function openDeleteModal() {
             const sheets = document.querySelectorAll('.sheet');
             if(sheets.length === 0){
                 uxToast("Tidak ada halaman untuk dihapus.", "error");
                 return;
             }
-            refreshDeleteDropdown();
+            updateAllPageSelectors();
             document.getElementById('deleteModal').style.display = 'flex';
         }
 
-        function closeDeleteModal(){
+        function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
         }
 
-        function refreshDeleteDropdown(){
+        function updateAllPageSelectors() {
             const dropdown = document.getElementById('deletePageSelect');
             if(!dropdown) return;
 
             dropdown.innerHTML = '';
-
             document.querySelectorAll('.sheet').forEach((sheet, i)=>{
                 const option = document.createElement('option');
                 option.value = i;
                 
                 let title = "Halaman " + (i+1);
-                // Simple content detection for clearer names
                 const content = sheet.textContent || sheet.innerText;
+                const isEmbed = sheet.dataset.pageType === 'embed';
+
                 if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
                 else if(content.includes('DOKUMENTASI')) title += " (Foto)";
                 else if(content.includes('JADWAL')) title += " (Jadwal)";
                 else if(content.includes('REKAP NILAI')) title += " (Nilai)";
-                else if(content.includes('REKAP SETORAN HAFALAN')) title += " (Hafalan)"; // Indikator title baru
+                else if(content.includes('REKAP SETORAN HAFALAN')) title += " (Hafalan)";
                 else if(content.includes('ABSENSI')) title += " (Absen)";
                 else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
                 else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
                 
+                if(isEmbed) title += " [EMBED]";
+                
                 option.textContent = title;
                 dropdown.appendChild(option);
             });
-        }
 
-        function updateAllPageSelectors() {
-            // Helper function untuk update semua dropdown yang butuh list halaman
-            refreshDeleteDropdown();
-            
-            const ids = ['swapPageA', 'swapPageB', 'orientPageSelect'];
-            ids.forEach(id => {
+            const sourceHTML = dropdown.innerHTML;
+            ['swapPageA', 'swapPageB', 'orientPageSelect', 'editPageSelect', 'htmlPageSelect'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.innerHTML = document.getElementById('deletePageSelect').innerHTML;
+                if (el) el.innerHTML = sourceHTML;
             });
         }
 
-        function confirmDelete(){
-            const index = document.getElementById('deletePageSelect').value;
-            deletePageByIndex(parseInt(index));
-            closeDeleteModal();
-        }
-
-        function deletePageByIndex(index){
+        function handleConfirmDelete() {
+            const index = parseInt(document.getElementById('deletePageSelect').value);
             const sheets = document.querySelectorAll('.sheet');
 
-            if(index < 0 || index >= sheets.length){
-                return; 
-            }
+            if(isNaN(index) || index < 0 || index >= sheets.length) return;
 
             const sheet = sheets[index];
-
             sheet.style.transition = "all .25s ease";
             sheet.style.opacity = "0";
             sheet.style.transform = "scale(.9)";
 
-            setTimeout(()=>{
+            setTimeout(() => {
                 sheet.remove();
                 saveToStorage();
                 updatePageNumbers(); 
                 updateAllPageSelectors();
-            },250);
+                uxToast("Halaman dihapus", "info");
+            }, 250);
+            
+            closeDeleteModal();
         }
 
         // ================= PDF ENGINE =================
@@ -1507,10 +1070,7 @@
             void document.body.offsetHeight;
 
             try {
-                // MODIFIED: Cek mode orientasi global (Override jika aktif)
                 const isGlobalLandscape = document.body.classList.contains('global-landscape');
-                
-                // Gunakan mode global jika aktif, kalau tidak fallback ke class individu page pertama
                 const firstIsLandscape = isGlobalLandscape || sheets[0].classList.contains('landscape');
                 
                 const pdf = new jsPDF({
@@ -1520,7 +1080,6 @@
                 });
 
                 for(let i=0; i<sheets.length; i++){
-                    // MODIFIED: Tentukan landscape untuk page ini
                     const isPageLandscape = isGlobalLandscape || sheets[i].classList.contains('landscape');
                     
                     const canvas = await html2canvas(sheets[i], {
@@ -1541,9 +1100,7 @@
                         pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
                     }
                 }
-
                 pdf.save('Laporan-Sekolah.pdf');
-
             } catch (error) {
                 console.error("PDF Generation Error:", error);
                 alert("Gagal membuat PDF. Coba refresh halaman.");
@@ -1553,13 +1110,10 @@
         }
 
         // ================= UI LOGIC =================
-        
         const menuToggle = document.querySelector('.menu-toggle');
         const sidebar = document.querySelector('aside');
         
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
 
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 1024) {
@@ -1570,19 +1124,14 @@
         });
 
         // ================= DATA LOGIC =================
-        
         function calculateScore(row) {
             const getVal = (cls) => {
                 const el = row.querySelector('.' + cls);
                 return el ? (parseFloat(el.innerText.replace(/,/g, '.')) || 0) : 0;
             };
-            const s1 = getVal('score-lancar');
-            const s2 = getVal('score-tajwid');
-            const s3 = getVal('score-irama');
-            const s4 = getVal('score-adab');
+            const s1 = getVal('score-lancar'), s2 = getVal('score-tajwid'), s3 = getVal('score-irama'), s4 = getVal('score-adab');
             const total = s1 + s2 + s3 + s4;
-            const totalEl = row.querySelector('.score-total');
-            const finalEl = row.querySelector('.score-final');
+            const totalEl = row.querySelector('.score-total'), finalEl = row.querySelector('.score-final');
             if(totalEl) totalEl.innerText = total;
             if(finalEl) finalEl.innerText = total;
         }
@@ -1592,24 +1141,18 @@
                 const el = row.querySelector('.' + cls);
                 return el ? (parseFloat(el.innerText.replace(/,/g, '.')) || 0) : 0;
             };
-            const s1 = getVal('exam-lancar');
-            const s2 = getVal('exam-tajwid');
-            const s3 = getVal('exam-irama');
-            const s4 = getVal('exam-adab');
+            const s1 = getVal('exam-lancar'), s2 = getVal('exam-tajwid'), s3 = getVal('exam-irama'), s4 = getVal('exam-adab');
             const total = s1 + s2 + s3 + s4;
             const finalEl = row.querySelector('.exam-final');
             if(finalEl) finalEl.innerText = total;
         }
 
-        /* NEW FUNCTION: Logic for Setoran Hafalan Checkboxes */
         function calculateSetoranRow(checkbox) {
             const row = checkbox.closest('tr');
             if(!row) return;
             const checkboxes = row.querySelectorAll('input[type="checkbox"]');
             let total = 0;
-            checkboxes.forEach(cb => {
-                if(cb.checked) total++;
-            });
+            checkboxes.forEach(cb => { if(cb.checked) total++; });
             const totalEl = row.querySelector('.total-setor');
             if(totalEl) totalEl.innerText = total;
         }
@@ -1618,64 +1161,18 @@
             const htmlContent = templates[type];
             if (!htmlContent) return;
 
-            const newPage = {
-                id: Date.now(),
-                type: 'standard',
-                html: htmlContent
-            };
-
-            pagesDB.push(newPage);
+            pagesDB.push({ id: Date.now(), type: 'standard', html: htmlContent });
             renderPages();
             saveToStorage();
             
             const newSheet = document.getElementById('document-area').lastElementChild;
-            if(newSheet) {
-                newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            if(newSheet) newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            if (window.innerWidth <= 1024) {
-                sidebar.classList.remove('active');
-            }
+            if (window.innerWidth <= 1024) sidebar.classList.remove('active');
         }
 
         function updatePageNumbers() {
-            const pages = document.querySelectorAll('.page-number');
-            pages.forEach((el, index) => {
-                el.innerText = `- ${index + 1} -`;
-            });
-        }
-
-        function syncData() {
-            const map = {
-                'm_sekolah': '.data-sekolah',
-                'm_alamat': '.data-alamat',
-                'm_kepsek': '.data-kepsek',
-                'm_nip1': '.data-nip1',
-                'm_guru': '.data-guru',
-                'm_nip2': '.data-nip2',
-                'm_tgl': '.data-tgl'
-            };
-            for (const [id, selector] of Object.entries(map)) {
-                const inputEl = document.getElementById(id);
-                if (!inputEl) continue; // Pengaman: Abaikan jika input form sudah dihapus dari sidebar
-                
-                const val = inputEl.value;
-                document.querySelectorAll(selector).forEach(el => {
-                    // NEW: Deteksi khusus untuk tanda tangan agar koma gelar tidak di-underline
-                    if (el.classList.contains('format-ttd')) {
-                        if (val.includes(',')) {
-                            const parts = val.split(',');
-                            const name = parts[0];
-                            const title = parts.slice(1).join(',');
-                            el.innerHTML = `<span class="nama-ttd">${name}</span>,${title}`;
-                        } else {
-                            el.innerHTML = `<span class="nama-ttd">${val}</span>`;
-                        }
-                    } else {
-                        el.innerText = val;
-                    }
-                });
-            }
+            document.querySelectorAll('.page-number').forEach((el, index) => { el.innerText = `- ${index + 1} -`; });
         }
 
         function triggerUpload(el) { el.querySelector('input').click(); }
@@ -1684,8 +1181,7 @@
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const container = input.parentElement;
-                    const img = container.querySelector('img');
+                    const img = input.parentElement.querySelector('img');
                     img.src = e.target.result;
                     img.style.display = 'block';
                     saveToStorage();
@@ -1695,17 +1191,10 @@
         }
 
         // ================= PREMIUM EDIT ENGINE =================
-
         function toggleEditMode(sheet) {
-            document.querySelectorAll('.sheet').forEach(s => {
-                if (s !== sheet) deactivateEditMode(s);
-            });
-
-            if (sheet.classList.contains('editing')) {
-                deactivateEditMode(sheet);
-            } else {
-                activateEditMode(sheet);
-            }
+            document.querySelectorAll('.sheet').forEach(s => { if (s !== sheet) deactivateEditMode(s); });
+            if (sheet.classList.contains('editing')) deactivateEditMode(sheet);
+            else activateEditMode(sheet);
         }
 
         function activateEditMode(sheet) {
@@ -1716,24 +1205,11 @@
             sheet.appendChild(badge);
 
             const textElements = sheet.querySelectorAll('p, span, td, th, div, h1, h2, h3, h4, h5, h6, li, u, b, strong, em');
-            
             textElements.forEach(el => {
-                if (
-                    el.closest('.sheet-controls') || 
-                    el.closest('.page-number') || 
-                    el.closest('.photo-placeholder') ||
-                    el.classList.contains('edit-badge') ||
-                    el.tagName === 'INPUT' || 
-                    el.tagName === 'TEXTAREA' || 
-                    el.tagName === 'SELECT' ||
-                    el.contentEditable === 'true' 
-                ) {
+                if (el.closest('.sheet-controls') || el.closest('.page-number') || el.closest('.photo-placeholder') || el.classList.contains('edit-badge') || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.contentEditable === 'true') {
                     return;
                 }
-
-                if(el.children.length === 0 || el.tagName === 'DIV' || el.tagName === 'TD'){
-                     el.setAttribute('contenteditable', 'true');
-                }
+                if(el.children.length === 0 || el.tagName === 'DIV' || el.tagName === 'TD') el.setAttribute('contenteditable', 'true');
             });
         }
 
@@ -1742,11 +1218,8 @@
             const badge = sheet.querySelector('.edit-badge');
             if(badge) badge.remove();
 
-            const editableElements = sheet.querySelectorAll('[contenteditable="true"]');
-            editableElements.forEach(el => {
-                if(['P','H1','H2','H3','H4','H5','H6','SPAN','LI','DIV'].includes(el.tagName)){
-                     el.removeAttribute('contenteditable');
-                }
+            sheet.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                if(['P','H1','H2','H3','H4','H5','H6','SPAN','LI','DIV'].includes(el.tagName)) el.removeAttribute('contenteditable');
             });
             saveToStorage();
         }
@@ -1757,120 +1230,74 @@
                 uxToast("Belum ada halaman untuk diedit.", "error");
                 return;
             }
-            
-            const dropdown = document.getElementById('editPageSelect');
-            dropdown.innerHTML = '';
-
-            sheets.forEach((sheet, i) => {
-                const option = document.createElement('option');
-                option.value = i;
-                
-                let title = "Halaman " + (i+1);
-                const content = sheet.textContent || sheet.innerText;
-                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
-                
-                option.textContent = title;
-                dropdown.appendChild(option);
-            });
-
+            updateAllPageSelectors();
             document.getElementById('editModal').style.display = 'flex';
         }
 
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
 
-        function confirmEditMode() {
-            const index = document.getElementById('editPageSelect').value;
+        function handleConfirmEditMode() {
+            const index = parseInt(document.getElementById('editPageSelect').value);
             const sheets = document.querySelectorAll('.sheet');
             
-            if(sheets[index]) {
+            if(!isNaN(index) && sheets[index]) {
                 toggleEditMode(sheets[index]);
                 sheets[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                uxToast("Mode Edit Diaktifkan", "info");
             }
             closeEditModal();
         }
 
         document.addEventListener('dblclick', function(e) {
             const sheet = e.target.closest('.sheet');
-            if (sheet && 
-                !e.target.closest('.sheet-controls') && 
-                e.target.tagName !== 'INPUT' && 
-                e.target.tagName !== 'TEXTAREA') {
+            if (sheet && !e.target.closest('.sheet-controls') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 toggleEditMode(sheet);
             }
         });
 
-        // ================= AUTO PAGINATION FEATURE =================
-        // STEP 2: Create Pagination Function
+        // ================= AUTO PAGINATION =================
         function autoPaginateCustomPages() {
-            const sheets = document.getElementsByClassName('sheet'); // Live collection
-            const MM_TO_PX = 3.78; // Conversion approx 1mm to px (96DPI)
-            const MAX_HEIGHT_PX = 330 * MM_TO_PX; // 330mm ~ 1247px
-            const LIMIT = MAX_HEIGHT_PX - 20; // Safe buffer
+            const sheets = document.getElementsByClassName('sheet'); 
+            const MAX_HEIGHT_PX = 330 * 3.78; 
 
-            // STEP 3: Detect Overflow
             for (let i = 0; i < sheets.length; i++) {
                 const sheet = sheets[i];
                 const content = sheet.querySelector('.page-content');
-                if (!content) continue; // Skip non-custom pages
+                if (!content) continue; 
 
-                // Check if current sheet height exceeds F4 Paper Height
-                // Note: sheet.scrollHeight includes overflowing content
                 while (sheet.scrollHeight > (MAX_HEIGHT_PX + 5)) {
-                    
-                    // STEP 4: Move Content Safely
                     const lastChild = content.lastElementChild;
-                    
-                    // Prevent infinite loops if element is too big or it's the only child
-                    if (!lastChild || content.children.length <= 1) {
-                        break; 
-                    }
+                    if (!lastChild || content.children.length <= 1) break; 
 
-                    // Find or create next sheet
                     let nextSheet = sheet.nextElementSibling;
                     let nextContent;
 
-                    // STEP 6: Prevent Page Explosion (Check existing next page)
                     if (nextSheet && nextSheet.querySelector('.page-content')) {
                           nextContent = nextSheet.querySelector('.page-content');
                     } else {
-                        // STEP 5: Create New Sheet using existing style
                         nextSheet = createNewCustomSheet();
                         sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
                         nextContent = nextSheet.querySelector('.page-content');
                     }
 
-                    // Move last element to the TOP of the next page
-                    if (nextContent.firstChild) {
-                        nextContent.insertBefore(lastChild, nextContent.firstChild);
-                    } else {
-                        nextContent.appendChild(lastChild);
-                    }
+                    if (nextContent.firstChild) nextContent.insertBefore(lastChild, nextContent.firstChild);
+                    else nextContent.appendChild(lastChild);
                 }
             }
-            // STEP 8: Update Page Numbers
             updatePageNumbers();
         }
 
         function createNewCustomSheet() {
             const div = document.createElement('div');
             div.className = 'sheet';
-            div.dataset.id = Date.now() + Math.random(); // Unique ID
-            
-            // Use standard custom template structure
+            div.dataset.id = Date.now() + Math.random(); 
             div.innerHTML = templates.custom; 
-            
-            // Clean content to start fresh (keep structure, remove placeholder text)
             const content = div.querySelector('.page-content');
             if(content) content.innerHTML = ''; 
-            
             return div;
         }
 
-        // ================= TEMPLATES =================
-
+        // ================= TEMPLATES (Natively Editable Without syncData) =================
         const getKop = () => `
             <div class="kop-surat">
                 <div class="kop-img" onclick="triggerUpload(this)" title="Klik untuk ganti logo">
@@ -1880,8 +1307,8 @@
                 <div class="kop-text">
                     <h3>PEMERINTAH KOTA BANJAR</h3>
                     <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-                    <h2 class="data-sekolah">UPTD SD NEGERI 1 BATULAWANG</h2>
-                    <p class="data-alamat">Alamat Sekolah Here</p>
+                    <h2 class="data-sekolah" contenteditable="true" spellcheck="false">UPTD SD NEGERI 1 BATULAWANG</h2>
+                    <p class="data-alamat" contenteditable="true" spellcheck="false">Alamat Sekolah Here</p>
                     <p>Email: sdn1batulawang@banjarkota.go.id</p>
                 </div>
             </div>
@@ -1892,39 +1319,27 @@
                 <div class="ttd-box">
                     <p>Mengetahui,<br>Kepala Sekolah</p>
                     <div class="ttd-space"></div>
-                    <p class="text-upper data-kepsek format-ttd">NAMA KEPALA</p>
-                    <p>NIP. <span class="data-nip1">...</span></p>
+                    <p class="text-upper data-kepsek format-ttd" contenteditable="true" spellcheck="false"><span class="nama-ttd">NAMA KEPALA</span></p>
+                    <p>NIP. <span class="data-nip1" contenteditable="true" spellcheck="false">...</span></p>
                 </div>
                 <div class="ttd-box">
-                    <p>Banjar, <span contenteditable="true" class="data-tgl">...</span><br>${jabatan}</p>
+                    <p>Banjar, <span contenteditable="true" class="data-tgl" spellcheck="false">...</span><br>${jabatan}</p>
                     <div class="ttd-space"></div>
-                    <p class="text-upper data-guru format-ttd">NAMA GURU</p>
-                    <p>NIP. <span class="data-nip2">...</span></p>
+                    <p class="text-upper data-guru format-ttd" contenteditable="true" spellcheck="false"><span class="nama-ttd">NAMA GURU</span></p>
+                    <p>NIP. <span class="data-nip2" contenteditable="true" spellcheck="false">...</span></p>
                 </div>
             </div>
         `;
 
-        const get31DaysHeader = () => {
-            let cols = '';
-            for(let i=1; i<=31; i++) { cols += `<th>${i}</th>`; }
-            return cols;
-        };
-
-        const get31DaysCells = () => {
-            let cols = '';
-            for(let i=1; i<=31; i++) { cols += `<td contenteditable="true"></td>`; }
-            return cols;
-        };
+        const get31DaysHeader = () => { let cols = ''; for(let i=1; i<=31; i++) cols += `<th>${i}</th>`; return cols; };
+        const get31DaysCells = () => { let cols = ''; for(let i=1; i<=31; i++) cols += `<td contenteditable="true"></td>`; return cols; };
 
         const templates = {
-            // STEP 1: Add Content Wrapper for Custom Page
             custom: `
                 <div style="min-height: 100%; display: flex; flex-direction: column;">
                     <div class="text-center text-bold" style="margin-bottom: 20px; font-size: 14pt;">CUSTOM PAGE</div>
                     <div class="page-content" contenteditable="true" style="flex: 1; outline: none; border: 1px dashed #e2e8f0; padding: 10px;">
-                        <p>Silakan ketik atau tempel konten Anda di sini...</p>
-                        <p>&nbsp;</p>
-                        <p>&nbsp;</p>
+                        <p>Silakan ketik atau tempel konten Anda di sini...</p><p>&nbsp;</p>
                     </div>
                     <div class="page-number"></div>
                 </div>
@@ -1935,65 +1350,30 @@
                     <h3 class="text-bold" style="text-decoration: underline;">LAPORAN PELAKSANAAN KEGIATAN</h3>
                     <p>Nomor: 421.2/...../SD/..../2025</p>
                 </div>
-
                 <div style="margin-bottom: 15px; text-align: justify;">
                     <p class="text-bold">A. PENDAHULUAN</p>
                     <div contenteditable="true" style="margin-left: 20px;">
-                        <p>Puji syukur ke hadirat Allah SWT, berkat rahmat dan karunia-Nya, kami dapat menyelesaikan penyusunan laporan kegiatan ini. Laporan ini disusun sebagai bentuk pertanggungjawaban atas pelaksanaan tugas dinas di lingkungan <span class="data-sekolah">...</span>.</p>
+                        <p>Puji syukur ke hadirat Allah SWT, berkat rahmat dan karunia-Nya, kami dapat menyelesaikan penyusunan laporan kegiatan ini.</p>
                     </div>
                 </div>
-
                 <div style="margin-bottom: 15px;">
                     <p class="text-bold">B. DATA PELAKSANA</p>
                     <table class="list-data" style="margin-left: 20px;">
-                        <tr><td width="150">Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
-                        <tr><td>NIP</td><td>:</td><td class="data-nip2">...</td></tr>
-                        <tr><td>Jabatan</td><td>:</td><td>Guru PJP PAI</td></tr>
-                        <tr><td>Unit Kerja</td><td>:</td><td class="data-sekolah">...</td></tr>
+                        <tr><td width="150">Nama</td><td>:</td><td class="data-guru text-bold" contenteditable="true" spellcheck="false">NAMA GURU</td></tr>
+                        <tr><td>NIP</td><td>:</td><td class="data-nip2" contenteditable="true" spellcheck="false">...</td></tr>
+                        <tr><td>Jabatan</td><td>:</td><td contenteditable="true">Guru PJP PAI</td></tr>
+                        <tr><td>Unit Kerja</td><td>:</td><td class="data-sekolah" contenteditable="true" spellcheck="false">NAMA SEKOLAH</td></tr>
                     </table>
                 </div>
-
                 <div style="margin-bottom: 15px;">
                     <p class="text-bold">C. HASIL KEGIATAN</p>
                     <table class="dinas">
-                        <thead>
-                            <tr>
-                                <th width="5%">No</th>
-                                <th width="30%">Nama Kegiatan</th>
-                                <th width="20%">Waktu</th>
-                                <th width="45%">Hasil / Output</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th width="5%">No</th><th width="30%">Nama Kegiatan</th><th width="20%">Waktu</th><th width="45%">Hasil / Output</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td class="text-center">1</td>
-                                <td contenteditable="true">Bimbingan Baca Tulis Al-Qur'an (BTQ)</td>
-                                <td contenteditable="true">Setiap Hari Senin-Jumat (13.00 - 14.00)</td>
-                                <td contenteditable="true">Siswa mampu membaca Iqra jilid 4-6 dengan lancar.</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">2</td>
-                                <td contenteditable="true">Pembinaan Akhlak Mulia</td>
-                                <td contenteditable="true">Insidental / Terintegrasi</td>
-                                <td contenteditable="true">Peningkatan kedisiplinan siswa dalam beribadah.</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">3</td>
-                                <td contenteditable="true">Evaluasi Hafalan Juz Amma</td>
-                                <td contenteditable="true">Akhir Bulan</td>
-                                <td contenteditable="true">80% siswa tuntas hafalan target semester.</td>
-                            </tr>
+                            <tr><td class="text-center">1</td><td contenteditable="true">Bimbingan BTQ</td><td contenteditable="true">Setiap Hari</td><td contenteditable="true">Siswa lancar baca Iqra</td></tr>
                         </tbody>
                     </table>
                 </div>
-
-                <div style="margin-bottom: 15px; text-align: justify;">
-                    <p class="text-bold">D. PENUTUP</p>
-                    <div contenteditable="true" style="margin-left: 20px;">
-                        <p>Demikian laporan ini kami buat dengan sebenar-benarnya untuk dapat dipergunakan sebagaimana mestinya. Kami menyadari masih banyak kekurangan dalam pelaksanaan kegiatan ini, oleh karena itu saran dan masukan sangat kami harapkan.</p>
-                    </div>
-                </div>
-
                 <div style="flex:1"></div>
                 ${getTTD()}
                 <div class="page-number"></div>
@@ -2001,13 +1381,13 @@
             cover: `
                 <div class="cover-border">
                     <div class="mt-2">
-                        <h2 class="text-bold">LAPORAN KEGIATAN</h2>
-                        <h2 class="text-bold">GURU PENAMBAHAN JAM PELAJARAN PAI</h2>
-                        <h3 class="text-bold">TAHUN PELAJARAN 2025/2026</h3>
+                        <h2 class="text-bold" contenteditable="true">LAPORAN KEGIATAN</h2>
+                        <h2 class="text-bold" contenteditable="true">GURU PENAMBAHAN JAM PELAJARAN PAI</h2>
+                        <h3 class="text-bold" contenteditable="true">TAHUN PELAJARAN 2025/2026</h3>
                     </div>
                     <div>
-                        <h3 class="text-bold data-sekolah">UPTD SD NEGERI 1 BATULAWANG</h3>
-                        <h3 class="text-bold text-upper data-tgl">BULAN ...</h3>
+                        <h3 class="text-bold data-sekolah" contenteditable="true" spellcheck="false">UPTD SD NEGERI 1 BATULAWANG</h3>
+                        <h3 class="text-bold text-upper data-tgl" contenteditable="true" spellcheck="false">BULAN ...</h3>
                     </div>
                     <div style="width:150px; height:180px; margin:0 auto; cursor:pointer;" onclick="triggerUpload(this)" title="Klik Ganti Logo">
                         <img src="https://via.placeholder.com/150x180?text=LOGO+BESAR" style="width:100%; height:100%; object-fit:contain;">
@@ -2015,590 +1395,211 @@
                     </div>
                     <div>
                         <p>DISUSUN OLEH :</p>
-                        <h3 class="text-bold text-upper data-guru">NAMA GURU</h3>
-                        <p class="data-nip2">NIP</p>
+                        <h3 class="text-bold text-upper data-guru" contenteditable="true" spellcheck="false">NAMA GURU</h3>
+                        <p class="data-nip2" contenteditable="true" spellcheck="false">NIP ...</p>
                     </div>
                     <div class="mb-2">
                         <h3 class="text-bold">PEMERINTAH KOTA BANJAR</h3>
                         <h3 class="text-bold">DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-                        <h3 class="text-bold">TAHUN 2025</h3>
+                        <h3 class="text-bold" contenteditable="true">TAHUN 2025</h3>
                     </div>
                 </div>
                 <div class="page-number"></div>
             `,
-
             laporan: `
                 <div style="min-height:100%; display:flex; flex-direction:column; font-family:'Times New Roman'; font-size:12pt; line-height:1.2;">
-
                     ${getKop()}
-
                     <div style="text-align:center; margin-bottom:15px;">
                         <div style="font-weight:bold;">LAPORAN KEGIATAN</div>
                         <div style="font-weight:bold;">TENAGA PENDIDIK PELAKSANA PENAMBAHAN JAM PELAJARAN (PJP)</div>
                         <div style="font-weight:bold;">PENDIDIKAN AGAMA ISLAM (PAI)</div>
                     </div>
-
                     <div style="flex:1;">
-
-                        <!-- Info Dasar -->
                         <table style="width:100%; margin-bottom:15px; border-collapse:collapse;">
-                            <tr>
-                                <td style="width:120px; vertical-align:top; padding:2px 0;">Nama</td>
-                                <td style="width:15px; vertical-align:top; padding:2px 0;">:</td>
-                                <td class="data-guru text-bold" style="vertical-align:top; padding:2px 0;">USAMAH DHIYA UL HAQ, S.Pd.</td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:2px 0;">Sekolah</td>
-                                <td style="vertical-align:top; padding:2px 0;">:</td>
-                                <td class="data-sekolah" style="vertical-align:top; padding:2px 0;">UPTD SD NEGERI 1 BATULAWANG</td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:2px 0;">Kelas</td>
-                                <td style="vertical-align:top; padding:2px 0;">:</td>
-                                <td contenteditable="true" style="vertical-align:top; padding:2px 0;">V (Lima)</td>
-                            </tr>
+                            <tr><td style="width:120px;">Nama</td><td>:</td><td class="data-guru text-bold" contenteditable="true" spellcheck="false">NAMA GURU</td></tr>
+                            <tr><td>Sekolah</td><td>:</td><td class="data-sekolah" contenteditable="true" spellcheck="false">NAMA SEKOLAH</td></tr>
+                            <tr><td>Kelas</td><td>:</td><td contenteditable="true">V (Lima)</td></tr>
                         </table>
-
-                        <!-- Isi Laporan (Tabel 3 Kolom agar Titik Dua Sejajar Presisi) -->
                         <table style="width:100%; border-collapse:collapse;">
-                            <tr>
-                                <td style="width:280px; vertical-align:top; padding:4px 0;"><b>1. Jumlah Peserta Didik (PD) yang Dihadapi</b></td>
-                                <td style="width:15px; vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Kelas V = 10 Orang Siswa</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>2. Tempat Pelaksanaan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">KELAS</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>3. Tanggal Pelaksanaan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">Tanggal 01 s.d. 20 Agustus 2025</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>4. Waktu Pelaksanaan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Kelas V : Pukul 10.00 s.d. 11.00 (hari Senin - Kamis)</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>5. Materi yang Diberikan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">1. Dasar Pengenalan Huruf Hijaiyah dan Harakat #3</p>
-                                        <p style="margin:2px 0;">2. Setor bacaan dan hafalan Iqra/Al-Quran</p>
-                                        <p style="margin:0;">3. Ujian lisan dan tulisan BTQ</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>6. Kondisi Awal PD yang Dihadapi</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Siswa yang Lancar Baca/Tulis = 6 Siswa</p>
-                                        <p style="margin:2px 0;">b. Siswa yang Belum Lancar Baca/Tulis = 3 Siswa</p>
-                                        <p style="margin:0;">c. Siswa yang Tidak Bisa Baca/Tulis = 1 Siswa</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>7. Perkembangan PD yang Dihadapi</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Siswa yang Lancar Baca/Tulis = 6 Siswa</p>
-                                        <p style="margin:2px 0;">b. Siswa yang Belum Lancar Baca/Tulis = 3 Siswa</p>
-                                        <p style="margin:0;">c. Siswa yang Tidak Bisa Baca/Tulis = 1 Siswa</p>
-                                    </div>
-                                </td>
-                            </tr>
+                            <tr><td style="width:280px; vertical-align:top;"><b>1. Jumlah Peserta Didik (PD) yang Dihadapi</b></td><td><b>:</b></td><td><div contenteditable="true"><p>a. Kelas V = 10 Orang Siswa</p></div></td></tr>
                         </table>
-
                     </div>
-
-                    <div style="margin-top:50px;">
-                        ${getTTD("Guru PJP PAI")}
-                    </div>
-
+                    <div style="margin-top:50px;">${getTTD("Guru PJP PAI")}</div>
                     <div class="page-number"></div>
-
                 </div>
             `,
-
             foto: `
                 <div class="text-center text-bold" style="margin-bottom:15px; border-bottom:1px solid #000; padding-bottom:10px;">
-                    <h3>LAPORAN DOKUMENTASI KEGIATAN</h3>
-                    <p class="data-tgl" style="font-size:10pt; font-weight:normal;">...</p>
+                    <h3 contenteditable="true">LAPORAN DOKUMENTASI KEGIATAN</h3>
+                    <p class="data-tgl" contenteditable="true" style="font-size:10pt; font-weight:normal;">...</p>
                 </div>
                 <div class="photo-grid">
-                    ${Array(6).fill(0).map((_, i) => `
-                    <div class="photo-card">
-                        <div class="photo-placeholder" onclick="triggerUpload(this)">
-                            <img src="" alt="Klik Upload" style="display:none;">
-                            <span style="color:#999; font-size:10pt;">+ Foto ${i+1}</span>
-                            <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
-                        </div>
-                        <div class="photo-caption" contenteditable="true">Kegiatan Siswa ${i+1}...</div>
-                    </div>`).join('')}
+                    ${Array(6).fill(0).map((_, i) => `<div class="photo-card"><div class="photo-placeholder" onclick="triggerUpload(this)"><img src="" alt="Klik Upload" style="display:none;"><span style="color:#999; font-size:10pt;">+ Foto ${i+1}</span><input type="file" accept="image/*" style="display:none" onchange="previewImage(this)"></div><div class="photo-caption" contenteditable="true">Kegiatan Siswa ${i+1}...</div></div>`).join('')}
                 </div>
                 <div class="page-number"></div>
             `,
-
             jadwal: `
                 ${getKop()}
                 <div class="text-center" style="margin-bottom:20px;">
-                    <h3 class="text-bold">JADWAL ASESMEN SUMATIF<br>AKHIR SEMESTER GANJIL</h3>
+                    <h3 class="text-bold" contenteditable="true">JADWAL ASESMEN SUMATIF<br>AKHIR SEMESTER GANJIL</h3>
                 </div>
                 <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="20%">Hari / Tanggal</th>
-                            <th width="10%">Jam Ke</th>
-                            <th width="15%">Pukul</th>
-                            <th width="35%">Mata Pelajaran</th>
-                            <th width="15%">Ket</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Array(5).fill(0).map((_, i) => `
-                        <tr>
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true">Senin, ...</td>
-                            <td class="text-center" contenteditable="true">1</td>
-                            <td class="text-center" contenteditable="true">07.30 - 09.00</td>
-                            <td contenteditable="true">PAI & Budi Pekerti</td>
-                            <td contenteditable="true"></td>
-                        </tr>`).join('')}
-                    </tbody>
+                    <thead><tr><th width="5%">No</th><th width="20%">Hari / Tanggal</th><th width="10%">Jam Ke</th><th width="15%">Pukul</th><th width="35%">Mata Pelajaran</th><th width="15%">Ket</th></tr></thead>
+                    <tbody>${Array(5).fill(0).map((_, i) => `<tr><td class="text-center">${i+1}</td><td contenteditable="true">Senin, ...</td><td class="text-center" contenteditable="true">1</td><td class="text-center" contenteditable="true">07.30 - 09.00</td><td contenteditable="true">PAI</td><td contenteditable="true"></td></tr>`).join('')}</tbody>
                 </table>
-                <p style="font-size:10pt; margin-top:10px;" contenteditable="true">* Jadwal dapat berubah sewaktu-waktu.</p>
                 <div style="flex:1"></div>
                 ${getTTD()}
                 <div class="page-number"></div>
             `,
-
             rekap_nilai: `
                 <div class="text-center text-bold" style="margin-bottom:15px; text-transform:uppercase; line-height:1.5;">
-                    <h3>REKAP NILAI HARIAN BTQ SISWA KELAS V (LIMA)</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
-                    <h3>KECAMATAN PATARUMAN</h3>
-                    <h3>KOTA BANJAR</h3>
+                    <h3 contenteditable="true">REKAP NILAI HARIAN BTQ SISWA KELAS V (LIMA)</h3>
+                    <h3 class="data-sekolah" contenteditable="true" spellcheck="false">UPTD SD NEGERI ...</h3>
                 </div>
-
                 <table class="table-padat">
                     <thead>
-                        <tr>
-                            <th rowspan="2" width="4%">No</th>
-                            <th rowspan="2" width="10%">NISN</th>
-                            <th rowspan="2" width="20%">Nama Siswa</th>
-                            <th colspan="4">Komponen Penilaian</th>
-                            <th rowspan="2" width="5%">Jml</th>
-                            <th rowspan="2" width="5%">NA</th>
-                            <th rowspan="2" width="15%">Deskripsi</th>
-                            <th colspan="3" width="9%">Absensi</th>
-                        </tr>
-                        <tr>
-                            <th width="6%">Lancar (30)</th>
-                            <th width="6%">Tajwid (40)</th>
-                            <th width="6%">Irama (20)</th>
-                            <th width="6%">Adab (10)</th>
-                            <th width="3%">S</th>
-                            <th width="3%">I</th>
-                            <th width="3%">A</th>
-                        </tr>
+                        <tr><th rowspan="2" width="4%">No</th><th rowspan="2" width="10%">NISN</th><th rowspan="2" width="20%">Nama Siswa</th><th colspan="4">Komponen Penilaian</th><th rowspan="2" width="5%">Jml</th><th rowspan="2" width="5%">NA</th><th rowspan="2" width="15%">Deskripsi</th><th colspan="3" width="9%">Absensi</th></tr>
+                        <tr><th width="6%">Lancar</th><th width="6%">Tajwid</th><th width="6%">Irama</th><th width="6%">Adab</th><th width="3%">S</th><th width="3%">I</th><th width="3%">A</th></tr>
                     </thead>
                     <tbody>
-                        ${Array(20).fill(0).map((_, i) => `
-                        <tr oninput="calculateScore(this)">
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true">Nama Siswa ${i+1}</td>
-                            <!-- Score Inputs -->
-                            <td contenteditable="true" class="text-center score-lancar">0</td>
-                            <td contenteditable="true" class="text-center score-tajwid">0</td>
-                            <td contenteditable="true" class="text-center score-irama">0</td>
-                            <td contenteditable="true" class="text-center score-adab">0</td>
-                            <!-- Auto Calc -->
-                            <td class="text-center text-bold score-total" style="background:#f1f5f9;">0</td>
-                            <td class="text-center text-bold score-final" style="background:#f1f5f9;">0</td>
-                            <!-- Ket -->
-                            <td contenteditable="true" style="font-size:8pt;">Sangat Baik</td>
-                            <!-- Absen -->
-                            <td contenteditable="true" class="text-center">-</td>
-                            <td contenteditable="true" class="text-center">-</td>
-                            <td contenteditable="true" class="text-center">-</td>
-                        </tr>
-                        `).join('')}
+                        ${Array(20).fill(0).map((_, i) => `<tr oninput="calculateScore(this)"><td class="text-center">${i+1}</td><td contenteditable="true"></td><td contenteditable="true">Nama Siswa ${i+1}</td><td contenteditable="true" class="text-center score-lancar">0</td><td contenteditable="true" class="text-center score-tajwid">0</td><td contenteditable="true" class="text-center score-irama">0</td><td contenteditable="true" class="text-center score-adab">0</td><td class="text-center text-bold score-total" style="background:#f1f5f9;">0</td><td class="text-center text-bold score-final" style="background:#f1f5f9;">0</td><td contenteditable="true" style="font-size:8pt;">Sangat Baik</td><td contenteditable="true" class="text-center">-</td><td contenteditable="true" class="text-center">-</td><td contenteditable="true" class="text-center">-</td></tr>`).join('')}
                     </tbody>
                 </table>
                 <div style="margin-top:20px; text-align:right;">
                     <div style="display:inline-block; width:200px; text-align:center;">
-                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p>Guru BTQ</p>
-                        <br><br><br>
-                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p><p>Guru BTQ</p><br><br><br>
+                        <p class="text-upper data-guru format-ttd" contenteditable="true" spellcheck="false"><span class="nama-ttd">Nama Guru</span></p>
                     </div>
                 </div>
                 <div class="page-number"></div>
             `,
-
             rekap_ujian: `
                 ${getKop()}
                 <div class="text-center text-bold text-upper" style="margin-bottom:20px;">
-                    <h3>REKAPITULASI HASIL UJIAN BACA TULIS AL-QURAN</h3>
-                    <h3>KELAS V SEMESTER 1</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
+                    <h3 contenteditable="true">REKAPITULASI HASIL UJIAN BACA TULIS AL-QURAN</h3>
+                    <h3 class="data-sekolah" contenteditable="true" spellcheck="false">UPTD SD NEGERI ...</h3>
                 </div>
-
                 <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="25%">Nama Siswa</th>
-                            <th width="10%">Kelancaran (30)</th>
-                            <th width="10%">Tajwid Makhorij (40)</th>
-                            <th width="10%">Irama Tartil (20)</th>
-                            <th width="10%">Adab (10)</th>
-                            <th width="10%" class="col-nilai-akhir">Nilai Akhir</th>
-                            <th width="20%">Keterangan</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th width="5%">No</th><th width="25%">Nama Siswa</th><th width="10%">Kelancaran (30)</th><th width="10%">Tajwid (40)</th><th width="10%">Irama (20)</th><th width="10%">Adab (10)</th><th width="10%" class="col-nilai-akhir">Nilai Akhir</th><th width="20%">Keterangan</th></tr></thead>
                     <tbody>
-                         ${Array(20).fill(0).map((_, i) => `
-                        <tr oninput="calculateExamScore(this)">
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true">Nama Siswa ${i+1}</td>
-                            <td contenteditable="true" class="text-center exam-lancar">0</td>
-                            <td contenteditable="true" class="text-center exam-tajwid">0</td>
-                            <td contenteditable="true" class="text-center exam-irama">0</td>
-                            <td contenteditable="true" class="text-center exam-adab">0</td>
-                            <td class="text-center col-nilai-akhir exam-final">0</td>
-                            <td contenteditable="true" class="text-center">LULUS</td>
-                        </tr>`).join('')}
+                         ${Array(20).fill(0).map((_, i) => `<tr oninput="calculateExamScore(this)"><td class="text-center">${i+1}</td><td contenteditable="true">Nama Siswa ${i+1}</td><td contenteditable="true" class="text-center exam-lancar">0</td><td contenteditable="true" class="text-center exam-tajwid">0</td><td contenteditable="true" class="text-center exam-irama">0</td><td contenteditable="true" class="text-center exam-adab">0</td><td class="text-center col-nilai-akhir exam-final">0</td><td contenteditable="true" class="text-center">LULUS</td></tr>`).join('')}
                     </tbody>
                 </table>
-
                 <div style="flex:1"></div>
                 ${getTTD()}
                 <div class="page-number"></div>
             `,
-
-            // ===============================================
-            // TEMPLATE BARU: SETORAN HAFALAN JUZ 30
-            // ===============================================
             setoran_hafalan_juz30: `
                 <div class="landscape-marker" style="display:none;"></div>
-                
-                <!-- Header / Kop -->
                 ${getKop()}
-                
-                <!-- Judul -->
                 <div class="text-center" style="margin-top: 15px; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 1px solid #000;">
-                    <h3 style="margin: 0 0 6px 0; font-weight: 700; letter-spacing: 1px; font-size: 14pt; text-transform: uppercase; line-height: 1.2;">REKAP SETORAN HAFALAN JUZ 30</h3>
-                    <h3 style="margin: 0 0 6px 0; font-weight: 700; letter-spacing: 1px; font-size: 12pt; text-transform: uppercase; line-height: 1.2;">KELAS V (LIMA)</h3>
-                    <h3 class="data-sekolah" style="margin: 0; font-weight: 700; letter-spacing: 1px; font-size: 12pt; text-transform: uppercase; line-height: 1.2;">UPTD SD NEGERI 1 BATULAWANG</h3>
+                    <h3 contenteditable="true" style="margin: 0 0 6px 0; font-weight: 700; font-size: 14pt; text-transform: uppercase;">REKAP SETORAN HAFALAN JUZ 30</h3>
+                    <h3 class="data-sekolah" contenteditable="true" spellcheck="false" style="margin: 0; font-weight: 700; font-size: 12pt; text-transform: uppercase;">UPTD SD NEGERI 1 BATULAWANG</h3>
                 </div>
-
-                <!-- Tabel -->
                 <table style="width: 100%; border-collapse: collapse; font-family: 'Times New Roman', Times, serif; font-size: 7pt; border: 2px solid #000; table-layout: fixed;">
                     <thead>
-                        <tr>
-                            <th rowspan="2" style="width: 3%; border: 1px solid #000; background-color: #e5e7eb; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">No</th>
-                            <th rowspan="2" style="width: 16%; border: 1px solid #000; background-color: #e5e7eb; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">Nama Siswa</th>
-                            <th colspan="37" style="border: 1px solid #000; background-color: #e5e7eb; padding: 4px 3px; vertical-align: middle; font-weight: bold; letter-spacing: 1px; text-align: center;">SURAH JUZ 30</th>
-                            <th rowspan="2" style="width: 5%; border: 1px solid #000; background-color: #eef2ff; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">Jml<br>Setor</th>
-                            <th rowspan="2" style="width: 8%; border: 1px solid #000; background-color: #e5e7eb; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">Ket</th>
-                        </tr>
-                        <tr>
-                            ${[
-                                "ANB","ANZ","ABS","ATK","AIF","AMF","AIS","ABR","ATR","AAL",
-                                "AGS","AFJ","ABL","ASY","ALL","ADH","SRH","ATN","ALQ","AQD",
-                                "ABY","AZL","ADY","AQR","TKT","ASR","AHM","AFL","QRS","AMN",
-                                "AKT","AKF","NSR","LHB","IKH","FLQ","NAS"
-                            ].map(surah => `
-                                <th style="border: 1px solid #000; background-color: #e5e7eb; height: 80px; width: 12px; padding: 0; vertical-align: middle; text-align: center;">
-                                    <div style="transform: rotate(-90deg); white-space: nowrap; font-size: 6.5pt; font-weight: bold; letter-spacing: 0.5px;">${surah}</div>
-                                </th>
-                            `).join('')}
-                        </tr>
+                        <tr><th rowspan="2" style="width: 3%; border: 1px solid #000; background-color: #e5e7eb;">No</th><th rowspan="2" style="width: 16%; border: 1px solid #000; background-color: #e5e7eb;">Nama Siswa</th><th colspan="37" style="border: 1px solid #000; background-color: #e5e7eb;">SURAH JUZ 30</th><th rowspan="2" style="width: 5%; border: 1px solid #000; background-color: #eef2ff;">Jml<br>Setor</th><th rowspan="2" style="width: 8%; border: 1px solid #000; background-color: #e5e7eb;">Ket</th></tr>
+                        <tr>${["ANB","ANZ","ABS","ATK","AIF","AMF","AIS","ABR","ATR","AAL","AGS","AFJ","ABL","ASY","ALL","ADH","SRH","ATN","ALQ","AQD","ABY","AZL","ADY","AQR","TKT","ASR","AHM","AFL","QRS","AMN","AKT","AKF","NSR","LHB","IKH","FLQ","NAS"].map(surah => `<th style="border: 1px solid #000; background-color: #e5e7eb; height: 80px; width: 12px; padding: 0;"><div style="transform: rotate(-90deg); font-size: 6.5pt; font-weight: bold;">${surah}</div></th>`).join('')}</tr>
                     </thead>
                     <tbody>
-                        ${[
-                            "Annisa", "Arda", "Azzam", "Darnel", "Felari", "Lutfi",
-                            "Nadira", "Nur Fauzah A", "Salma", "Septi", "Nayla"
-                        ].map((nama, i) => `
-                        <tr>
-                            <td class="text-center" style="border: 1px solid #000; padding: 2px 3px; vertical-align: middle;">${i+1}</td>
-                            <td contenteditable="true" style="border: 1px solid #000; padding: 2px 3px 2px 5px; vertical-align: middle; text-align: left; white-space: nowrap; overflow: hidden;">${nama}</td>
-                            ${Array(37).fill(0).map(() => `
-                                <td class="text-center" style="border: 1px solid #000; padding: 0; vertical-align: middle;">
-                                    <input type="checkbox" onchange="calculateSetoranRow(this)" style="margin: 0 auto; transform: scale(0.7); cursor: pointer; display: block;">
-                                </td>
-                            `).join('')}
-                            <td contenteditable="true" class="text-center text-bold total-setor" style="border: 1px solid #000; padding: 2px 3px; vertical-align: middle; background-color: #eef2ff;">0</td>
-                            <td contenteditable="true" class="text-center" style="border: 1px solid #000; padding: 2px 3px; vertical-align: middle;">-</td>
-                        </tr>
-                        `).join('')}
+                        ${["Annisa", "Arda", "Azzam", "Darnel", "Felari", "Lutfi", "Nadira", "Nur Fauzah", "Salma", "Septi", "Nayla"].map((nama, i) => `<tr><td class="text-center" style="border: 1px solid #000;">${i+1}</td><td contenteditable="true" style="border: 1px solid #000;">${nama}</td>${Array(37).fill(0).map(() => `<td class="text-center" style="border: 1px solid #000;"><input type="checkbox" onchange="calculateSetoranRow(this)" style="transform: scale(0.7); cursor: pointer;"></td>`).join('')}<td contenteditable="true" class="text-center text-bold total-setor" style="border: 1px solid #000; background-color: #eef2ff;">0</td><td contenteditable="true" class="text-center" style="border: 1px solid #000;">-</td></tr>`).join('')}
                     </tbody>
                 </table>
-
-                <!-- Footer TTD -->
                 <div style="margin-top: 30px; display: flex; justify-content: flex-end; padding-right: 25px; page-break-inside: avoid;">
-                    <div style="text-align: center; width: 220px; font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-                        <p style="margin: 0 0 5px 0; line-height: 1.5;">Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p style="margin: 0; line-height: 1.5;">Guru PAI / BTQ</p>
-                        <div style="height: 65px;"></div>
-                        <p class="text-upper data-guru format-ttd" style="margin: 0;">Nama Guru</p>
-                        <p style="margin: 5px 0 0 0;">NIP. <span class="data-nip2">...</span></p>
+                    <div style="text-align: center; width: 220px;">
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p><p>Guru PAI / BTQ</p><div style="height: 65px;"></div>
+                        <p class="text-upper data-guru format-ttd" contenteditable="true" spellcheck="false"><span class="nama-ttd">Nama Guru</span></p>
+                        <p>NIP. <span class="data-nip2" contenteditable="true" spellcheck="false">...</span></p>
                     </div>
                 </div>
-                
                 <div class="page-number"></div>
             `,
-
             absensi_guru: `
                 ${getKop()}
                 <div class="text-center text-bold text-upper" style="margin-bottom:20px;">
-                    <h3>DAFTAR HADIR GURU PJP PAI</h3>
-                    <h3>KEGIATAN PEMBINAAN BACA TULIS AL QURAN</h3>
-                    <h3 class="data-tgl">BULAN ...</h3>
+                    <h3 contenteditable="true">DAFTAR HADIR GURU PJP PAI</h3>
+                    <h3 class="data-tgl" contenteditable="true" spellcheck="false">BULAN ...</h3>
                 </div>
-
                 <table class="table-grid">
-                    <thead>
-                        <tr>
-                            <th width="40px" rowspan="2">No</th>
-                            <th width="200px" rowspan="2">Nama Guru / NIP</th>
-                            <th colspan="31">Tanggal</th>
-                        </tr>
-                        <tr>
-                            ${get31DaysHeader()}
-                        </tr>
-                    </thead>
+                    <thead><tr><th width="40px" rowspan="2">No</th><th width="200px" rowspan="2">Nama Guru / NIP</th><th colspan="31">Tanggal</th></tr><tr>${get31DaysHeader()}</tr></thead>
                     <tbody>
-                        <tr>
-                            <td class="text-center">1</td>
-                            <td style="text-align:left; padding-left:5px;">
-                                <span class="text-bold text-upper data-guru">Nama Guru</span><br>
-                                NIP. <span class="data-nip2">-</span>
-                            </td>
-                            ${get31DaysCells()}
-                        </tr>
-                         <tr>
-                            <td class="text-center">2</td>
-                             <td style="text-align:left; padding-left:5px;">
-                                <span class="text-bold text-upper data-kepsek">Nama Kepala</span><br>
-                                NIP. <span class="data-nip1">-</span>
-                            </td>
-                            ${get31DaysCells()}
-                        </tr>
+                        <tr><td class="text-center">1</td><td style="text-align:left; padding-left:5px;"><span class="text-bold text-upper data-guru" contenteditable="true" spellcheck="false">Nama Guru</span><br>NIP. <span class="data-nip2" contenteditable="true" spellcheck="false">-</span></td>${get31DaysCells()}</tr>
+                        <tr><td class="text-center">2</td><td style="text-align:left; padding-left:5px;"><span class="text-bold text-upper data-kepsek" contenteditable="true" spellcheck="false">Nama Kepala</span><br>NIP. <span class="data-nip1" contenteditable="true" spellcheck="false">-</span></td>${get31DaysCells()}</tr>
                     </tbody>
                 </table>
                 <div style="flex:1"></div>
                 ${getTTD()}
                 <div class="page-number"></div>
             `,
-
             absensi_siswa: `
                 <div class="text-center text-bold text-upper" style="margin-bottom:15px;">
-                    <h3>DAFTAR HADIR SISWA</h3>
-                    <h3>KEGIATAN PEMBINAAN BACA TULIS AL QURAN</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
+                    <h3 contenteditable="true">DAFTAR HADIR SISWA</h3>
+                    <h3 class="data-sekolah" contenteditable="true" spellcheck="false">UPTD SD NEGERI ...</h3>
                 </div>
-
                 <table class="table-grid">
-                    <thead>
-                        <tr>
-                            <th width="30px" rowspan="2">No</th>
-                            <th width="150px" rowspan="2">Nama Siswa</th>
-                            <th colspan="31">Tanggal</th>
-                        </tr>
-                        <tr>
-                            ${get31DaysHeader()}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Array(25).fill(0).map((_, i) => `
-                        <tr>
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true" style="text-align:left; padding-left:4px; white-space:nowrap; overflow:hidden;">Nama Siswa ${i+1}</td>
-                            ${get31DaysCells()}
-                        </tr>
-                        `).join('')}
-                    </tbody>
+                    <thead><tr><th width="30px" rowspan="2">No</th><th width="150px" rowspan="2">Nama Siswa</th><th colspan="31">Tanggal</th></tr><tr>${get31DaysHeader()}</tr></thead>
+                    <tbody>${Array(25).fill(0).map((_, i) => `<tr><td class="text-center">${i+1}</td><td contenteditable="true" style="text-align:left;">Nama Siswa ${i+1}</td>${get31DaysCells()}</tr>`).join('')}</tbody>
                 </table>
                 <div style="flex:1"></div>
                  <div style="margin-top:20px; text-align:right;">
                     <div style="display:inline-block; width:200px; text-align:center;">
-                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p>Guru BTQ</p>
-                        <br><br><br>
-                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p><p>Guru BTQ</p><br><br><br>
+                        <p class="text-upper data-guru format-ttd" contenteditable="true" spellcheck="false"><span class="nama-ttd">Nama Guru</span></p>
                     </div>
                 </div>
                 <div class="page-number"></div>
             `,
-
             program_semester: `
                 ${getKop()}
                 <div class="text-center text-bold text-upper" style="margin-bottom:15px; border-bottom:1px solid #000; padding-bottom:10px;">
-                    <h3>PROGRAM KEGIATAN SEMESTER</h3>
-                    <h3>TENAGA PENDIDIK PELAKSANA PENAMBAHAN JAM PELAJARAN (PJP)</h3>
-                    <h3>PENDIDIKAN AGAMA ISLAM (PAI)</h3>
-                    <h3>SEMESTER GANJIL TAHUN PELAJARAN 2025/2026</h3>
+                    <h3 contenteditable="true">PROGRAM KEGIATAN SEMESTER</h3>
                 </div>
-
                 <div style="margin-bottom:15px;">
                     <table class="list-data">
-                        <tr><td>Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
-                        <tr><td>Sekolah</td><td>:</td><td class="data-sekolah">...</td></tr>
+                        <tr><td>Nama</td><td>:</td><td class="data-guru text-bold" contenteditable="true" spellcheck="false">NAMA GURU</td></tr>
+                        <tr><td>Sekolah</td><td>:</td><td class="data-sekolah" contenteditable="true" spellcheck="false">NAMA SEKOLAH</td></tr>
                     </table>
                 </div>
-
                 <div class="text-bold" style="margin-bottom:5px;">I. PELAKSANAAN PEMBELAJARAN</div>
-                <div style="margin-left:20px; margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:5px;"><input type="checkbox" checked> Bimbingan Klasikal</label>
-                    <label style="display:block;"><input type="checkbox"> Bimbingan Individual</label>
-                </div>
-
+                <div style="margin-left:20px; margin-bottom:15px;"><label><input type="checkbox" checked> Bimbingan Klasikal</label><br><label><input type="checkbox"> Bimbingan Individual</label></div>
+                
                 <div class="text-bold" style="margin-bottom:5px;">II. TEMPAT PELAKSANAAN</div>
-                <div style="margin-left:20px; margin-bottom:10px;">
-                    <label style="display:inline-block; margin-right:20px;"><input type="checkbox" checked> Sekolah</label>
-                    <label style="display:inline-block; margin-right:20px;"><input type="checkbox"> Masjid / Madrasah</label>
-                    <label style="display:inline-block;"><input type="checkbox"> Lainnya: <span contenteditable="true" style="border-bottom:1px dotted #000; min-width:100px; display:inline-block;">...</span></label>
-                </div>
-                <div style="margin-left:20px; margin-bottom:15px;">
-                    <span style="font-size:10pt;">Alasan Pemilihan Tempat:</span>
-                    <textarea class="print-safe" rows="2">Tempat kondusif dan sarana memadai.</textarea>
-                </div>
-
+                <div style="margin-left:20px; margin-bottom:10px;"><label><input type="checkbox" checked> Sekolah</label><label style="margin-left:15px;"><input type="checkbox"> Masjid</label></div>
+                
                 <div class="text-bold" style="margin-bottom:5px;">III. WAKTU PELAKSANAAN</div>
-                <div style="margin-left:20px; margin-bottom:15px;">
-                    <p style="margin:0;">• Durasi: 1 jam (60 menit) per hari.</p>
-                    <p style="margin:0;">• Hari: Senin s.d Jumat</p>
-                    <p style="margin:5px 0;">• Pukul <span contenteditable="true" style="font-weight:bold;">13.00</span> s.d <span contenteditable="true" style="font-weight:bold;">14.00</span> WIB</p>
-                    <p style="margin:0;">• Kelas: <span contenteditable="true">V (Lima)</span></p>
-                    <div style="margin-top:5px;">
-                         <span style="font-size:10pt;">Alasan / Saran Waktu:</span>
-                         <textarea class="print-safe" rows="2">Dilaksanakan setelah jam pelajaran reguler.</textarea>
-                    </div>
-                </div>
+                <div style="margin-left:20px; margin-bottom:15px;"><p>• Kelas: <span contenteditable="true">V (Lima)</span></p></div>
 
                 <div class="text-bold" style="margin-bottom:5px;">IV. DAFTAR MATERI DAN PELAKSANAANNYA</div>
                 <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" width="40%">Materi</th>
-                            <th colspan="6">Bulan Pelaksanaan (2025)</th>
-                        </tr>
-                        <tr>
-                            <th width="10%">Jul</th><th width="10%">Agt</th><th width="10%">Sep</th>
-                            <th width="10%">Okt</th><th width="10%">Nov</th><th width="10%">Des</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th rowspan="2" width="40%">Materi</th><th colspan="6">Bulan Pelaksanaan</th></tr><tr><th>Jul</th><th>Agt</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td contenteditable="true">Membaca Al-Qur'an / Iqra</td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true">Menulis Huruf Hijaiyah</td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                        </tr>
-                         <tr>
-                            <td contenteditable="true">Hafalan Surat Pendek</td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                        </tr>
+                        <tr><td contenteditable="true">Membaca Al-Qur'an / Iqra</td><td class="text-center"><input type="checkbox"></td><td class="text-center"><input type="checkbox"></td><td class="text-center"><input type="checkbox"></td><td class="text-center"><input type="checkbox"></td><td class="text-center"><input type="checkbox"></td><td class="text-center"><input type="checkbox"></td></tr>
                     </tbody>
                 </table>
-
-                <div class="text-bold" style="margin-top:15px; margin-bottom:5px;">V. CATATAN KEGIATAN</div>
-                <div contenteditable="true" style="border:1px solid #ccc; padding:10px; min-height:80px; font-size:10pt;">
-                    • Metode Pembelajaran: Ceramah, Demonstrasi, Drill<br>
-                    • Media: Buku Iqra, Juz Amma, Papan Tulis<br>
-                    • Evaluasi: Tes Lisan Harian
-                </div>
-
                 <div style="flex:1"></div>
                 ${getTTD()}
                 <div class="page-number"></div>
             `,
-
             hadir_ujian: `
                 <div class="text-center text-bold text-upper" style="margin-bottom:20px; padding-top:20px;">
-                    <h3>DAFTAR HADIR UJIAN BTQ SISWA KELAS V</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
-                    <h3>TAHUN PELAJARAN 2025/2026</h3>
+                    <h3 contenteditable="true">DAFTAR HADIR UJIAN BTQ SISWA KELAS V</h3>
+                    <h3 class="data-sekolah" contenteditable="true" spellcheck="false">UPTD SD NEGERI ...</h3>
                 </div>
-
                 <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="15%">NISN</th>
-                            <th width="35%">Nama Siswa</th>
-                            <th width="45%">Tanda Tangan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                         ${Array(20).fill(0).map((_, i) => `
-                        <tr>
-                            <td class="text-center" style="height:35px;">${i+1}</td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true">Nama Siswa ${i+1}</td>
-                            <td style="vertical-align:top; font-size:9pt; color:#ccc;">${i+1}....................</td>
-                        </tr>`).join('')}
-                    </tbody>
+                    <thead><tr><th width="5%">No</th><th width="15%">NISN</th><th width="35%">Nama Siswa</th><th width="45%">Tanda Tangan</th></tr></thead>
+                    <tbody>${Array(20).fill(0).map((_, i) => `<tr><td class="text-center" style="height:35px;">${i+1}</td><td contenteditable="true"></td><td contenteditable="true">Nama Siswa ${i+1}</td><td style="vertical-align:top; font-size:9pt; color:#ccc;">${i+1}....................</td></tr>`).join('')}</tbody>
                 </table>
-
                 <div style="flex:1"></div>
                  <div style="margin-top:20px; text-align:right;">
                     <div style="display:inline-block; width:200px; text-align:center;">
-                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p>Penguji</p>
-                        <br><br><br>
-                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
+                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p><p>Penguji</p><br><br><br>
+                        <p class="text-upper data-guru format-ttd" contenteditable="true" spellcheck="false"><span class="nama-ttd">Nama Guru</span></p>
                     </div>
                 </div>
                 <div class="page-number"></div>
             `
         };
 
-        // Init Default Page
         window.onload = function() {
             if (!loadFromStorage()) {
                 addPage('cover');
@@ -2607,52 +1608,31 @@
                 renderPages();
             }
         }
-
     </script>
     
     <!-- =========================================
-       10. NEW UX LOGIC (NON-DESTRUCTIVE)
+       UX & UTILITY LOGIC
        ========================================= -->
     <script id="ux-logic">
-        // --- UX HELPER FUNCTIONS ---
-
         function uxToast(message, type = 'success') {
             const container = document.getElementById('uxToastContainer');
             const toast = document.createElement('div');
-            
-            // Icon Logic
-            let iconClass = 'ph-check-circle';
-            if(type === 'error') iconClass = 'ph-warning-circle';
-            if(type === 'info') iconClass = 'ph-info';
+            let iconClass = type === 'error' ? 'ph-warning-circle' : type === 'info' ? 'ph-info' : 'ph-check-circle';
 
             toast.className = `ux-toast ${type}`;
-            toast.innerHTML = `
-                <i class="ph ${iconClass}"></i>
-                <span>${message}</span>
-            `;
-
+            toast.innerHTML = `<i class="ph ${iconClass}"></i><span>${message}</span>`;
             container.appendChild(toast);
             
-            // Trigger Animation
             requestAnimationFrame(() => toast.classList.add('visible'));
-
-            // Remove after 3s
-            setTimeout(() => {
-                toast.classList.remove('visible');
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('visible'); setTimeout(() => toast.remove(), 400); }, 3000);
         }
 
         function uxShowLoader(text = "Memproses...") {
-            const loader = document.getElementById('uxLoader');
             document.getElementById('uxLoaderText').innerText = text;
-            loader.classList.add('active');
+            document.getElementById('uxLoader').classList.add('active');
         }
 
-        function uxHideLoader() {
-            const loader = document.getElementById('uxLoader');
-            loader.classList.remove('active');
-        }
+        function uxHideLoader() { document.getElementById('uxLoader').classList.remove('active'); }
 
         function uxBtnLoad(btn, start = true) {
             if(!btn) return;
@@ -2667,56 +1647,34 @@
         function uxConfirm(title, desc) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('uxConfirmModal');
-                const titleEl = document.getElementById('uxConfirmTitle');
-                const descEl = document.getElementById('uxConfirmDesc');
-                const btnConfirm = document.getElementById('uxBtnConfirm');
-                const btnCancel = document.getElementById('uxBtnCancel');
-
-                titleEl.innerText = title;
-                descEl.innerText = desc;
-                
+                document.getElementById('uxConfirmTitle').innerText = title;
+                document.getElementById('uxConfirmDesc').innerText = desc;
                 modal.classList.add('active');
 
                 const cleanup = () => {
                     modal.classList.remove('active');
-                    btnConfirm.removeEventListener('click', onConfirm);
-                    btnCancel.removeEventListener('click', onCancel);
+                    document.getElementById('uxBtnConfirm').removeEventListener('click', onConfirm);
+                    document.getElementById('uxBtnCancel').removeEventListener('click', onCancel);
                 };
 
-                const onConfirm = () => {
-                    cleanup();
-                    resolve(true);
-                };
+                const onConfirm = () => { cleanup(); resolve(true); };
+                const onCancel = () => { cleanup(); resolve(false); };
 
-                const onCancel = () => {
-                    cleanup();
-                    resolve(false);
-                };
-
-                btnConfirm.addEventListener('click', onConfirm);
-                btnCancel.addEventListener('click', onCancel);
+                document.getElementById('uxBtnConfirm').addEventListener('click', onConfirm);
+                document.getElementById('uxBtnCancel').addEventListener('click', onCancel);
             });
         }
 
-        // --- UX SAVING INDICATOR HOOK ---
         const saveIndicator = document.getElementById('uxSaveIndicator');
         let hideSaveIndicatorTimeout;
-
-        // Override existing listener logic via new listener
         document.addEventListener('input', (e) => {
             if(e.target.closest('.sheet') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 saveIndicator.classList.add('active');
                 clearTimeout(hideSaveIndicatorTimeout);
-                
-                hideSaveIndicatorTimeout = setTimeout(() => {
-                    saveIndicator.classList.remove('active');
-                }, 1500);
+                hideSaveIndicatorTimeout = setTimeout(() => { saveIndicator.classList.remove('active'); }, 1500);
             }
         });
 
-        // --- WRAPPER FUNCTIONS (THE EXTEND STRATEGY) ---
-
-        // Wrapper for Add Page
         function handleAddPage(type, btn) {
             uxBtnLoad(btn, true);
             setTimeout(() => {
@@ -2726,21 +1684,15 @@
                 } catch(e) {
                     uxToast("Gagal menambah halaman", "error");
                     console.error(e);
-                } finally {
-                    uxBtnLoad(btn, false);
-                }
-            }, 300); // Fake delay for UX feel
+                } finally { uxBtnLoad(btn, false); }
+            }, 300);
         }
 
-        // Wrapper for Print
         async function handleSafePrint(btn) {
             uxShowLoader("Menyiapkan PDF...");
             uxBtnLoad(btn, true);
-            
             try {
-                // Wait small delay to allow UI to render loader
                 await new Promise(r => setTimeout(r, 100));
-                
                 await safePrint();
                 uxToast("PDF Berhasil Diunduh!", "success");
             } catch (e) {
@@ -2751,130 +1703,56 @@
             }
         }
 
-        // Wrapper for Sync Data
-        function handleSyncData() {
-            syncData();
-            // No toast needed for realtime sync, maybe just log or small indicator
-        }
-
-        // Wrapper for Delete Confirmation
-        async function handleConfirmDelete() {
-            // No async logic needed for delete execution, but good for UI consistency
-            try {
-                confirmDelete();
-                uxToast("Halaman dihapus", "info");
-            } catch(e) {
-                uxToast("Gagal menghapus", "error");
-            }
-        }
-
-        // Wrapper for Embed Confirmation
-        function handleConfirmEmbed() {
-            confirmEmbed();
-            // Toasts handled inside validation logic or we can add here if successful
-        }
-
-        // Wrapper for Edit Mode
-        function handleConfirmEditMode() {
-            confirmEditMode();
-            uxToast("Mode Edit Diaktifkan", "info");
-        }
-
-        // Wrapper for Reset All (The Trickiest One)
         async function handleResetAllPages() {
-            const confirmed = await uxConfirm(
-                "Reset Semua Data?", 
-                "Tindakan ini akan menghapus semua halaman dan data tersimpan. Tidak bisa dibatalkan."
-            );
-
+            const confirmed = await uxConfirm("Reset Semua Data?", "Tindakan ini akan menghapus semua halaman dan data tersimpan. Tidak bisa dibatalkan.");
             if (confirmed) {
-                // TRICK: Override window.confirm temporarily so the original function doesn't popup a second native alert
                 const originalConfirm = window.confirm;
                 window.confirm = () => true; 
-                
                 uxShowLoader("Mereset Sistem...");
-                
                 setTimeout(() => {
-                    resetAllPages(); // This calls reload, so loader stays until reload
-                    window.confirm = originalConfirm; // Restore just in case reload fails
+                    resetAllPages(); 
+                    window.confirm = originalConfirm; 
                 }, 500);
             }
         }
 
-        // =========================================
-        // 11. NEW: HTML EDITOR LOGIC (ADDITIVE)
-        // =========================================
         let currentEditingIndex = -1;
 
-        // 1. SELECTOR MODAL
         function openHtmlEditSelectionModal() {
-            const dropdown = document.getElementById('htmlPageSelect');
-            if(!dropdown) return;
-            dropdown.innerHTML = '';
-            
+            updateAllPageSelectors();
             const sheets = document.querySelectorAll('.sheet');
             if(sheets.length === 0) {
                 uxToast("Tidak ada halaman.", "error");
                 return;
             }
-
-            sheets.forEach((sheet, i)=>{
-                const option = document.createElement('option');
-                option.value = i;
-                
-                let title = `Halaman ${i+1}`;
-                const content = sheet.textContent || sheet.innerText;
-                const type = sheet.dataset.pageType === 'embed' ? ' [EMBED]' : '';
-                
-                if(content.includes('LAPORAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
-                
-                option.textContent = title + type;
-                dropdown.appendChild(option);
-            });
-
             document.getElementById('htmlEditSelectModal').style.display = 'flex';
         }
 
-        function closeHtmlEditSelectModal() {
-            document.getElementById('htmlEditSelectModal').style.display = 'none';
-        }
+        function closeHtmlEditSelectModal() { document.getElementById('htmlEditSelectModal').style.display = 'none'; }
 
-        // 2. OPEN EDITOR
         function handleOpenHtmlEditor() {
             const index = document.getElementById('htmlPageSelect').value;
             if(index === "") return;
 
             currentEditingIndex = parseInt(index);
-            const sheets = document.querySelectorAll('.sheet');
-            const sheet = sheets[currentEditingIndex];
-
+            const sheet = document.querySelectorAll('.sheet')[currentEditingIndex];
             if(!sheet) return;
 
             closeHtmlEditSelectModal();
 
-            // Determine Content Source (Crucial: Protect Embeds)
             let contentToEdit = "";
             const isEmbed = sheet.dataset.pageType === 'embed';
 
             if(isEmbed) {
-                // Source of truth for embed is the hidden textarea .raw-storage
                 const storage = sheet.querySelector('.raw-storage');
                 contentToEdit = storage ? storage.value : "<!-- Error: Raw Storage not found -->";
                 document.getElementById('editorPageInfo').innerText = `Halaman ${currentEditingIndex+1} (Embed Mode)`;
             } else {
-                // Source of truth for standard page is innerHTML
                 contentToEdit = sheet.innerHTML;
                 document.getElementById('editorPageInfo').innerText = `Halaman ${currentEditingIndex+1} (Standard Mode)`;
             }
 
-            // Load into textarea
-            const textarea = document.getElementById('htmlCodeInput');
-            
-            // Optional: Basic pretty print for readability (add newlines after block tags)
-            // But we keep it relatively raw to avoid breaking spacing
-            textarea.value = formatHtmlForEditor(contentToEdit);
-            
+            document.getElementById('htmlCodeInput').value = formatHtmlForEditor(contentToEdit);
             document.getElementById('htmlEditorModal').style.display = 'flex';
         }
 
@@ -2883,24 +1761,17 @@
             currentEditingIndex = -1;
         }
 
-        // 3. LIVE PREVIEW LOGIC
         function handlePreviewHtml() {
             if(currentEditingIndex === -1) return;
-
             const code = document.getElementById('htmlCodeInput').value;
-            const sheets = document.querySelectorAll('.sheet');
-            const sheet = sheets[currentEditingIndex];
+            const sheet = document.querySelectorAll('.sheet')[currentEditingIndex];
             const isEmbed = sheet.dataset.pageType === 'embed';
 
             try {
-                // Sanitize first
                 const safeCode = cleanHTML(code);
-
                 if(isEmbed) {
-                    // For embed, we update the .embed-safe-zone wrapper
                     let wrapper = sheet.querySelector('.embed-safe-zone');
                     if(!wrapper) {
-                        // Recreate if missing
                          wrapper = document.createElement('div');
                          wrapper.className = 'embed-safe-zone';
                          sheet.innerHTML = '';
@@ -2908,37 +1779,24 @@
                     }
                     wrapper.innerHTML = safeCode;
                 } else {
-                    // For standard, direct innerHTML update
                     sheet.innerHTML = safeCode;
                 }
-
                 uxToast("Preview diperbarui", "info");
-
-                // Scroll to preview behind modal (optional, might be covered)
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
             } catch(e) {
                 uxToast("HTML Invalid. Cek tag.", "error");
-                console.error(e);
             }
         }
 
-        // 4. SAVE LOGIC
         function handleSaveHtmlChange() {
             if(currentEditingIndex === -1) return;
-
             const code = document.getElementById('htmlCodeInput').value;
-            const sheets = document.querySelectorAll('.sheet');
-            const sheet = sheets[currentEditingIndex];
+            const sheet = document.querySelectorAll('.sheet')[currentEditingIndex];
             const isEmbed = sheet.dataset.pageType === 'embed';
 
             try {
-                // 1. Sanitize
                 const safeCode = cleanHTML(code);
-
-                // 2. Update DOM & DB based on Type
                 if (isEmbed) {
-                    // Update DOM
                     let wrapper = sheet.querySelector('.embed-safe-zone');
                     if(!wrapper) {
                          wrapper = document.createElement('div');
@@ -2948,7 +1806,6 @@
                     }
                     wrapper.innerHTML = safeCode;
 
-                    // Update Hidden Storage (DOM Source of Truth)
                     let storage = sheet.querySelector('.raw-storage');
                     if(!storage) {
                         storage = document.createElement('textarea');
@@ -2957,90 +1814,36 @@
                         sheet.appendChild(storage);
                     }
                     storage.value = safeCode;
-
-                    // Update DB (Memory)
-                    if(pagesDB[currentEditingIndex]) {
-                        pagesDB[currentEditingIndex].rawHTML = safeCode;
-                    }
-
+                    if(pagesDB[currentEditingIndex]) pagesDB[currentEditingIndex].rawHTML = safeCode;
                 } else {
-                    // Standard Page
                     sheet.innerHTML = safeCode;
-                    
-                    // Update DB (Memory)
-                    if(pagesDB[currentEditingIndex]) {
-                        pagesDB[currentEditingIndex].html = safeCode;
-                    }
+                    if(pagesDB[currentEditingIndex]) pagesDB[currentEditingIndex].html = safeCode;
                 }
 
-                // 3. Persist to Storage
                 saveToStorage();
-
-                // 4. Re-sync Dynamic Data (Variables & Page Numbers)
-                // This ensures if user deleted <span class="data-sekolah">, it won't crash, 
-                // but if they added it back, it gets populated.
-                syncData();
                 updatePageNumbers();
-
                 uxToast("HTML Berhasil Disimpan", "success");
                 closeHtmlEditorModal();
-
-                // 5. Scroll to edited page
-                setTimeout(() => {
-                    sheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 300);
-
-            } catch(e) {
-                uxToast("Gagal menyimpan. Cek error console.", "error");
-                console.error(e);
-            }
+                setTimeout(() => { sheet.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
+            } catch(e) { uxToast("Gagal menyimpan. Cek error console.", "error"); }
         }
 
-        // Helper: Basic pretty print (very simple)
         function formatHtmlForEditor(html) {
-            // Add newlines after block closing tags for readability in textarea
-            // This is non-destructive
-            return html
-                .replace(/<\/div>/g, '</div>\n')
-                .replace(/<\/p>/g, '</p>\n')
-                .replace(/<\/tr>/g, '</tr>\n')
-                .replace(/<br>/g, '<br>\n');
+            return html.replace(/<\/div>/g, '</div>\n').replace(/<\/p>/g, '</p>\n').replace(/<\/tr>/g, '</tr>\n').replace(/<br>/g, '<br>\n');
         }
-
     </script>
 
-    <!-- =========================================
-       13. NEW: ZIP EXPORT & IMPORT LOGIC (ADDITIVE)
-       ========================================= -->
+    <!-- ZIP EXPORT & IMPORT LOGIC -->
     <script id="zip-logic">
-        // Fungsi Export ZIP
         async function exportToZip() {
             uxShowLoader("Menyiapkan file ZIP...");
-            
-            // 1. Sinkronisasi input form ke atribut value/innerHTML
-            document.querySelectorAll('.sheet input[type="text"], .sheet input[type="number"]').forEach(el => {
-                el.setAttribute('value', el.value);
-            });
-            document.querySelectorAll('.sheet textarea').forEach(el => {
-                el.innerHTML = el.value;
-            });
-            document.querySelectorAll('.sheet input[type="checkbox"]').forEach(el => {
-                if(el.checked) el.setAttribute('checked', 'checked');
-                else el.removeAttribute('checked');
-            });
-
-            // 2. Simpan state terbaru ke pagesDB (Gunakan fungsi lama)
             saveToStorage();
 
-            // 3. Clone DB untuk dimanipulasi agar layar aktif tidak rusak
             let exportDB = JSON.parse(JSON.stringify(pagesDB));
-            
-            // 4. Inisialisasi JSZip
             const zip = new JSZip();
             const imgFolder = zip.folder("images");
             let imgCounter = 1;
 
-            // 5. Ekstrak gambar base64
             exportDB.forEach((page, pageIndex) => {
                 if (page.type === 'standard' && page.html) {
                     const parser = new DOMParser();
@@ -3058,69 +1861,45 @@
                                     const b64Data = parts[1];
                                     const fileName = `img_p${pageIndex}_${imgIndex}_${imgCounter++}.${ext}`;
                                     
-                                    // Simpan base64 ke dalam folder images di dalam file ZIP
                                     imgFolder.file(fileName, b64Data, {base64: true});
-                                    
-                                    // Ubah src di HTML menjadi path relatif
                                     img.setAttribute('src', `images/${fileName}`);
                                 }
-                            } catch(e) {
-                                console.error("Gagal memproses gambar:", e);
-                            }
+                            } catch(e) {}
                         }
                     });
 
-                    // Bersihkan value cache dari input file demi keamanan data JSON
-                    doc.querySelectorAll('input[type="file"]').forEach(inp => {
-                        inp.removeAttribute('value');
-                    });
-                    
+                    doc.querySelectorAll('input[type="file"]').forEach(inp => inp.removeAttribute('value'));
                     page.html = doc.body.innerHTML;
                 }
             });
 
-            // 6. Masukkan data.json (tanpa base64) ke root ZIP
             zip.file("data.json", JSON.stringify(exportDB, null, 2));
 
-            // 7. Generate dan Download ZIP
             try {
                 const content = await zip.generateAsync({type:"blob"});
                 saveAs(content, "Laporan-Sekolah-Lengkap.zip");
                 uxToast("Export ZIP Berhasil!", "success");
             } catch (err) {
-                console.error(err);
                 uxToast("Gagal men-generate ZIP", "error");
-            } finally {
-                uxHideLoader();
-            }
+            } finally { uxHideLoader(); }
         }
 
-        // Fungsi Trigger Import ZIP
-        function importFromZipTrigger() {
-            document.getElementById('zipLoader').click();
-        }
+        function importFromZipTrigger() { document.getElementById('zipLoader').click(); }
 
-        // Fungsi Proses Import ZIP
         function processZipImport(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             uxShowLoader("Mengekstrak file ZIP...");
-            
             const zip = new JSZip();
             zip.loadAsync(file).then(async (loadedZip) => {
                 try {
-                    // Cek apakah data.json ada di dalam ZIP
                     const jsonFile = loadedZip.file("data.json");
-                    if (!jsonFile) {
-                        throw new Error("File data.json tidak ditemukan di dalam ZIP!");
-                    }
+                    if (!jsonFile) throw new Error("File data.json tidak ditemukan!");
 
-                    // Parse data.json
                     const jsonDataStr = await jsonFile.async("string");
                     let importedDB = JSON.parse(jsonDataStr);
 
-                    // Proses setiap halaman untuk mengembalikan path gambar menjadi base64/dataURI
                     for (let i = 0; i < importedDB.length; i++) {
                         const page = importedDB[i];
                         if (page.type === 'standard' && page.html) {
@@ -3130,14 +1909,10 @@
                             const images = Array.from(doc.querySelectorAll('img'));
                             for (let img of images) {
                                 const src = img.getAttribute('src');
-                                // Jika src mengarah ke folder images/
                                 if (src && src.startsWith('images/')) {
                                     const imgFileInZip = loadedZip.file(src);
                                     if (imgFileInZip) {
-                                        // Baca base64 dari zip yang diekstrak di memory
                                         const b64 = await imgFileInZip.async("base64");
-                                        
-                                        // Deteksi mime type dari ekstensi file
                                         const ext = src.split('.').pop().toLowerCase();
                                         let mime = 'image/png';
                                         if(ext === 'jpg' || ext === 'jpeg') mime = 'image/jpeg';
@@ -3145,113 +1920,68 @@
                                         else if(ext === 'svg') mime = 'image/svg+xml';
                                         else if(ext === 'webp') mime = 'image/webp';
 
-                                        // Kembalikan src ke format base64 agar browser bisa render kembali secara instan
                                         img.setAttribute('src', `data:${mime};base64,${b64}`);
                                     }
                                 }
                             }
-                            // Update HTML halaman dengan gambar yang sudah ditautkan ulang
                             page.html = doc.body.innerHTML;
                         }
                     }
 
-                    // Terapkan ke state utama
                     pagesDB = importedDB;
-                    renderPages();      // Render ulang menggunakan function bawaan
-                    saveToStorage();    // Simpan ke local browser 
-                    
+                    renderPages();      
+                    saveToStorage();  
                     uxToast("Import ZIP Berhasil!", "success");
                 } catch (err) {
-                    console.error("Import error:", err);
                     uxToast(err.message || "Gagal memproses file ZIP", "error");
                 } finally {
                     uxHideLoader();
-                    event.target.value = ''; // Reset input agar event onchange selalu ke-trigger walau file sama
+                    event.target.value = ''; 
                 }
             }).catch(err => {
-                console.error("JSZip error:", err);
                 uxToast("Gagal membaca ZIP. File corrupt.", "error");
                 uxHideLoader();
-                event.target.value = ''; // Reset input
+                event.target.value = '';
             });
         }
     </script>
 
-    <!-- =========================================
-       14. NEW: TAB INDENTATION LOGIC (ADDITIVE)
-       ========================================= -->
-    <script id="tab-indent-logic">
+    <!-- TAB INDENTATION & ORIENTATION LOGIC -->
+    <script id="misc-logic">
         document.addEventListener('keydown', function(e) {
-            // Hanya deteksi ketika tombol Tab ditekan
             if (e.key === 'Tab') {
                 const activeElement = document.activeElement;
-                
-                // PENGECUALIAN: Biarkan Tab bekerja normal (pindah fokus) jika sedang berada di input form sidebar
-                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT')) {
-                    return; 
-                }
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT')) return; 
 
-                // Cek apakah area saat ini bisa diedit
                 const isContentEditable = activeElement && activeElement.isContentEditable || (e.target && e.target.closest && e.target.closest('[contenteditable="true"]'));
-                
                 if (isContentEditable) {
-                    e.preventDefault(); // Mencegah default behavior (kursor tidak akan lompat keluar)
-
+                    e.preventDefault(); 
                     const selection = window.getSelection();
                     if (!selection.rangeCount) return;
                     const range = selection.getRangeAt(0);
 
                     if (!e.shiftKey) {
-                        // ==========================================
-                        // TEKAN TAB (TANPA SHIFT): Tambah 4 Spasi
-                        // ==========================================
-                        if (!range.collapsed) {
-                            range.deleteContents(); // Hapus teks jika user sedang mem-blok teks lalu menekan Tab
-                        }
-                        
-                        // Gunakan Non-Breaking Space (\u00a0) agar jarak tidak diciutkan oleh HTML
+                        if (!range.collapsed) range.deleteContents(); 
                         const tabText = document.createTextNode('\u00a0\u00a0\u00a0\u00a0');
                         range.insertNode(tabText);
-                        
-                        // Pindahkan kursor secara otomatis ke kanan (setelah spasi yang baru disisipkan)
                         range.setStartAfter(tabText);
                         range.setEndAfter(tabText);
                         selection.removeAllRanges();
                         selection.addRange(range);
-
                     } else {
-                        // ==========================================
-                        // TEKAN SHIFT + TAB: Kurangi 4 Spasi (Hapus ke kiri)
-                        // ==========================================
-                        if (!range.collapsed) return; // Abaikan jika sedang mem-blok teks
-
+                        if (!range.collapsed) return; 
                         if (range.startContainer.nodeType === Node.TEXT_NODE) {
                             const text = range.startContainer.textContent;
                             const offset = range.startOffset;
-                            
                             let spacesToRemove = 0;
-                            // Cari mundur maksimal 4 karakter, hitung berapa spasi yang ada
                             for (let i = 1; i <= 4; i++) {
                                 const charIndex = offset - i;
-                                if (charIndex >= 0) {
-                                    const char = text[charIndex];
-                                    // Deteksi Spasi biasa atau Non-breaking space
-                                    if (char === ' ' || char === '\u00a0') {
-                                        spacesToRemove++;
-                                    } else {
-                                        break; // Berhenti jika menemui huruf
-                                    }
-                                } else {
-                                    break;
-                                }
+                                if (charIndex >= 0 && (text[charIndex] === ' ' || text[charIndex] === '\u00a0')) {
+                                    spacesToRemove++;
+                                } else break;
                             }
-
-                            // Hapus spasi yang ditemukan
                             if (spacesToRemove > 0) {
-                                const newText = text.slice(0, offset - spacesToRemove) + text.slice(offset);
-                                range.startContainer.textContent = newText;
-                                
-                                // Kembalikan posisi kursor agar tidak melompat ke awal
+                                range.startContainer.textContent = text.slice(0, offset - spacesToRemove) + text.slice(offset);
                                 range.setStart(range.startContainer, offset - spacesToRemove);
                                 range.setEnd(range.startContainer, offset - spacesToRemove);
                                 selection.removeAllRanges();
@@ -3259,93 +1989,51 @@
                             }
                         }
                     }
-                    
-                    // Trigger input event secara manual agar fitur Auto-Save sistem menangkap perubahan ini
-                    if (e.target && e.target.dispatchEvent) {
-                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
+                    if (e.target && e.target.dispatchEvent) e.target.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
         });
-    </script>
 
-    <!-- =========================================
-       15. NEW: ORIENTATION TOGGLE LOGIC (ADDITIVE)
-       ========================================= -->
-    <script id="orientation-logic">
         function changeOrientation(mode) {
             const body = document.body;
+            mode === 'landscape' ? body.classList.add('global-landscape') : body.classList.remove('global-landscape');
             
-            if (mode === 'landscape') {
-                body.classList.add('global-landscape');
-            } else {
-                body.classList.remove('global-landscape');
-            }
-            
-            // Update Print Page CSS dinamis untuk native browser print (Ctrl+P)
             let styleEl = document.getElementById('dynamic-print-style');
             if (!styleEl) {
                 styleEl = document.createElement('style');
                 styleEl.id = 'dynamic-print-style';
                 document.head.appendChild(styleEl);
             }
+            styleEl.innerHTML = mode === 'landscape' ? '@media print { @page { size: 330mm 215mm !important; margin: 0; } }' : '@media print { @page { size: 215mm 330mm !important; margin: 0; } }';
             
-            if (mode === 'landscape') {
-                styleEl.innerHTML = '@media print { @page { size: 330mm 215mm !important; margin: 0; } }';
-            } else {
-                styleEl.innerHTML = '@media print { @page { size: 215mm 330mm !important; margin: 0; } }';
-            }
-            
-            // Simpan pilihan ke localStorage agar tidak reset ketika refresh
             localStorage.setItem('global_orientation', mode);
-            
-            // Trigger Pagination check setelah transisi CSS selesai (450ms)
-            if(typeof autoPaginateCustomPages === 'function') {
-                setTimeout(autoPaginateCustomPages, 450);
-            }
+            if(typeof autoPaginateCustomPages === 'function') setTimeout(autoPaginateCustomPages, 450);
         }
 
-        // Inisialisasi posisi saat halaman dimuat
         window.addEventListener('DOMContentLoaded', () => {
             const savedMode = localStorage.getItem('global_orientation') || 'portrait';
             const selectEl = document.getElementById('global_orientation');
-            if (selectEl) {
-                selectEl.value = savedMode;
-            }
+            if (selectEl) selectEl.value = savedMode;
             changeOrientation(savedMode);
         });
-    </script>
 
-    <!-- =========================================
-       16. NEW: PAGE MANAGEMENT ENGINE (REORDER & ORIENTATION)
-       ========================================= -->
-    <script id="page-management-logic">
-        
-        // --- 1. ORIENTASI PER HALAMAN ---
         function applyPageOrientation() {
-            saveToStorage(); // Amankan input/editan terakhir
-            
+            saveToStorage(); 
             const index = parseInt(document.getElementById('orientPageSelect').value);
             const mode = document.getElementById('orientPageMode').value;
             
             if (isNaN(index) || !pagesDB[index]) return;
+            pagesDB[index].orientation = mode; 
 
-            pagesDB[index].orientation = mode; // Update DB
-
-            // Update DOM Langsung tanpa re-render penuh agar cepat
             const sheet = document.querySelectorAll('.sheet')[index];
             if (sheet) {
-                if (mode === 'landscape') sheet.classList.add('landscape');
-                else sheet.classList.remove('landscape');
-                
+                mode === 'landscape' ? sheet.classList.add('landscape') : sheet.classList.remove('landscape');
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-
-            saveToStorage(); // Permanenkan
+            saveToStorage(); 
             uxToast(`Halaman ${index + 1} diubah ke ${mode.toUpperCase()}`, "success");
         }
 
-        // --- 2. SWAP HALAMAN (MANUAL DROPDOWN) ---
         function applyPageSwap() {
             const indexA = parseInt(document.getElementById('swapPageA').value);
             const indexB = parseInt(document.getElementById('swapPageB').value);
@@ -3355,64 +2043,18 @@
                 return;
             }
 
-            saveToStorage(); // Wajib: Amankan state DOM ke pagesDB sebelum swap
-
-            // Lakukan penukaran di array
+            saveToStorage(); 
             const temp = pagesDB[indexA];
             pagesDB[indexA] = pagesDB[indexB];
             pagesDB[indexB] = temp;
 
-            renderPages(); // Rebuild UI
+            renderPages(); 
             saveToStorage();
             
             const targetSheet = document.querySelectorAll('.sheet')[indexB];
             if(targetSheet) targetSheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             uxToast(`Halaman ${indexA + 1} ⇄ ${indexB + 1} berhasil ditukar!`, "success");
-        }
-
-        // --- 3. REORDER: NAIK (UP) ---
-        function movePageUp(index) {
-            if (index <= 0) {
-                uxToast("Halaman sudah berada di posisi paling atas.", "error");
-                return;
-            }
-            saveToStorage();
-            
-            // Swap elemen (Index saat ini & Index sebelumnya)
-            const temp = pagesDB[index];
-            pagesDB[index] = pagesDB[index - 1];
-            pagesDB[index - 1] = temp;
-            
-            renderPages();
-            saveToStorage();
-            
-            const sheet = document.querySelectorAll('.sheet')[index - 1];
-            if(sheet) sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            uxToast("Halaman dinaikkan 1 tingkat", "info");
-        }
-
-        // --- 4. REORDER: TURUN (DOWN) ---
-        function movePageDown(index) {
-            if (index >= pagesDB.length - 1) {
-                uxToast("Halaman sudah berada di posisi paling bawah.", "error");
-                return;
-            }
-            saveToStorage();
-            
-            // Swap elemen (Index saat ini & Index setelahnya)
-            const temp = pagesDB[index];
-            pagesDB[index] = pagesDB[index + 1];
-            pagesDB[index + 1] = temp;
-            
-            renderPages();
-            saveToStorage();
-            
-            const sheet = document.querySelectorAll('.sheet')[index + 1];
-            if(sheet) sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            uxToast("Halaman diturunkan 1 tingkat", "info");
         }
     </script>
 </body>
