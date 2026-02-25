@@ -8,6 +8,9 @@
     <!-- LIBRARIES FOR PDF GENERATION -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- NEW: LIBRARIES FOR ZIP EXPORT/IMPORT -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- PHOSPHOR ICONS (Premium Icons) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -811,6 +814,49 @@
         .ux-save-indicator.active { transform: translateX(-50%) translateY(0); }
         .ux-save-spinner { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
     </style>
+
+    <!-- =========================================
+         NEW OVERRIDE STYLES (NON-DESTRUCTIVE)
+         Memenuhi semua instruksi override tanpa menghapus/merusak style lama
+         ========================================= -->
+    <style id="custom-override-styles">
+        /* 1. OVERRIDE COVER TANPA HAPUS CODE LAMA */
+        .cover-border .text-upper {
+            text-transform: none !important;
+        }
+
+        .cover-border h1,
+        .cover-border h2,
+        .cover-border h3,
+        .cover-border p,
+        .cover-border span {
+            text-transform: none !important;
+        }
+
+        /* 2. MEMASTIKAN NAMA GURU & KEPSEK TIDAK OTOMATIS KAPITAL DI SELURUH HALAMAN (TERMASUK TTD) */
+        .data-guru,
+        .data-kepsek,
+        .signature-section .text-upper,
+        .text-upper .data-guru,
+        .text-upper .data-kepsek {
+            text-transform: none !important;
+        }
+
+        /* 3. FONT GLOBAL TIMES NEW ROMAN */
+        body,
+        .sheet,
+        .cover-border,
+        table,
+        td,
+        th,
+        input,
+        textarea,
+        select,
+        .embed-safe-zone,
+        .embed-safe-zone * {
+            font-family: "Times New Roman", Times, serif !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -895,6 +941,18 @@
             <button class="btn btn-html-edit" onclick="openHtmlEditSelectionModal()">
                 <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
             </button>
+
+            <div class="section-divider">Data Management</div>
+
+            <!-- FITUR BARU: EXPORT & IMPORT ZIP -->
+            <button class="btn btn-add" style="background:#4f46e5; border-color:#4338ca;" onclick="exportToZip()">
+                <i class="ph ph-package"></i> Export ZIP (Dengan Gambar)
+            </button>
+            <button class="btn btn-add" style="background:#0284c7; border-color:#3730a3;" onclick="importFromZipTrigger()">
+                <i class="ph ph-file-zip"></i> Import ZIP
+            </button>
+            <!-- Hidden input file untuk sistem Load ZIP -->
+            <input type="file" id="zipLoader" accept=".zip" style="display:none;" onchange="processZipImport(event)">
 
             <!-- WRAPPED SAFE PRINT HANDLER -->
             <button class="btn btn-print" onclick="handleSafePrint(this)"><i class="ph ph-printer"></i> Download PDF (F4)</button>
@@ -1185,7 +1243,7 @@
                     saveToStorage();
                     // Additional safety: Run pagination once more after save to catch any stragglers
                     if (e.target.closest('.page-content')) {
-                          autoPaginateCustomPages();
+                         autoPaginateCustomPages();
                     }
                 }, 500); 
             }
@@ -2756,6 +2814,174 @@
                 .replace(/<br>/g, '<br>\n');
         }
 
+    </script>
+
+    <!-- =========================================
+       13. NEW: ZIP EXPORT & IMPORT LOGIC (ADDITIVE)
+       ========================================= -->
+    <script id="zip-logic">
+        // Fungsi Export ZIP
+        async function exportToZip() {
+            uxShowLoader("Menyiapkan file ZIP...");
+            
+            // 1. Sinkronisasi input form ke atribut value/innerHTML
+            document.querySelectorAll('.sheet input[type="text"], .sheet input[type="number"]').forEach(el => {
+                el.setAttribute('value', el.value);
+            });
+            document.querySelectorAll('.sheet textarea').forEach(el => {
+                el.innerHTML = el.value;
+            });
+            document.querySelectorAll('.sheet input[type="checkbox"]').forEach(el => {
+                if(el.checked) el.setAttribute('checked', 'checked');
+                else el.removeAttribute('checked');
+            });
+
+            // 2. Simpan state terbaru ke pagesDB (Gunakan fungsi lama)
+            saveToStorage();
+
+            // 3. Clone DB untuk dimanipulasi agar layar aktif tidak rusak
+            let exportDB = JSON.parse(JSON.stringify(pagesDB));
+            
+            // 4. Inisialisasi JSZip
+            const zip = new JSZip();
+            const imgFolder = zip.folder("images");
+            let imgCounter = 1;
+
+            // 5. Ekstrak gambar base64
+            exportDB.forEach((page, pageIndex) => {
+                if (page.type === 'standard' && page.html) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(page.html, 'text/html');
+                    
+                    doc.querySelectorAll('img').forEach((img, imgIndex) => {
+                        const src = img.getAttribute('src');
+                        if (src && src.startsWith('data:image/')) {
+                            try {
+                                const parts = src.split(',');
+                                const mimeInfo = parts[0].match(/:(.*?);/);
+                                if (mimeInfo) {
+                                    const mime = mimeInfo[1];
+                                    const ext = mime.split('/')[1] || 'png';
+                                    const b64Data = parts[1];
+                                    const fileName = `img_p${pageIndex}_${imgIndex}_${imgCounter++}.${ext}`;
+                                    
+                                    // Simpan base64 ke dalam folder images di dalam file ZIP
+                                    imgFolder.file(fileName, b64Data, {base64: true});
+                                    
+                                    // Ubah src di HTML menjadi path relatif
+                                    img.setAttribute('src', `images/${fileName}`);
+                                }
+                            } catch(e) {
+                                console.error("Gagal memproses gambar:", e);
+                            }
+                        }
+                    });
+
+                    // Bersihkan value cache dari input file demi keamanan data JSON
+                    doc.querySelectorAll('input[type="file"]').forEach(inp => {
+                        inp.removeAttribute('value');
+                    });
+                    
+                    page.html = doc.body.innerHTML;
+                }
+            });
+
+            // 6. Masukkan data.json (tanpa base64) ke root ZIP
+            zip.file("data.json", JSON.stringify(exportDB, null, 2));
+
+            // 7. Generate dan Download ZIP
+            try {
+                const content = await zip.generateAsync({type:"blob"});
+                saveAs(content, "Laporan-Sekolah-Lengkap.zip");
+                uxToast("Export ZIP Berhasil!", "success");
+            } catch (err) {
+                console.error(err);
+                uxToast("Gagal men-generate ZIP", "error");
+            } finally {
+                uxHideLoader();
+            }
+        }
+
+        // Fungsi Trigger Import ZIP
+        function importFromZipTrigger() {
+            document.getElementById('zipLoader').click();
+        }
+
+        // Fungsi Proses Import ZIP
+        function processZipImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            uxShowLoader("Mengekstrak file ZIP...");
+            
+            const zip = new JSZip();
+            zip.loadAsync(file).then(async (loadedZip) => {
+                try {
+                    // Cek apakah data.json ada di dalam ZIP
+                    const jsonFile = loadedZip.file("data.json");
+                    if (!jsonFile) {
+                        throw new Error("File data.json tidak ditemukan di dalam ZIP!");
+                    }
+
+                    // Parse data.json
+                    const jsonDataStr = await jsonFile.async("string");
+                    let importedDB = JSON.parse(jsonDataStr);
+
+                    // Proses setiap halaman untuk mengembalikan path gambar menjadi base64/dataURI
+                    for (let i = 0; i < importedDB.length; i++) {
+                        const page = importedDB[i];
+                        if (page.type === 'standard' && page.html) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(page.html, 'text/html');
+                            
+                            const images = Array.from(doc.querySelectorAll('img'));
+                            for (let img of images) {
+                                const src = img.getAttribute('src');
+                                // Jika src mengarah ke folder images/
+                                if (src && src.startsWith('images/')) {
+                                    const imgFileInZip = loadedZip.file(src);
+                                    if (imgFileInZip) {
+                                        // Baca base64 dari zip yang diekstrak di memory
+                                        const b64 = await imgFileInZip.async("base64");
+                                        
+                                        // Deteksi mime type dari ekstensi file
+                                        const ext = src.split('.').pop().toLowerCase();
+                                        let mime = 'image/png';
+                                        if(ext === 'jpg' || ext === 'jpeg') mime = 'image/jpeg';
+                                        else if(ext === 'gif') mime = 'image/gif';
+                                        else if(ext === 'svg') mime = 'image/svg+xml';
+                                        else if(ext === 'webp') mime = 'image/webp';
+
+                                        // Kembalikan src ke format base64 agar browser bisa render kembali secara instan
+                                        img.setAttribute('src', `data:${mime};base64,${b64}`);
+                                    }
+                                }
+                            }
+                            // Update HTML halaman dengan gambar yang sudah ditautkan ulang
+                            page.html = doc.body.innerHTML;
+                        }
+                    }
+
+                    // Terapkan ke state utama
+                    pagesDB = importedDB;
+                    renderPages();      // Render ulang menggunakan function bawaan
+                    saveToStorage();    // Simpan ke local browser 
+                    
+                    uxToast("Import ZIP Berhasil!", "success");
+                } catch (err) {
+                    console.error("Import error:", err);
+                    uxToast(err.message || "Gagal memproses file ZIP", "error");
+                } finally {
+                    uxHideLoader();
+                    event.target.value = ''; // Reset input agar event onchange selalu ke-trigger walau file sama
+                }
+            }).catch(err => {
+                console.error("JSZip error:", err);
+                uxToast("Gagal membaca ZIP. File corrupt.", "error");
+                uxHideLoader();
+                event.target.value = ''; // Reset input
+            });
+        }
     </script>
 </body>
 </html>
