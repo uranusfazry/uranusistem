@@ -103,7 +103,8 @@
             letter-spacing: 0.5px;
             font-weight: 600;
         }
-        .control-group input { 
+        .control-group input,
+        .control-group select { 
             width: 100%; 
             padding: 10px 12px; 
             border-radius: 6px; 
@@ -112,9 +113,10 @@
             color: white;
             font-size: 0.9rem; 
             transition: all 0.2s;
-        }
-        .control-group input:focus {
             outline: none;
+        }
+        .control-group input:focus,
+        .control-group select:focus {
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
@@ -876,6 +878,44 @@
             font-weight: bold;
             padding-bottom: 2px;
         }
+
+        /* 6. FITUR ORIENTASI GLOBAL (LANDSCAPE / PORTRAIT) */
+        .sheet {
+            /* Smooth transition untuk perpindahan orientasi tanpa merusak efek lama */
+            transition: width 0.4s ease, min-height 0.4s ease, transform 0.3s ease !important;
+        }
+
+        body.global-landscape .sheet {
+            width: 330mm !important;
+            min-height: 215mm !important;
+            padding: 20mm 25mm !important;
+        }
+
+        /* Supaya saat tinggi kertas menciut jadi 215mm, konten tabel tidak tumpah/overflow */
+        body.global-landscape table.table-grid,
+        body.global-landscape table.table-padat,
+        body.global-landscape table.dinas,
+        body.global-landscape table.list-data,
+        body.global-landscape p,
+        body.global-landscape div {
+            font-size: 10.5pt !important;
+            line-height: 1.15 !important;
+        }
+        
+        body.global-landscape table.table-grid th, 
+        body.global-landscape table.table-grid td {
+            padding: 2px 1px !important; 
+        }
+
+        /* Reset untuk print mode dalam state landscape */
+        @media print {
+            body.global-landscape .sheet {
+                width: 100% !important;
+                min-height: 215mm !important;
+                margin: 0 !important;
+                page-break-after: always;
+            }
+        }
     </style>
 </head>
 <body>
@@ -919,6 +959,15 @@
             <div class="control-group">
                 <label>Tanggal Surat</label>
                 <input type="text" id="m_tgl" value="Desember 2025" oninput="handleSyncData()">
+            </div>
+
+            <!-- FITUR BARU: TOGGLE ORIENTASI KERTAS GLOBAL -->
+            <div class="control-group">
+                <label><i class="ph ph-arrows-out-line-horizontal"></i> Orientasi Kertas</label>
+                <select id="global_orientation" onchange="changeOrientation(this.value)">
+                    <option value="portrait">Portrait (215 x 330mm)</option>
+                    <option value="landscape">Landscape (330 x 215mm)</option>
+                </select>
             </div>
 
             <div class="section-divider">Laporan Kegiatan</div>
@@ -1447,7 +1496,12 @@
             void document.body.offsetHeight;
 
             try {
-                const firstIsLandscape = sheets[0].classList.contains('landscape');
+                // MODIFIED: Cek mode orientasi global (Override jika aktif)
+                const isGlobalLandscape = document.body.classList.contains('global-landscape');
+                
+                // Gunakan mode global jika aktif, kalau tidak fallback ke class individu page pertama
+                const firstIsLandscape = isGlobalLandscape || sheets[0].classList.contains('landscape');
+                
                 const pdf = new jsPDF({
                     orientation: firstIsLandscape ? 'landscape' : 'portrait',
                     unit: 'mm',
@@ -1455,7 +1509,9 @@
                 });
 
                 for(let i=0; i<sheets.length; i++){
-                    const isLandscape = sheets[i].classList.contains('landscape');
+                    // MODIFIED: Tentukan landscape untuk page ini
+                    const isPageLandscape = isGlobalLandscape || sheets[i].classList.contains('landscape');
+                    
                     const canvas = await html2canvas(sheets[i], {
                         scale: 2,
                         useCORS: true,
@@ -1465,10 +1521,10 @@
                     const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
                     if(i !== 0){
-                        pdf.addPage(isLandscape ? [330, 215] : [215, 330], isLandscape ? 'landscape' : 'portrait');
+                        pdf.addPage(isPageLandscape ? [330, 215] : [215, 330], isPageLandscape ? 'landscape' : 'portrait');
                     }
 
-                    if (isLandscape) {
+                    if (isPageLandscape) {
                         pdf.addImage(imgData, 'JPEG', 0, 0, 330, 215);
                     } else {
                         pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
@@ -3196,6 +3252,53 @@
                     }
                 }
             }
+        });
+    </script>
+
+    <!-- =========================================
+       15. NEW: ORIENTATION TOGGLE LOGIC (ADDITIVE)
+       ========================================= -->
+    <script id="orientation-logic">
+        function changeOrientation(mode) {
+            const body = document.body;
+            
+            if (mode === 'landscape') {
+                body.classList.add('global-landscape');
+            } else {
+                body.classList.remove('global-landscape');
+            }
+            
+            // Update Print Page CSS dinamis untuk native browser print (Ctrl+P)
+            let styleEl = document.getElementById('dynamic-print-style');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'dynamic-print-style';
+                document.head.appendChild(styleEl);
+            }
+            
+            if (mode === 'landscape') {
+                styleEl.innerHTML = '@media print { @page { size: 330mm 215mm !important; margin: 0; } }';
+            } else {
+                styleEl.innerHTML = '@media print { @page { size: 215mm 330mm !important; margin: 0; } }';
+            }
+            
+            // Simpan pilihan ke localStorage agar tidak reset ketika refresh
+            localStorage.setItem('global_orientation', mode);
+            
+            // Trigger Pagination check setelah transisi CSS selesai (450ms)
+            if(typeof autoPaginateCustomPages === 'function') {
+                setTimeout(autoPaginateCustomPages, 450);
+            }
+        }
+
+        // Inisialisasi posisi saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedMode = localStorage.getItem('global_orientation') || 'portrait';
+            const selectEl = document.getElementById('global_orientation');
+            if (selectEl) {
+                selectEl.value = savedMode;
+            }
+            changeOrientation(savedMode);
         });
     </script>
 </body>
