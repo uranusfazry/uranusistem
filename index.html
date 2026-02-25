@@ -856,6 +856,26 @@
         .embed-safe-zone * {
             font-family: "Times New Roman", Times, serif !important;
         }
+
+        /* 4. GAMBAR EKSTERNAL & RESPONSIF (FITUR EMBED HTML) */
+        .sheet img,
+        .embed-safe-zone img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: auto;
+        }
+
+        /* 5. FORMAT TANDA TANGAN RESMI (TANPA UNDERLINE DI KOMA/TITIK) */
+        .nama-ttd {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+            padding-bottom: 2px;
+        }
     </style>
 </head>
 <body>
@@ -1570,7 +1590,21 @@
             };
             for (const [id, selector] of Object.entries(map)) {
                 const val = document.getElementById(id).value;
-                document.querySelectorAll(selector).forEach(el => el.innerText = val);
+                document.querySelectorAll(selector).forEach(el => {
+                    // NEW: Deteksi khusus untuk tanda tangan agar koma gelar tidak di-underline
+                    if (el.classList.contains('format-ttd')) {
+                        if (val.includes(',')) {
+                            const parts = val.split(',');
+                            const name = parts[0];
+                            const title = parts.slice(1).join(',');
+                            el.innerHTML = `<span class="nama-ttd">${name}</span>,${title}`;
+                        } else {
+                            el.innerHTML = `<span class="nama-ttd">${val}</span>`;
+                        }
+                    } else {
+                        el.innerText = val;
+                    }
+                });
             }
         }
 
@@ -1788,13 +1822,13 @@
                 <div class="ttd-box">
                     <p>Mengetahui,<br>Kepala Sekolah</p>
                     <div class="ttd-space"></div>
-                    <p class="text-bold text-upper"><u class="data-kepsek">NAMA KEPALA</u></p>
+                    <p class="text-upper data-kepsek format-ttd">NAMA KEPALA</p>
                     <p>NIP. <span class="data-nip1">...</span></p>
                 </div>
                 <div class="ttd-box">
                     <p>Banjar, <span contenteditable="true" class="data-tgl">...</span><br>${jabatan}</p>
                     <div class="ttd-space"></div>
-                    <p class="text-bold text-upper"><u class="data-guru">NAMA GURU</u></p>
+                    <p class="text-upper data-guru format-ttd">NAMA GURU</p>
                     <p>NIP. <span class="data-nip2">...</span></p>
                 </div>
             </div>
@@ -2151,7 +2185,7 @@
                         <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p>Guru BTQ</p>
                         <br><br><br>
-                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
+                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
                     </div>
                 </div>
                 <div class="page-number"></div>
@@ -2263,7 +2297,7 @@
                         <p style="margin: 0 0 5px 0; line-height: 1.5;">Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p style="margin: 0; line-height: 1.5;">Guru PAI / BTQ</p>
                         <div style="height: 65px;"></div>
-                        <p class="text-bold text-upper" style="margin: 0; text-decoration: underline;"><span class="data-guru">Nama Guru</span></p>
+                        <p class="text-upper data-guru format-ttd" style="margin: 0;">Nama Guru</p>
                         <p style="margin: 5px 0 0 0;">NIP. <span class="data-nip2">...</span></p>
                     </div>
                 </div>
@@ -2348,7 +2382,7 @@
                         <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p>Guru BTQ</p>
                         <br><br><br>
-                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
+                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
                     </div>
                 </div>
                 <div class="page-number"></div>
@@ -2487,7 +2521,7 @@
                         <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p>Penguji</p>
                         <br><br><br>
-                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
+                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
                     </div>
                 </div>
                 <div class="page-number"></div>
