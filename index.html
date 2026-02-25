@@ -931,52 +931,38 @@
             <h2>
                 <i class="ph ph-buildings" style="font-size: 24px;"></i> Admin Sekolah
             </h2>
-            
-            <div class="control-group">
-                <label>Nama Sekolah</label>
-                <input type="text" id="m_sekolah" value="UPTD SD NEGERI 1 BATULAWANG" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Alamat Sekolah</label>
-                <input type="text" id="m_alamat" value="Jl. Desa Batulawang No. 123" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Kepala Sekolah</label>
-                <input type="text" id="m_kepsek" value="NAMA KEPALA SEKOLAH" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>NIP Kepala Sekolah</label>
-                <input type="text" id="m_nip1" value="19800101 200501 1 001" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Guru PJP / Kelas</label>
-                <input type="text" id="m_guru" value="USAMAH DHIYA UL HAQ, S.Pd." oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>NIP Guru</label>
-                <input type="text" id="m_nip2" value="-" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Tanggal Surat</label>
-                <input type="text" id="m_tgl" value="Desember 2025" oninput="handleSyncData()">
-            </div>
 
             <!-- FITUR BARU: TOGGLE ORIENTASI KERTAS GLOBAL -->
             <div class="control-group">
-                <label><i class="ph ph-arrows-out-line-horizontal"></i> Orientasi Kertas</label>
+                <label><i class="ph ph-arrows-out-line-horizontal"></i> Orientasi Global</label>
                 <select id="global_orientation" onchange="changeOrientation(this.value)">
-                    <option value="portrait">Portrait (215 x 330mm)</option>
-                    <option value="landscape">Landscape (330 x 215mm)</option>
+                    <option value="portrait">Portrait Semua (215 x 330mm)</option>
+                    <option value="landscape">Landscape Semua (330 x 215mm)</option>
                 </select>
             </div>
 
-            <div class="section-divider">Laporan Kegiatan</div>
-            <!-- UPDATED ONCLICK HANDLERS TO UX WRAPPERS -->
-            <button class="btn btn-add" onclick="handleAddPage('cover', this)"><i class="ph ph-file-text"></i> Halaman Cover</button>
-            <button class="btn btn-add" onclick="handleAddPage('laporan', this)"><i class="ph ph-file-plus"></i> Laporan Kegiatan</button>
-            <button class="btn btn-add" onclick="handleAddPage('laporan_convert', this)"><i class="ph ph-file-arrow-up"></i> Laporan (Convert)</button>
-            <button class="btn btn-add" onclick="handleAddPage('foto', this)"><i class="ph ph-camera"></i> Dokumentasi Foto</button>
-            <button class="btn btn-add" onclick="handleAddPage('jadwal', this)"><i class="ph ph-calendar"></i> Jadwal Asesmen</button>
+            <!-- FITUR BARU: MANAJEMEN HALAMAN TINGKAT LANJUT -->
+            <div class="section-divider">Manajemen Halaman</div>
+            
+            <div class="control-group" style="background:#1e293b; padding:10px; border-radius:8px; margin-bottom:10px;">
+                <label style="color:#e2e8f0;"><i class="ph ph-swap"></i> Tukar Posisi (Swap)</label>
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <select id="swapPageA" style="font-size:0.8rem; padding:8px;"></select>
+                    <span style="color:#64748b; align-self:center;">⇄</span>
+                    <select id="swapPageB" style="font-size:0.8rem; padding:8px;"></select>
+                </div>
+                <button class="btn btn-add" style="margin:0; padding:8px; font-size:0.8rem; background:#3b82f6;" onclick="applyPageSwap()">Tukar Posisi</button>
+            </div>
+
+            <div class="control-group" style="background:#1e293b; padding:10px; border-radius:8px;">
+                <label style="color:#e2e8f0;"><i class="ph ph-frame-corners"></i> Orientasi Per Halaman</label>
+                <select id="orientPageSelect" style="font-size:0.8rem; padding:8px; margin-bottom:5px;"></select>
+                <select id="orientPageMode" style="font-size:0.8rem; padding:8px; margin-bottom:10px;">
+                    <option value="portrait">Portrait</option>
+                    <option value="landscape">Landscape</option>
+                </select>
+                <button class="btn btn-add" style="margin:0; padding:8px; font-size:0.8rem; background:#10b981;" onclick="applyPageOrientation()">Terapkan Ukuran</button>
+            </div>
 
             <div class="section-divider">Administrasi PJP</div>
             <button class="btn btn-add" onclick="handleAddPage('program_semester', this)"><i class="ph ph-chart-bar"></i> Program Semester</button>
@@ -1172,12 +1158,20 @@
             // Kita harus mensinkronkan DOM saat ini kembali ke pagesDB
             // karena user mungkin telah mengedit halaman Standard.
             
+            // TRICK: Paksa value input masuk ke attribute agar terbaca saat innerHTML di-clone
+            document.querySelectorAll('.sheet input[type="text"], .sheet input[type="number"]').forEach(el => el.setAttribute('value', el.value));
+            document.querySelectorAll('.sheet textarea').forEach(el => el.innerHTML = el.value);
+            document.querySelectorAll('.sheet input[type="checkbox"]').forEach(el => el.checked ? el.setAttribute('checked', 'checked') : el.removeAttribute('checked'));
+
             const sheets = document.querySelectorAll('.sheet');
             
             // Rebuild DB from Current DOM State
             pagesDB = Array.from(sheets).map((sheet, index) => {
                 const isEmbed = sheet.dataset.pageType === 'embed';
                 const pageId = parseInt(sheet.dataset.id) || (Date.now() + index);
+                
+                // NEW: Tangkap orientasi per halaman dari class
+                const isLandscape = sheet.classList.contains('landscape');
 
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
@@ -1186,14 +1180,16 @@
                     return {
                         id: pageId,
                         type: 'embed',
-                        rawHTML: rawStorage ? rawStorage.value : '' // Source of Truth
+                        rawHTML: rawStorage ? rawStorage.value : '', // Source of Truth
+                        orientation: isLandscape ? 'landscape' : 'portrait'
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
                     return {
                         id: pageId,
                         type: 'standard', // atau undefined (legacy support)
-                        html: sheet.innerHTML
+                        html: sheet.innerHTML,
+                        orientation: isLandscape ? 'landscape' : 'portrait'
                     };
                 }
             });
@@ -1233,7 +1229,7 @@
             const container = document.getElementById('document-area');
             container.innerHTML = ''; // Reset container
 
-            pagesDB.forEach(page => {
+            pagesDB.forEach((page, index) => {
                 const sheet = document.createElement('div');
                 sheet.className = 'sheet';
                 sheet.dataset.id = page.id || Date.now(); // Maintain Identity
@@ -1269,9 +1265,11 @@
                     sheet.innerHTML = page.html;
                 }
 
-                // Cek penanda landscape dari dalam template
-                if (sheet.querySelector('.landscape-marker')) {
+                // NEW: Terapkan orientasi per halaman yang tersimpan di DB
+                if (page.orientation === 'landscape' || sheet.querySelector('.landscape-marker')) {
                     sheet.classList.add('landscape');
+                } else {
+                    sheet.classList.remove('landscape');
                 }
 
                 // B. SYSTEM COMPONENTS (Jika belum ada)
@@ -1287,6 +1285,7 @@
 
             syncData(); 
             updatePageNumbers();
+            updateAllPageSelectors(); // Sinkronisasi otomatis dropdown di sidebar
         }
 
         // ================= AUTO SAVE ENGINE (DEBOUNCE) =================
@@ -1456,6 +1455,17 @@
             });
         }
 
+        function updateAllPageSelectors() {
+            // Helper function untuk update semua dropdown yang butuh list halaman
+            refreshDeleteDropdown();
+            
+            const ids = ['swapPageA', 'swapPageB', 'orientPageSelect'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = document.getElementById('deletePageSelect').innerHTML;
+            });
+        }
+
         function confirmDelete(){
             const index = document.getElementById('deletePageSelect').value;
             deletePageByIndex(parseInt(index));
@@ -1479,6 +1489,7 @@
                 sheet.remove();
                 saveToStorage();
                 updatePageNumbers(); 
+                updateAllPageSelectors();
             },250);
         }
 
@@ -1645,7 +1656,10 @@
                 'm_tgl': '.data-tgl'
             };
             for (const [id, selector] of Object.entries(map)) {
-                const val = document.getElementById(id).value;
+                const inputEl = document.getElementById(id);
+                if (!inputEl) continue; // Pengaman: Abaikan jika input form sudah dihapus dari sidebar
+                
+                const val = inputEl.value;
                 document.querySelectorAll(selector).forEach(el => {
                     // NEW: Deteksi khusus untuk tanda tangan agar koma gelar tidak di-underline
                     if (el.classList.contains('format-ttd')) {
@@ -3300,6 +3314,106 @@
             }
             changeOrientation(savedMode);
         });
+    </script>
+
+    <!-- =========================================
+       16. NEW: PAGE MANAGEMENT ENGINE (REORDER & ORIENTATION)
+       ========================================= -->
+    <script id="page-management-logic">
+        
+        // --- 1. ORIENTASI PER HALAMAN ---
+        function applyPageOrientation() {
+            saveToStorage(); // Amankan input/editan terakhir
+            
+            const index = parseInt(document.getElementById('orientPageSelect').value);
+            const mode = document.getElementById('orientPageMode').value;
+            
+            if (isNaN(index) || !pagesDB[index]) return;
+
+            pagesDB[index].orientation = mode; // Update DB
+
+            // Update DOM Langsung tanpa re-render penuh agar cepat
+            const sheet = document.querySelectorAll('.sheet')[index];
+            if (sheet) {
+                if (mode === 'landscape') sheet.classList.add('landscape');
+                else sheet.classList.remove('landscape');
+                
+                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            saveToStorage(); // Permanenkan
+            uxToast(`Halaman ${index + 1} diubah ke ${mode.toUpperCase()}`, "success");
+        }
+
+        // --- 2. SWAP HALAMAN (MANUAL DROPDOWN) ---
+        function applyPageSwap() {
+            const indexA = parseInt(document.getElementById('swapPageA').value);
+            const indexB = parseInt(document.getElementById('swapPageB').value);
+            
+            if (isNaN(indexA) || isNaN(indexB) || indexA === indexB) {
+                uxToast("Pilih halaman yang berbeda untuk ditukar.", "info");
+                return;
+            }
+
+            saveToStorage(); // Wajib: Amankan state DOM ke pagesDB sebelum swap
+
+            // Lakukan penukaran di array
+            const temp = pagesDB[indexA];
+            pagesDB[indexA] = pagesDB[indexB];
+            pagesDB[indexB] = temp;
+
+            renderPages(); // Rebuild UI
+            saveToStorage();
+            
+            const targetSheet = document.querySelectorAll('.sheet')[indexB];
+            if(targetSheet) targetSheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            uxToast(`Halaman ${indexA + 1} ⇄ ${indexB + 1} berhasil ditukar!`, "success");
+        }
+
+        // --- 3. REORDER: NAIK (UP) ---
+        function movePageUp(index) {
+            if (index <= 0) {
+                uxToast("Halaman sudah berada di posisi paling atas.", "error");
+                return;
+            }
+            saveToStorage();
+            
+            // Swap elemen (Index saat ini & Index sebelumnya)
+            const temp = pagesDB[index];
+            pagesDB[index] = pagesDB[index - 1];
+            pagesDB[index - 1] = temp;
+            
+            renderPages();
+            saveToStorage();
+            
+            const sheet = document.querySelectorAll('.sheet')[index - 1];
+            if(sheet) sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            uxToast("Halaman dinaikkan 1 tingkat", "info");
+        }
+
+        // --- 4. REORDER: TURUN (DOWN) ---
+        function movePageDown(index) {
+            if (index >= pagesDB.length - 1) {
+                uxToast("Halaman sudah berada di posisi paling bawah.", "error");
+                return;
+            }
+            saveToStorage();
+            
+            // Swap elemen (Index saat ini & Index setelahnya)
+            const temp = pagesDB[index];
+            pagesDB[index] = pagesDB[index + 1];
+            pagesDB[index + 1] = temp;
+            
+            renderPages();
+            saveToStorage();
+            
+            const sheet = document.querySelectorAll('.sheet')[index + 1];
+            if(sheet) sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            uxToast("Halaman diturunkan 1 tingkat", "info");
+        }
     </script>
 </body>
 </html>
