@@ -103,8 +103,7 @@
             letter-spacing: 0.5px;
             font-weight: 600;
         }
-        .control-group input,
-        .control-group select { 
+        .control-group input { 
             width: 100%; 
             padding: 10px 12px; 
             border-radius: 6px; 
@@ -113,10 +112,9 @@
             color: white;
             font-size: 0.9rem; 
             transition: all 0.2s;
-            outline: none;
         }
-        .control-group input:focus,
-        .control-group select:focus {
+        .control-group input:focus {
+            outline: none;
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
@@ -858,64 +856,6 @@
         .embed-safe-zone * {
             font-family: "Times New Roman", Times, serif !important;
         }
-
-        /* 4. GAMBAR EKSTERNAL & RESPONSIF (FITUR EMBED HTML) */
-        .sheet img,
-        .embed-safe-zone img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        .logo-img {
-            width: 80px;
-            height: auto;
-        }
-
-        /* 5. FORMAT TANDA TANGAN RESMI (TANPA UNDERLINE DI KOMA/TITIK) */
-        .nama-ttd {
-            display: inline-block;
-            border-bottom: 1px solid #000;
-            font-weight: bold;
-            padding-bottom: 2px;
-        }
-
-        /* 6. FITUR ORIENTASI GLOBAL (LANDSCAPE / PORTRAIT) */
-        .sheet {
-            /* Smooth transition untuk perpindahan orientasi tanpa merusak efek lama */
-            transition: width 0.4s ease, min-height 0.4s ease, transform 0.3s ease !important;
-        }
-
-        body.global-landscape .sheet {
-            width: 330mm !important;
-            min-height: 215mm !important;
-            padding: 20mm 25mm !important;
-        }
-
-        /* Supaya saat tinggi kertas menciut jadi 215mm, konten tabel tidak tumpah/overflow */
-        body.global-landscape table.table-grid,
-        body.global-landscape table.table-padat,
-        body.global-landscape table.dinas,
-        body.global-landscape table.list-data,
-        body.global-landscape p,
-        body.global-landscape div {
-            font-size: 10.5pt !important;
-            line-height: 1.15 !important;
-        }
-        
-        body.global-landscape table.table-grid th, 
-        body.global-landscape table.table-grid td {
-            padding: 2px 1px !important; 
-        }
-
-        /* Reset untuk print mode dalam state landscape */
-        @media print {
-            body.global-landscape .sheet {
-                width: 100% !important;
-                min-height: 215mm !important;
-                margin: 0 !important;
-                page-break-after: always;
-            }
-        }
     </style>
 </head>
 <body>
@@ -931,38 +871,43 @@
             <h2>
                 <i class="ph ph-buildings" style="font-size: 24px;"></i> Admin Sekolah
             </h2>
-
-            <!-- FITUR BARU: TOGGLE ORIENTASI KERTAS GLOBAL -->
-            <div class="control-group">
-                <label><i class="ph ph-arrows-out-line-horizontal"></i> Orientasi Global</label>
-                <select id="global_orientation" onchange="changeOrientation(this.value)">
-                    <option value="portrait">Portrait Semua (215 x 330mm)</option>
-                    <option value="landscape">Landscape Semua (330 x 215mm)</option>
-                </select>
-            </div>
-
-            <!-- FITUR BARU: MANAJEMEN HALAMAN TINGKAT LANJUT -->
-            <div class="section-divider">Manajemen Halaman</div>
             
-            <div class="control-group" style="background:#1e293b; padding:10px; border-radius:8px; margin-bottom:10px;">
-                <label style="color:#e2e8f0;"><i class="ph ph-swap"></i> Tukar Posisi (Swap)</label>
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <select id="swapPageA" style="font-size:0.8rem; padding:8px;"></select>
-                    <span style="color:#64748b; align-self:center;">⇄</span>
-                    <select id="swapPageB" style="font-size:0.8rem; padding:8px;"></select>
-                </div>
-                <button class="btn btn-add" style="margin:0; padding:8px; font-size:0.8rem; background:#3b82f6;" onclick="applyPageSwap()">Tukar Posisi</button>
+            <div class="control-group">
+                <label>Nama Sekolah</label>
+                <input type="text" id="m_sekolah" value="UPTD SD NEGERI 1 BATULAWANG" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Alamat Sekolah</label>
+                <input type="text" id="m_alamat" value="Jl. Desa Batulawang No. 123" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Kepala Sekolah</label>
+                <input type="text" id="m_kepsek" value="NAMA KEPALA SEKOLAH" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>NIP Kepala Sekolah</label>
+                <input type="text" id="m_nip1" value="19800101 200501 1 001" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Guru PJP / Kelas</label>
+                <input type="text" id="m_guru" value="USAMAH DHIYA UL HAQ, S.Pd." oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>NIP Guru</label>
+                <input type="text" id="m_nip2" value="-" oninput="handleSyncData()">
+            </div>
+            <div class="control-group">
+                <label>Tanggal Surat</label>
+                <input type="text" id="m_tgl" value="Desember 2025" oninput="handleSyncData()">
             </div>
 
-            <div class="control-group" style="background:#1e293b; padding:10px; border-radius:8px;">
-                <label style="color:#e2e8f0;"><i class="ph ph-frame-corners"></i> Orientasi Per Halaman</label>
-                <select id="orientPageSelect" style="font-size:0.8rem; padding:8px; margin-bottom:5px;"></select>
-                <select id="orientPageMode" style="font-size:0.8rem; padding:8px; margin-bottom:10px;">
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                </select>
-                <button class="btn btn-add" style="margin:0; padding:8px; font-size:0.8rem; background:#10b981;" onclick="applyPageOrientation()">Terapkan Ukuran</button>
-            </div>
+            <div class="section-divider">Laporan Kegiatan</div>
+            <!-- UPDATED ONCLICK HANDLERS TO UX WRAPPERS -->
+            <button class="btn btn-add" onclick="handleAddPage('cover', this)"><i class="ph ph-file-text"></i> Halaman Cover</button>
+            <button class="btn btn-add" onclick="handleAddPage('laporan', this)"><i class="ph ph-file-plus"></i> Laporan Kegiatan</button>
+            <button class="btn btn-add" onclick="handleAddPage('laporan_convert', this)"><i class="ph ph-file-arrow-up"></i> Laporan (Convert)</button>
+            <button class="btn btn-add" onclick="handleAddPage('foto', this)"><i class="ph ph-camera"></i> Dokumentasi Foto</button>
+            <button class="btn btn-add" onclick="handleAddPage('jadwal', this)"><i class="ph ph-calendar"></i> Jadwal Asesmen</button>
 
             <div class="section-divider">Administrasi PJP</div>
             <button class="btn btn-add" onclick="handleAddPage('program_semester', this)"><i class="ph ph-chart-bar"></i> Program Semester</button>
@@ -1158,20 +1103,12 @@
             // Kita harus mensinkronkan DOM saat ini kembali ke pagesDB
             // karena user mungkin telah mengedit halaman Standard.
             
-            // TRICK: Paksa value input masuk ke attribute agar terbaca saat innerHTML di-clone
-            document.querySelectorAll('.sheet input[type="text"], .sheet input[type="number"]').forEach(el => el.setAttribute('value', el.value));
-            document.querySelectorAll('.sheet textarea').forEach(el => el.innerHTML = el.value);
-            document.querySelectorAll('.sheet input[type="checkbox"]').forEach(el => el.checked ? el.setAttribute('checked', 'checked') : el.removeAttribute('checked'));
-
             const sheets = document.querySelectorAll('.sheet');
             
             // Rebuild DB from Current DOM State
             pagesDB = Array.from(sheets).map((sheet, index) => {
                 const isEmbed = sheet.dataset.pageType === 'embed';
                 const pageId = parseInt(sheet.dataset.id) || (Date.now() + index);
-                
-                // NEW: Tangkap orientasi per halaman dari class
-                const isLandscape = sheet.classList.contains('landscape');
 
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
@@ -1180,16 +1117,14 @@
                     return {
                         id: pageId,
                         type: 'embed',
-                        rawHTML: rawStorage ? rawStorage.value : '', // Source of Truth
-                        orientation: isLandscape ? 'landscape' : 'portrait'
+                        rawHTML: rawStorage ? rawStorage.value : '' // Source of Truth
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
                     return {
                         id: pageId,
                         type: 'standard', // atau undefined (legacy support)
-                        html: sheet.innerHTML,
-                        orientation: isLandscape ? 'landscape' : 'portrait'
+                        html: sheet.innerHTML
                     };
                 }
             });
@@ -1229,7 +1164,7 @@
             const container = document.getElementById('document-area');
             container.innerHTML = ''; // Reset container
 
-            pagesDB.forEach((page, index) => {
+            pagesDB.forEach(page => {
                 const sheet = document.createElement('div');
                 sheet.className = 'sheet';
                 sheet.dataset.id = page.id || Date.now(); // Maintain Identity
@@ -1265,11 +1200,9 @@
                     sheet.innerHTML = page.html;
                 }
 
-                // NEW: Terapkan orientasi per halaman yang tersimpan di DB
-                if (page.orientation === 'landscape' || sheet.querySelector('.landscape-marker')) {
+                // Cek penanda landscape dari dalam template
+                if (sheet.querySelector('.landscape-marker')) {
                     sheet.classList.add('landscape');
-                } else {
-                    sheet.classList.remove('landscape');
                 }
 
                 // B. SYSTEM COMPONENTS (Jika belum ada)
@@ -1285,7 +1218,6 @@
 
             syncData(); 
             updatePageNumbers();
-            updateAllPageSelectors(); // Sinkronisasi otomatis dropdown di sidebar
         }
 
         // ================= AUTO SAVE ENGINE (DEBOUNCE) =================
@@ -1455,17 +1387,6 @@
             });
         }
 
-        function updateAllPageSelectors() {
-            // Helper function untuk update semua dropdown yang butuh list halaman
-            refreshDeleteDropdown();
-            
-            const ids = ['swapPageA', 'swapPageB', 'orientPageSelect'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = document.getElementById('deletePageSelect').innerHTML;
-            });
-        }
-
         function confirmDelete(){
             const index = document.getElementById('deletePageSelect').value;
             deletePageByIndex(parseInt(index));
@@ -1489,7 +1410,6 @@
                 sheet.remove();
                 saveToStorage();
                 updatePageNumbers(); 
-                updateAllPageSelectors();
             },250);
         }
 
@@ -1507,12 +1427,7 @@
             void document.body.offsetHeight;
 
             try {
-                // MODIFIED: Cek mode orientasi global (Override jika aktif)
-                const isGlobalLandscape = document.body.classList.contains('global-landscape');
-                
-                // Gunakan mode global jika aktif, kalau tidak fallback ke class individu page pertama
-                const firstIsLandscape = isGlobalLandscape || sheets[0].classList.contains('landscape');
-                
+                const firstIsLandscape = sheets[0].classList.contains('landscape');
                 const pdf = new jsPDF({
                     orientation: firstIsLandscape ? 'landscape' : 'portrait',
                     unit: 'mm',
@@ -1520,9 +1435,7 @@
                 });
 
                 for(let i=0; i<sheets.length; i++){
-                    // MODIFIED: Tentukan landscape untuk page ini
-                    const isPageLandscape = isGlobalLandscape || sheets[i].classList.contains('landscape');
-                    
+                    const isLandscape = sheets[i].classList.contains('landscape');
                     const canvas = await html2canvas(sheets[i], {
                         scale: 2,
                         useCORS: true,
@@ -1532,10 +1445,10 @@
                     const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
                     if(i !== 0){
-                        pdf.addPage(isPageLandscape ? [330, 215] : [215, 330], isPageLandscape ? 'landscape' : 'portrait');
+                        pdf.addPage(isLandscape ? [330, 215] : [215, 330], isLandscape ? 'landscape' : 'portrait');
                     }
 
-                    if (isPageLandscape) {
+                    if (isLandscape) {
                         pdf.addImage(imgData, 'JPEG', 0, 0, 330, 215);
                     } else {
                         pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
@@ -1656,25 +1569,8 @@
                 'm_tgl': '.data-tgl'
             };
             for (const [id, selector] of Object.entries(map)) {
-                const inputEl = document.getElementById(id);
-                if (!inputEl) continue; // Pengaman: Abaikan jika input form sudah dihapus dari sidebar
-                
-                const val = inputEl.value;
-                document.querySelectorAll(selector).forEach(el => {
-                    // NEW: Deteksi khusus untuk tanda tangan agar koma gelar tidak di-underline
-                    if (el.classList.contains('format-ttd')) {
-                        if (val.includes(',')) {
-                            const parts = val.split(',');
-                            const name = parts[0];
-                            const title = parts.slice(1).join(',');
-                            el.innerHTML = `<span class="nama-ttd">${name}</span>,${title}`;
-                        } else {
-                            el.innerHTML = `<span class="nama-ttd">${val}</span>`;
-                        }
-                    } else {
-                        el.innerText = val;
-                    }
-                });
+                const val = document.getElementById(id).value;
+                document.querySelectorAll(selector).forEach(el => el.innerText = val);
             }
         }
 
@@ -1892,13 +1788,13 @@
                 <div class="ttd-box">
                     <p>Mengetahui,<br>Kepala Sekolah</p>
                     <div class="ttd-space"></div>
-                    <p class="text-upper data-kepsek format-ttd">NAMA KEPALA</p>
+                    <p class="text-bold text-upper"><u class="data-kepsek">NAMA KEPALA</u></p>
                     <p>NIP. <span class="data-nip1">...</span></p>
                 </div>
                 <div class="ttd-box">
                     <p>Banjar, <span contenteditable="true" class="data-tgl">...</span><br>${jabatan}</p>
                     <div class="ttd-space"></div>
-                    <p class="text-upper data-guru format-ttd">NAMA GURU</p>
+                    <p class="text-bold text-upper"><u class="data-guru">NAMA GURU</u></p>
                     <p>NIP. <span class="data-nip2">...</span></p>
                 </div>
             </div>
@@ -2255,7 +2151,7 @@
                         <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p>Guru BTQ</p>
                         <br><br><br>
-                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
+                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
                     </div>
                 </div>
                 <div class="page-number"></div>
@@ -2367,7 +2263,7 @@
                         <p style="margin: 0 0 5px 0; line-height: 1.5;">Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p style="margin: 0; line-height: 1.5;">Guru PAI / BTQ</p>
                         <div style="height: 65px;"></div>
-                        <p class="text-upper data-guru format-ttd" style="margin: 0;">Nama Guru</p>
+                        <p class="text-bold text-upper" style="margin: 0; text-decoration: underline;"><span class="data-guru">Nama Guru</span></p>
                         <p style="margin: 5px 0 0 0;">NIP. <span class="data-nip2">...</span></p>
                     </div>
                 </div>
@@ -2452,7 +2348,7 @@
                         <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p>Guru BTQ</p>
                         <br><br><br>
-                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
+                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
                     </div>
                 </div>
                 <div class="page-number"></div>
@@ -2591,7 +2487,7 @@
                         <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
                         <p>Penguji</p>
                         <br><br><br>
-                        <p class="text-upper data-guru format-ttd">Nama Guru</p>
+                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
                     </div>
                 </div>
                 <div class="page-number"></div>
@@ -3267,153 +3163,6 @@
                 }
             }
         });
-    </script>
-
-    <!-- =========================================
-       15. NEW: ORIENTATION TOGGLE LOGIC (ADDITIVE)
-       ========================================= -->
-    <script id="orientation-logic">
-        function changeOrientation(mode) {
-            const body = document.body;
-            
-            if (mode === 'landscape') {
-                body.classList.add('global-landscape');
-            } else {
-                body.classList.remove('global-landscape');
-            }
-            
-            // Update Print Page CSS dinamis untuk native browser print (Ctrl+P)
-            let styleEl = document.getElementById('dynamic-print-style');
-            if (!styleEl) {
-                styleEl = document.createElement('style');
-                styleEl.id = 'dynamic-print-style';
-                document.head.appendChild(styleEl);
-            }
-            
-            if (mode === 'landscape') {
-                styleEl.innerHTML = '@media print { @page { size: 330mm 215mm !important; margin: 0; } }';
-            } else {
-                styleEl.innerHTML = '@media print { @page { size: 215mm 330mm !important; margin: 0; } }';
-            }
-            
-            // Simpan pilihan ke localStorage agar tidak reset ketika refresh
-            localStorage.setItem('global_orientation', mode);
-            
-            // Trigger Pagination check setelah transisi CSS selesai (450ms)
-            if(typeof autoPaginateCustomPages === 'function') {
-                setTimeout(autoPaginateCustomPages, 450);
-            }
-        }
-
-        // Inisialisasi posisi saat halaman dimuat
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedMode = localStorage.getItem('global_orientation') || 'portrait';
-            const selectEl = document.getElementById('global_orientation');
-            if (selectEl) {
-                selectEl.value = savedMode;
-            }
-            changeOrientation(savedMode);
-        });
-    </script>
-
-    <!-- =========================================
-       16. NEW: PAGE MANAGEMENT ENGINE (REORDER & ORIENTATION)
-       ========================================= -->
-    <script id="page-management-logic">
-        
-        // --- 1. ORIENTASI PER HALAMAN ---
-        function applyPageOrientation() {
-            saveToStorage(); // Amankan input/editan terakhir
-            
-            const index = parseInt(document.getElementById('orientPageSelect').value);
-            const mode = document.getElementById('orientPageMode').value;
-            
-            if (isNaN(index) || !pagesDB[index]) return;
-
-            pagesDB[index].orientation = mode; // Update DB
-
-            // Update DOM Langsung tanpa re-render penuh agar cepat
-            const sheet = document.querySelectorAll('.sheet')[index];
-            if (sheet) {
-                if (mode === 'landscape') sheet.classList.add('landscape');
-                else sheet.classList.remove('landscape');
-                
-                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
-            saveToStorage(); // Permanenkan
-            uxToast(`Halaman ${index + 1} diubah ke ${mode.toUpperCase()}`, "success");
-        }
-
-        // --- 2. SWAP HALAMAN (MANUAL DROPDOWN) ---
-        function applyPageSwap() {
-            const indexA = parseInt(document.getElementById('swapPageA').value);
-            const indexB = parseInt(document.getElementById('swapPageB').value);
-            
-            if (isNaN(indexA) || isNaN(indexB) || indexA === indexB) {
-                uxToast("Pilih halaman yang berbeda untuk ditukar.", "info");
-                return;
-            }
-
-            saveToStorage(); // Wajib: Amankan state DOM ke pagesDB sebelum swap
-
-            // Lakukan penukaran di array
-            const temp = pagesDB[indexA];
-            pagesDB[indexA] = pagesDB[indexB];
-            pagesDB[indexB] = temp;
-
-            renderPages(); // Rebuild UI
-            saveToStorage();
-            
-            const targetSheet = document.querySelectorAll('.sheet')[indexB];
-            if(targetSheet) targetSheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            uxToast(`Halaman ${indexA + 1} ⇄ ${indexB + 1} berhasil ditukar!`, "success");
-        }
-
-        // --- 3. REORDER: NAIK (UP) ---
-        function movePageUp(index) {
-            if (index <= 0) {
-                uxToast("Halaman sudah berada di posisi paling atas.", "error");
-                return;
-            }
-            saveToStorage();
-            
-            // Swap elemen (Index saat ini & Index sebelumnya)
-            const temp = pagesDB[index];
-            pagesDB[index] = pagesDB[index - 1];
-            pagesDB[index - 1] = temp;
-            
-            renderPages();
-            saveToStorage();
-            
-            const sheet = document.querySelectorAll('.sheet')[index - 1];
-            if(sheet) sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            uxToast("Halaman dinaikkan 1 tingkat", "info");
-        }
-
-        // --- 4. REORDER: TURUN (DOWN) ---
-        function movePageDown(index) {
-            if (index >= pagesDB.length - 1) {
-                uxToast("Halaman sudah berada di posisi paling bawah.", "error");
-                return;
-            }
-            saveToStorage();
-            
-            // Swap elemen (Index saat ini & Index setelahnya)
-            const temp = pagesDB[index];
-            pagesDB[index] = pagesDB[index + 1];
-            pagesDB[index + 1] = temp;
-            
-            renderPages();
-            saveToStorage();
-            
-            const sheet = document.querySelectorAll('.sheet')[index + 1];
-            if(sheet) sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            uxToast("Halaman diturunkan 1 tingkat", "info");
-        }
     </script>
 </body>
 </html>
