@@ -8,9 +8,13 @@
     <!-- LIBRARIES FOR PDF GENERATION -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- NEW: LIBRARIES FOR ZIP EXPORT/IMPORT -->
+    <!-- LIBRARIES FOR ZIP EXPORT/IMPORT -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- NEW: LIBRARY FOR WORD (DOCX) EXPORT -->
+    <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
+
     <!-- PHOSPHOR ICONS (Premium Icons) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -925,13 +929,6 @@
             <button class="btn btn-add" onclick="handleAddPage('custom', this)"><i class="ph ph-magic-wand"></i> Halaman Custom</button>
             <button class="btn btn-add" style="border-style: dashed;" onclick="openEmbedModal()"><i class="ph ph-code"></i> Embed HTML / Code</button>
 
-            <div class="section-divider">Layout Halaman</div>
-            
-            <!-- FITUR BARU: ORIENTATION -->
-            <button class="btn btn-add" onclick="openOrientationModal()">
-                <i class="ph ph-rectangle"></i> Atur Orientation Halaman
-            </button>
-
             <div class="section-divider">Actions</div>
             
             <!-- BUTTON DELETE DI SIDEBAR -->
@@ -964,11 +961,16 @@
             <!-- WRAPPED SAFE PRINT HANDLER -->
             <button class="btn btn-print" onclick="handleSafePrint(this)"><i class="ph ph-printer"></i> Download PDF (F4)</button>
 
+            <!-- NEW: WRAPPED SAFE WORD EXPORT HANDLER -->
+            <button class="btn btn-print" style="background:#2563eb; margin-top:10px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);" onclick="handleExportWordWrapper(this)">
+                <i class="ph ph-file-doc"></i> Download Word (.docx)
+            </button>
+
             <!-- WRAPPED RESET HANDLER -->
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.4 Enterprise • Native Embed • HTML Editor • Page Orientation
+                v9.4 Enterprise • Word Export Ready
             </p>
         </aside>
 
@@ -982,107 +984,87 @@
     <!-- MODAL DELETE SYSTEM (EXISTING - PRESERVED) -->
     <div id="deleteModal" class="modal">
        <div class="modal-box">
-           <h3>Hapus Halaman</h3>
-           <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin dihapus:</p>
+            <h3>Hapus Halaman</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin dihapus:</p>
 
-           <select id="deletePageSelect"></select>
+            <select id="deletePageSelect"></select>
 
-           <div class="modal-actions">
-               <button onclick="handleConfirmDelete()">Hapus</button>
-               <button onclick="closeDeleteModal()">Batal</button>
-           </div>
+            <div class="modal-actions">
+                <button onclick="handleConfirmDelete()">Hapus</button>
+                <button onclick="closeDeleteModal()">Batal</button>
+            </div>
        </div>
     </div>
 
     <!-- MODAL EDIT SYSTEM (EXISTING - PRESERVED) -->
     <div id="editModal" class="modal">
        <div class="modal-box">
-           <h3>Edit Custom Halaman</h3>
-           <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman untuk masuk mode edit:</p>
+            <h3>Edit Custom Halaman</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman untuk masuk mode edit:</p>
 
-           <select id="editPageSelect"></select>
+            <select id="editPageSelect"></select>
 
-           <div class="modal-actions">
-               <button onclick="handleConfirmEditMode()">✅ Aktifkan Edit</button>
-               <button onclick="closeEditModal()">Batal</button>
-           </div>
+            <div class="modal-actions">
+                <button onclick="handleConfirmEditMode()">✅ Aktifkan Edit</button>
+                <button onclick="closeEditModal()">Batal</button>
+            </div>
        </div>
     </div>
 
     <!-- NEW MODAL: HTML SELECT SYSTEM -->
     <div id="htmlEditSelectModal" class="modal">
        <div class="modal-box">
-           <h3><i class="ph ph-code-block" style="color:var(--code-purple)"></i> Edit HTML Halaman</h3>
-           <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin diedit kode sumbernya:</p>
+            <h3><i class="ph ph-code-block" style="color:var(--code-purple)"></i> Edit HTML Halaman</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin diedit kode sumbernya:</p>
 
-           <select id="htmlPageSelect"></select>
+            <select id="htmlPageSelect"></select>
 
-           <div class="modal-actions">
-               <button style="background:var(--code-purple); color:white;" onclick="handleOpenHtmlEditor()">Buka Editor</button>
-               <button onclick="closeHtmlEditSelectModal()">Batal</button>
-           </div>
+            <div class="modal-actions">
+                <button style="background:var(--code-purple); color:white;" onclick="handleOpenHtmlEditor()">Buka Editor</button>
+                <button onclick="closeHtmlEditSelectModal()">Batal</button>
+            </div>
        </div>
     </div>
 
     <!-- NEW MODAL: LARGE HTML EDITOR -->
     <div id="htmlEditorModal" class="modal">
        <div class="modal-box modal-large">
-           <div style="display:flex; justify-content:space-between; align-items:center;">
-               <h3 style="margin:0;"><i class="ph ph-file-code"></i> Source Code Editor</h3>
-               <span id="editorPageInfo" style="font-size:0.8rem; background:#f1f5f9; padding:4px 8px; border-radius:4px; color:#64748b;">Halaman ?</span>
-           </div>
-           
-           <div class="code-editor-container">
-               <div class="code-toolbar">
-                   <span>HTML / Embed Source</span>
-                   <span style="font-size:0.7rem; opacity:0.7;">Auto-Sanitized • Monospace</span>
-               </div>
-               <!-- Textarea for Coding -->
-               <textarea id="htmlCodeInput" class="code-textarea" spellcheck="false"></textarea>
-           </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;"><i class="ph ph-file-code"></i> Source Code Editor</h3>
+                <span id="editorPageInfo" style="font-size:0.8rem; background:#f1f5f9; padding:4px 8px; border-radius:4px; color:#64748b;">Halaman ?</span>
+            </div>
+            
+            <div class="code-editor-container">
+                <div class="code-toolbar">
+                    <span>HTML / Embed Source</span>
+                    <span style="font-size:0.7rem; opacity:0.7;">Auto-Sanitized • Monospace</span>
+                </div>
+                <!-- Textarea for Coding -->
+                <textarea id="htmlCodeInput" class="code-textarea" spellcheck="false"></textarea>
+            </div>
 
-           <div class="modal-actions">
-               <button class="btn-preview-html" onclick="handlePreviewHtml()">👁 Preview</button>
-               <button class="btn-save-html" onclick="handleSaveHtmlChange()">💾 Simpan Perubahan</button>
-               <button onclick="closeHtmlEditorModal()">Batal</button>
-           </div>
+            <div class="modal-actions">
+                <button class="btn-preview-html" onclick="handlePreviewHtml()">👁 Preview</button>
+                <button class="btn-save-html" onclick="handleSaveHtmlChange()">💾 Simpan Perubahan</button>
+                <button onclick="closeHtmlEditorModal()">Batal</button>
+            </div>
        </div>
     </div>
 
     <!-- MODAL EMBED HTML SYSTEM (EXISTING - PRESERVED) -->
     <div id="embedModal" class="modal">
        <div class="modal-box" style="width: 600px; max-width: 90vw;">
-           <h3>Embed HTML Code</h3>
-           <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">
-               Tempel kode HTML Anda di bawah. Script tag akan dihapus otomatis demi keamanan.
-           </p>
+            <h3>Embed HTML Code</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">
+                Tempel kode HTML Anda di bawah. Script tag akan dihapus otomatis demi keamanan.
+            </p>
 
-           <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
+            <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
 
-           <div class="modal-actions" style="margin-top: 20px;">
-               <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
-               <button onclick="closeEmbedModal()">Batal</button>
-           </div>
-       </div>
-    </div>
-
-    <!-- MODAL ORIENTATION SYSTEM (NEW ADDITION) -->
-    <div id="orientationModal" class="modal">
-       <div class="modal-box">
-           <h3>Atur Orientation Halaman</h3>
-           <p style="font-size:0.9rem; color:#64748b;">Pilih halaman dan orientation:</p>
-
-           <select id="orientationPageSelect"></select>
-
-           <select id="orientationTypeSelect" style="margin-top:10px;">
-               <option value="portrait">Portrait</option>
-               <option value="landscape">Landscape</option>
-           </select>
-
-           <div class="modal-actions" style="margin-top:20px;">
-               <button onclick="applyOrientation()" style="background: var(--accent-blue); color: white;">Terapkan</button>
-               <button onclick="closeOrientationModal()">Batal</button>
-           </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
+                <button onclick="closeEmbedModal()">Batal</button>
+            </div>
        </div>
     </div>
 
@@ -1136,7 +1118,6 @@
             pagesDB = Array.from(sheets).map((sheet, index) => {
                 const isEmbed = sheet.dataset.pageType === 'embed';
                 const pageId = parseInt(sheet.dataset.id) || (Date.now() + index);
-                const currentOrientation = sheet.dataset.orientation || (sheet.classList.contains('landscape') ? 'landscape' : 'portrait');
 
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
@@ -1145,16 +1126,14 @@
                     return {
                         id: pageId,
                         type: 'embed',
-                        rawHTML: rawStorage ? rawStorage.value : '', // Source of Truth
-                        orientation: currentOrientation // ADDITIVE
+                        rawHTML: rawStorage ? rawStorage.value : '' // Source of Truth
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
                     return {
                         id: pageId,
                         type: 'standard', // atau undefined (legacy support)
-                        html: sheet.innerHTML,
-                        orientation: currentOrientation // ADDITIVE
+                        html: sheet.innerHTML
                     };
                 }
             });
@@ -1230,22 +1209,12 @@
                     sheet.innerHTML = page.html;
                 }
 
-                // B. SYSTEM COMPONENTS (Jika belum ada)
-                // ADDITIVE: Set orientation based on pagesDB state
-                if(page.orientation === 'landscape'){
-                    sheet.classList.add('landscape');
-                    sheet.dataset.orientation = 'landscape';
-                } else if(page.orientation === 'portrait') {
-                    sheet.classList.remove('landscape');
-                    sheet.dataset.orientation = 'portrait';
-                }
-
-                // Cek penanda landscape dari dalam template (Legacy support overrides if exists)
+                // Cek penanda landscape dari dalam template
                 if (sheet.querySelector('.landscape-marker')) {
                     sheet.classList.add('landscape');
-                    sheet.dataset.orientation = 'landscape';
                 }
 
+                // B. SYSTEM COMPONENTS (Jika belum ada)
                 // Cek apakah page number sudah ada (untuk standard page yg tersimpan full HTML)
                 if (!sheet.querySelector('.page-number')) {
                     const pageNum = document.createElement('div');
@@ -2272,7 +2241,7 @@
                                 "AKT","AKF","NSR","LHB","IKH","FLQ","NAS"
                             ].map(surah => `
                                 <th style="border: 1px solid #000; background-color: #e5e7eb; height: 80px; width: 12px; padding: 0; vertical-align: middle; text-align: center;">
-                                    <div style="transform: rotate(-90deg); white-space: nowrap; font-size: 6.5pt; font-weight: bold; letter-spacing: 0.5px;">${surah}</div>
+                                    <div style="transform: rotate(-90deg); white-space: nowrap; font-size: 6.5pt; font-weight: bold; letter-spacing: 0.5px; mso-rotate: 90; writing-mode: vertical-rl;">${surah}</div>
                                 </th>
                             `).join('')}
                         </tr>
@@ -2738,7 +2707,7 @@
         }
 
         // =========================================
-        // 11. NEW: HTML EDITOR LOGIC (ADDITIVE)
+        // 11. HTML EDITOR LOGIC (ADDITIVE)
         // =========================================
         let currentEditingIndex = -1;
 
@@ -2946,7 +2915,272 @@
     </script>
 
     <!-- =========================================
-       13. NEW: ZIP EXPORT & IMPORT LOGIC (ADDITIVE)
+       12. NEW: WORD (DOCX) EXPORT LOGIC (ADDITIVE)
+       Memastikan hasil 100% identik dengan mengubah struktur DOM sebelum diexport
+       serta mengatur ukuran twip Word F4.
+       ========================================= -->
+    <script id="word-export-logic">
+        async function handleExportWordWrapper(btn) {
+            uxShowLoader("Menyiapkan file Word (.docx)...");
+            uxBtnLoad(btn, true);
+            
+            try {
+                // Tunggu render loader
+                await new Promise(r => setTimeout(r, 100));
+                await executeWordExport();
+            } catch (e) {
+                console.error(e);
+                uxToast("Gagal export Word. Cek koneksi internet untuk library.", "error");
+            } finally {
+                uxHideLoader();
+                uxBtnLoad(btn, false);
+            }
+        }
+
+        async function executeWordExport() {
+            if (typeof htmlDocx === 'undefined') {
+                throw new Error("Library htmlDocx belum dimuat!");
+            }
+
+            const sheets = document.querySelectorAll('.sheet');
+            if(!sheets.length) {
+                alert('Tidak ada halaman untuk didownload!');
+                return;
+            }
+
+            // Pastikan nilai terbaru tersimpan ke atribut DOM
+            document.querySelectorAll('.sheet input[type="text"], .sheet input[type="number"]').forEach(el => {
+                el.setAttribute('value', el.value);
+            });
+            document.querySelectorAll('.sheet textarea').forEach(el => {
+                el.innerHTML = el.value.replace(/\n/g, '<br>');
+            });
+
+            // 1. Kumpulkan semua CSS yang aktif di halaman untuk menjaga styling tabel, dll.
+            let activeStyles = '';
+            document.querySelectorAll('style').forEach(s => {
+                activeStyles += s.innerHTML;
+            });
+
+            // 2. Tambahkan MSO khusus untuk mengatur kertas F4 (215x330mm) ke Twip/Inch Word
+            activeStyles += `
+                @page {
+                    size: 8.46in 12.99in; /* F4 width 215mm, height 330mm */
+                    margin: 0.79in; /* 20mm */
+                }
+                @page SectionPortrait {
+                    size: 8.46in 12.99in;
+                    margin: 0.79in;
+                    mso-page-orientation: portrait;
+                }
+                @page SectionLandscape {
+                    size: 12.99in 8.46in;
+                    margin: 0.79in;
+                    mso-page-orientation: landscape;
+                }
+                div.SectionPortrait { page: SectionPortrait; }
+                div.SectionLandscape { page: SectionLandscape; }
+                
+                /* Override agar sesuai spesifikasi di prompt */
+                body, p, span, td, th, div, h1, h2, h3, h4, table {
+                    font-family: "Times New Roman", Times, serif !important;
+                }
+            `;
+
+            // 3. Bangun HTML untuk Word
+            let htmlContent = `
+            <!DOCTYPE html>
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset="utf-8">
+                <style>${activeStyles}</style>
+            </head>
+            <body>
+            `;
+
+            // 4. Proses per halaman untuk mapping sempurna
+            sheets.forEach((sheet, index) => {
+                const isLandscape = sheet.classList.contains('landscape');
+                const clone = sheet.cloneNode(true); // Clone agar DOM asli tidak rusak
+
+                // --- PEMBERSIHAN ELEMEN UI ---
+                clone.querySelectorAll('.edit-badge, .sheet-controls, .menu-toggle, aside, .page-number, input[type="file"]').forEach(el => el.remove());
+
+                // --- TRANSFORMASI FORM ELEMENT KE TEKS ---
+                clone.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => {
+                    const span = document.createElement('span');
+                    span.innerText = el.value || el.getAttribute('value') || '';
+                    span.style.cssText = el.style.cssText;
+                    span.className = el.className;
+                    el.replaceWith(span);
+                });
+
+                clone.querySelectorAll('textarea').forEach(el => {
+                    const div = document.createElement('div');
+                    div.innerHTML = (el.value || el.innerHTML || '').replace(/\n/g, '<br>');
+                    div.style.cssText = el.style.cssText;
+                    div.className = el.className;
+                    el.replaceWith(div);
+                });
+
+                clone.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                    const span = document.createElement('span');
+                    span.innerHTML = el.checked ? '&#9745;' : '&#9744;'; // Unicode checked/unchecked box
+                    span.style.fontFamily = 'Arial'; // Renders symbol better in Word
+                    span.style.fontSize = '12pt';
+                    el.replaceWith(span);
+                });
+
+                // --- TRANSFORMASI FLEXBOX KE TABLE (KUNCI PRESISI WORD) ---
+                // Word tidak bisa Flexbox, jadi Flexbox harus diubah jadi Table Layout
+                
+                // A. Kop Surat
+                clone.querySelectorAll('.kop-surat').forEach(kop => {
+                    const imgContainer = kop.querySelector('.kop-img');
+                    const img = imgContainer ? imgContainer.querySelector('img') : null;
+                    const text = kop.querySelector('.kop-text');
+
+                    const table = document.createElement('table');
+                    table.style.width = '100%';
+                    table.style.borderBottom = '3px double #000';
+                    table.style.marginBottom = '20px';
+                    table.setAttribute('cellpadding', '0');
+                    table.setAttribute('cellspacing', '0');
+
+                    let imgHtml = '';
+                    if (img && img.src) {
+                         imgHtml = `<img src="${img.src}" style="width:80px; height:90px;" />`;
+                    }
+
+                    table.innerHTML = `
+                        <tr>
+                            <td style="width:15%; text-align:center; vertical-align:middle; padding-bottom:10px;">
+                                ${imgHtml}
+                            </td>
+                            <td style="width:85%; text-align:center; vertical-align:middle; padding-bottom:10px;">
+                                ${text ? text.innerHTML : ''}
+                            </td>
+                        </tr>
+                    `;
+                    kop.replaceWith(table);
+                });
+
+                // B. Signature Section
+                clone.querySelectorAll('.signature-section').forEach(sig => {
+                    const boxes = sig.querySelectorAll('.ttd-box');
+                    if (boxes.length >= 2) {
+                        const table = document.createElement('table');
+                        table.style.width = '100%';
+                        table.style.marginTop = '30px';
+                        table.style.pageBreakInside = 'avoid';
+                        table.setAttribute('cellpadding', '0');
+                        table.setAttribute('cellspacing', '0');
+                        table.innerHTML = `
+                            <tr>
+                                <td style="width:50%; text-align:center; vertical-align:top;">
+                                    ${boxes[0].innerHTML}
+                                </td>
+                                <td style="width:50%; text-align:center; vertical-align:top;">
+                                    ${boxes[1].innerHTML}
+                                </td>
+                            </tr>
+                        `;
+                        sig.replaceWith(table);
+                    }
+                });
+
+                // C. Photo Grid
+                clone.querySelectorAll('.photo-grid').forEach(grid => {
+                    const cards = grid.querySelectorAll('.photo-card');
+                    const table = document.createElement('table');
+                    table.style.width = '100%';
+                    table.style.marginTop = '10px';
+                    table.setAttribute('cellpadding', '5');
+                    table.setAttribute('cellspacing', '0');
+                    
+                    let rows = '';
+                    for (let i = 0; i < cards.length; i += 2) {
+                        rows += `<tr>`;
+                        rows += `<td style="width:50%; vertical-align:top; border:1px solid #000;">${cards[i] ? cleanPhotoCardForWord(cards[i]) : ''}</td>`;
+                        rows += `<td style="width:50%; vertical-align:top; border:1px solid #000;">${cards[i+1] ? cleanPhotoCardForWord(cards[i+1]) : ''}</td>`;
+                        rows += `</tr>`;
+                    }
+                    table.innerHTML = rows;
+                    grid.replaceWith(table);
+                });
+
+                function cleanPhotoCardForWord(card) {
+                    const img = card.querySelector('img');
+                    const cap = card.querySelector('.photo-caption');
+                    let res = '';
+                    
+                    // Bersihkan span placeholder jika ada
+                    const span = card.querySelector('span');
+                    if(span) span.remove();
+
+                    if(img && img.src && !img.src.includes('display:none')) {
+                         res += `<div style="text-align:center;"><img src="${img.src}" style="max-width:100%; height:200px;" /></div>`;
+                    } else {
+                         res += `<div style="height:200px; text-align:center; color:#999;"><br><br><br><br>[Area Foto]</div>`;
+                    }
+                    if(cap) {
+                         res += `<div style="text-align:center; margin-top:5px; border-top:1px dotted #ccc; padding-top:5px;">${cap.innerHTML}</div>`;
+                    }
+                    return res;
+                }
+
+                // --- PASTIKAN BORDER TABEL WORD MUNCUL (INLINE BORDER) ---
+                clone.querySelectorAll('table').forEach(t => {
+                    t.style.borderCollapse = 'collapse';
+                });
+                clone.querySelectorAll('table.dinas th, table.dinas td, table.table-padat th, table.table-padat td, table.table-grid th, table.table-grid td').forEach(cell => {
+                    cell.style.border = '1px solid #000';
+                });
+
+                // --- FIX TEXT ROTATION UNTUK LANDSCAPE TABEL (SETORAN HAFALAN) ---
+                clone.querySelectorAll('th div[style*="transform: rotate"]').forEach(div => {
+                    // MSO Specific property untuk memutar teks di Word
+                    div.style.writingMode = 'vertical-rl';
+                    div.style.msoTextDirection = 'tb-rl';
+                    // Hilangkan transform CSS biasa agar tidak rancu
+                    div.style.transform = 'none';
+                });
+
+                // --- TAMBAHKAN NOMOR HALAMAN MANUALLY ---
+                const pageNumDiv = document.createElement('div');
+                pageNumDiv.style.textAlign = 'center';
+                pageNumDiv.style.fontSize = '9pt';
+                pageNumDiv.style.marginTop = '20px';
+                pageNumDiv.innerText = `- ${index + 1} -`;
+                clone.appendChild(pageNumDiv);
+
+                // --- BUNGKUS DENGAN SECTION KERTAS ---
+                const sectionClass = isLandscape ? 'SectionLandscape' : 'SectionPortrait';
+                htmlContent += `<div class="${sectionClass}">\n`;
+                htmlContent += clone.innerHTML;
+                htmlContent += `\n</div>\n`;
+
+                // Add Page Break if not last page
+                if (index < sheets.length - 1) {
+                    htmlContent += `<br clear="all" style="page-break-before:always" />\n`;
+                }
+            });
+
+            htmlContent += `
+            </body>
+            </html>
+            `;
+
+            // Gunakan html-docx-js untuk konversi ke DOCX format
+            const converted = htmlDocx.asBlob(htmlContent);
+            saveAs(converted, "Laporan-Sekolah.docx");
+            
+            uxToast("Word (.docx) Berhasil Diunduh!", "success");
+        }
+    </script>
+
+    <!-- =========================================
+       13. ZIP EXPORT & IMPORT LOGIC (PRESERVED)
        ========================================= -->
     <script id="zip-logic">
         // Fungsi Export ZIP
@@ -3114,7 +3348,7 @@
     </script>
 
     <!-- =========================================
-       14. NEW: TAB INDENTATION LOGIC (ADDITIVE)
+       14. TAB INDENTATION LOGIC (PRESERVED)
        ========================================= -->
     <script id="tab-indent-logic">
         document.addEventListener('keydown', function(e) {
@@ -3203,72 +3437,6 @@
                 }
             }
         });
-    </script>
-
-    <!-- =========================================
-       15. NEW: ORIENTATION LOGIC (ADDITIVE)
-       ========================================= -->
-    <script id="orientation-logic">
-        function openOrientationModal(){
-            const dropdown = document.getElementById('orientationPageSelect');
-            if(!dropdown) return;
-            dropdown.innerHTML = '';
-
-            const sheets = document.querySelectorAll('.sheet');
-            if(sheets.length === 0){
-                uxToast("Tidak ada halaman.", "error");
-                return;
-            }
-
-            sheets.forEach((sheet, i)=>{
-                const option = document.createElement('option');
-                option.value = i;
-                
-                let title = "Halaman " + (i+1);
-                const content = sheet.textContent || sheet.innerText;
-                
-                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
-                else if(content.includes('JADWAL')) title += " (Jadwal)";
-                else if(content.includes('REKAP NILAI')) title += " (Nilai)";
-                else if(content.includes('REKAP SETORAN HAFALAN')) title += " (Hafalan)";
-                else if(content.includes('ABSENSI')) title += " (Absen)";
-                else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
-                else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
-                
-                const currentOrientation = sheet.dataset.orientation || (sheet.classList.contains('landscape') ? 'landscape' : 'portrait');
-                option.textContent = title + ` [${currentOrientation.toUpperCase()}]`;
-                dropdown.appendChild(option);
-            });
-
-            document.getElementById('orientationModal').style.display = 'flex';
-        }
-
-        function closeOrientationModal(){
-            document.getElementById('orientationModal').style.display = 'none';
-        }
-
-        function applyOrientation(){
-            const pageIndex = document.getElementById('orientationPageSelect').value;
-            const type = document.getElementById('orientationTypeSelect').value;
-            const sheets = document.querySelectorAll('.sheet');
-
-            if(!sheets[pageIndex]) return;
-
-            const sheet = sheets[pageIndex];
-
-            if(type === 'landscape'){
-                sheet.classList.add('landscape');
-                sheet.dataset.orientation = 'landscape';
-            } else {
-                sheet.classList.remove('landscape');
-                sheet.dataset.orientation = 'portrait';
-            }
-
-            saveToStorage();
-            closeOrientationModal();
-            uxToast("Orientation berhasil diubah", "success");
-        }
     </script>
 </body>
 </html>
