@@ -970,7 +970,7 @@
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.4 Enterprise • Word Export Ready
+                v9.5 HQ Print Ready • Word Export Ready
             </p>
         </aside>
 
@@ -1422,7 +1422,7 @@
             },250);
         }
 
-        // ================= PDF ENGINE =================
+        // ================= PDF ENGINE (UPGRADED PRINT SHOP QUALITY) =================
         async function safePrint(){
             const { jsPDF } = window.jspdf;
             const sheets = document.querySelectorAll('.sheet');
@@ -1432,39 +1432,60 @@
                 return;
             }
 
+            // Persiapan DOM sebelum dirender html2canvas
             document.body.classList.add('exporting');
-            void document.body.offsetHeight;
+            void document.body.offsetHeight; // force reflow
 
             try {
                 const firstIsLandscape = sheets[0].classList.contains('landscape');
+                
+                // PENGATURAN WAJIB 2: PDF Kualitas Maksimal
                 const pdf = new jsPDF({
                     orientation: firstIsLandscape ? 'landscape' : 'portrait',
                     unit: 'mm',
-                    format: firstIsLandscape ? [330, 215] : [215, 330] 
+                    format: firstIsLandscape ? [330, 215] : [215, 330],
+                    compress: false, // compress: false sesuai instruksi agar tidak ada loss
+                    precision: 16    // precision 16 untuk layouting mm ke px yang sangat presisi
                 });
 
                 for(let i=0; i<sheets.length; i++){
-                    const isLandscape = sheets[i].classList.contains('landscape');
-                    const canvas = await html2canvas(sheets[i], {
-                        scale: 2,
+                    const sheet = sheets[i];
+                    const isLandscape = sheet.classList.contains('landscape');
+                    
+                    // PENGATURAN WAJIB 1, 4 & 6: Resolusi Tinggi
+                    const canvas = await html2canvas(sheet, {
+                        scale: 4, // Level Print Shop (approx 384 DPI for F4)
                         useCORS: true,
-                        logging: false
+                        allowTaint: true,
+                        backgroundColor: "#ffffff", // Menghindari transparansi blur
+                        logging: false,
+                        onclone: (clonedDoc) => {
+                            // PENGATURAN WAJIB 5 & 8: Pastikan presisi canvas saat diclone
+                            const clonedSheets = clonedDoc.querySelectorAll('.sheet');
+                            clonedSheets.forEach(s => {
+                                s.style.transform = "none";
+                                s.style.boxShadow = "none";
+                                s.style.margin = "0";
+                            });
+                        }
                     });
 
-                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                    // PENGATURAN WAJIB 3: Format PNG untuk ketajaman vektor teks/tabel
+                    const imgData = canvas.toDataURL('image/png', 1.0);
 
                     if(i !== 0){
                         pdf.addPage(isLandscape ? [330, 215] : [215, 330], isLandscape ? 'landscape' : 'portrait');
                     }
 
+                    // Tambahkan ke PDF sesuai ukuran kertas F4
                     if (isLandscape) {
-                        pdf.addImage(imgData, 'JPEG', 0, 0, 330, 215);
+                        pdf.addImage(imgData, 'PNG', 0, 0, 330, 215, undefined, 'FAST');
                     } else {
-                        pdf.addImage(imgData, 'JPEG', 0, 0, 215, 330);
+                        pdf.addImage(imgData, 'PNG', 0, 0, 215, 330, undefined, 'FAST');
                     }
                 }
 
-                pdf.save('Laporan-Sekolah.pdf');
+                pdf.save('Laporan-Sekolah-Premium.pdf');
 
             } catch (error) {
                 console.error("PDF Generation Error:", error);
@@ -2639,7 +2660,7 @@
 
         // Wrapper for Print
         async function handleSafePrint(btn) {
-            uxShowLoader("Menyiapkan PDF...");
+            uxShowLoader("Menyiapkan Resolusi Tinggi..."); // Pesan loader diupdate untuk mencerminkan proses rendering kualitas tinggi
             uxBtnLoad(btn, true);
             
             try {
@@ -2647,7 +2668,7 @@
                 await new Promise(r => setTimeout(r, 100));
                 
                 await safePrint();
-                uxToast("PDF Berhasil Diunduh!", "success");
+                uxToast("PDF Print Shop Quality Berhasil Diunduh!", "success");
             } catch (e) {
                 uxToast("Gagal membuat PDF", "error");
             } finally {
