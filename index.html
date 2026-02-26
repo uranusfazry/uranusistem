@@ -861,6 +861,26 @@
             font-family: "Times New Roman", Times, serif !important;
         }
     </style>
+
+    <!-- =========================================
+         NEW: FITUR ORIENTASI HALAMAN (ADDITIVE)
+         ========================================= -->
+    <style id="orientation-additive-styles">
+        /* Pastikan Portrait spesifik 215x330mm */
+        .sheet.portrait {
+            width: 215mm !important;
+            min-height: 330mm !important;
+            padding: var(--margin-doc) !important;
+        }
+        
+        /* Landscape sudah terdefinisi di kode awal, 
+           namun kita override memastikan konsistensi */
+        .sheet.landscape {
+            width: 330mm !important;
+            min-height: 215mm !important;
+            padding: 20mm 25mm !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -876,35 +896,6 @@
                 <i class="ph ph-buildings" style="font-size: 24px;"></i> Admin Sekolah
             </h2>
             
-            <div class="control-group">
-                <label>Nama Sekolah</label>
-                <input type="text" id="m_sekolah" value="UPTD SD NEGERI 1 BATULAWANG" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Alamat Sekolah</label>
-                <input type="text" id="m_alamat" value="Jl. Desa Batulawang No. 123" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Kepala Sekolah</label>
-                <input type="text" id="m_kepsek" value="NAMA KEPALA SEKOLAH" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>NIP Kepala Sekolah</label>
-                <input type="text" id="m_nip1" value="19800101 200501 1 001" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Guru PJP / Kelas</label>
-                <input type="text" id="m_guru" value="USAMAH DHIYA UL HAQ, S.Pd." oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>NIP Guru</label>
-                <input type="text" id="m_nip2" value="-" oninput="handleSyncData()">
-            </div>
-            <div class="control-group">
-                <label>Tanggal Surat</label>
-                <input type="text" id="m_tgl" value="Desember 2025" oninput="handleSyncData()">
-            </div>
-
             <div class="section-divider">Laporan Kegiatan</div>
             <!-- UPDATED ONCLICK HANDLERS TO UX WRAPPERS -->
             <button class="btn btn-add" onclick="handleAddPage('cover', this)"><i class="ph ph-file-text"></i> Halaman Cover</button>
@@ -941,9 +932,14 @@
                 <i class="ph ph-pencil"></i> Edit Custom Halaman
             </button>
 
-            <!-- NEW: BUTTON EDIT HTML -->
+            <!-- BUTTON EDIT HTML -->
             <button class="btn btn-html-edit" onclick="openHtmlEditSelectionModal()">
                 <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
+            </button>
+
+            <!-- NEW: BUTTON ORIENTASI (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fef08a; color:#854d0e; border-color:#fde047;" onclick="openOrientationModal()">
+                <i class="ph ph-arrows-left-right"></i> 🔄 Ubah Orientasi
             </button>
 
             <div class="section-divider">Data Management</div>
@@ -970,7 +966,7 @@
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.5 HQ Print Ready • Word Export Ready
+                v9.6 HQ Print Ready • Word Export Ready • Orientation Control
             </p>
         </aside>
 
@@ -1048,6 +1044,25 @@
                 <button class="btn-save-html" onclick="handleSaveHtmlChange()">💾 Simpan Perubahan</button>
                 <button onclick="closeHtmlEditorModal()">Batal</button>
             </div>
+       </div>
+    </div>
+
+    <!-- NEW MODAL: ORIENTASI HALAMAN (ADDITIVE) -->
+    <div id="orientationModal" class="modal">
+       <div class="modal-box">
+           <h3><i class="ph ph-arrows-left-right" style="color:#854d0e"></i> Ubah Orientasi</h3>
+           <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman dan orientasinya:</p>
+
+           <select id="orientationPageSelect"></select>
+           <select id="orientationModeSelect">
+               <option value="portrait">Portrait (Tegak)</option>
+               <option value="landscape">Landscape (Mendatar)</option>
+           </select>
+
+           <div class="modal-actions">
+               <button onclick="confirmOrientationChange()" style="background:#eab308; color:white;">💾 Simpan</button>
+               <button onclick="closeOrientationModal()">Batal</button>
+           </div>
        </div>
     </div>
 
@@ -1225,7 +1240,6 @@
                 container.appendChild(sheet);
             });
 
-            syncData(); 
             updatePageNumbers();
         }
 
@@ -1586,22 +1600,6 @@
             pages.forEach((el, index) => {
                 el.innerText = `- ${index + 1} -`;
             });
-        }
-
-        function syncData() {
-            const map = {
-                'm_sekolah': '.data-sekolah',
-                'm_alamat': '.data-alamat',
-                'm_kepsek': '.data-kepsek',
-                'm_nip1': '.data-nip1',
-                'm_guru': '.data-guru',
-                'm_nip2': '.data-nip2',
-                'm_tgl': '.data-tgl'
-            };
-            for (const [id, selector] of Object.entries(map)) {
-                const val = document.getElementById(id).value;
-                document.querySelectorAll(selector).forEach(el => el.innerText = val);
-            }
         }
 
         function triggerUpload(el) { el.querySelector('input').click(); }
@@ -2677,12 +2675,6 @@
             }
         }
 
-        // Wrapper for Sync Data
-        function handleSyncData() {
-            syncData();
-            // No toast needed for realtime sync, maybe just log or small indicator
-        }
-
         // Wrapper for Delete Confirmation
         async function handleConfirmDelete() {
             // No async logic needed for delete execution, but good for UI consistency
@@ -2905,7 +2897,6 @@
                 // 4. Re-sync Dynamic Data (Variables & Page Numbers)
                 // This ensures if user deleted <span class="data-sekolah">, it won't crash, 
                 // but if they added it back, it gets populated.
-                syncData();
                 updatePageNumbers();
 
                 uxToast("HTML Berhasil Disimpan", "success");
@@ -3458,6 +3449,129 @@
                 }
             }
         });
+    </script>
+
+    <!-- =========================================
+         15. NEW: ORIENTATION CONTROL LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="orientation-logic">
+        // Fungsi untuk membuka modal orientasi
+        function openOrientationModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if(sheets.length === 0){
+                uxToast("Tidak ada halaman untuk diubah orientasinya.", "error");
+                return;
+            }
+
+            const dropdown = document.getElementById('orientationPageSelect');
+            dropdown.innerHTML = '';
+            
+            sheets.forEach((sheet, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = "Halaman " + (i+1);
+                const content = sheet.textContent || sheet.innerText;
+                
+                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
+                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
+                else if(content.includes('JADWAL')) title += " (Jadwal)";
+                else if(content.includes('REKAP NILAI')) title += " (Nilai)";
+                else if(content.includes('REKAP SETORAN HAFALAN')) title += " (Hafalan)";
+                else if(content.includes('ABSENSI')) title += " (Absen)";
+                else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
+                else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+
+                // Tampilkan label orientasi saat ini di pilihan
+                const isLandscape = sheet.classList.contains('landscape');
+                title += isLandscape ? " [Landscape]" : " [Portrait]";
+
+                option.textContent = title;
+                dropdown.appendChild(option);
+            });
+
+            // Setelan awal berdasarkan halaman pertama yang ter-select
+            updateOrientationSelectTarget();
+
+            // Pasang event listener ketika dropdown halaman diubah
+            dropdown.onchange = updateOrientationSelectTarget;
+
+            document.getElementById('orientationModal').style.display = 'flex';
+        }
+
+        // Fungsi memperbarui dropdown mode sesuai dengan halaman yang dipilih
+        function updateOrientationSelectTarget() {
+            const index = document.getElementById('orientationPageSelect').value;
+            const sheet = document.querySelectorAll('.sheet')[index];
+            if(sheet) {
+                const modeDropdown = document.getElementById('orientationModeSelect');
+                modeDropdown.value = sheet.classList.contains('landscape') ? 'landscape' : 'portrait';
+            }
+        }
+
+        // Fungsi menutup modal orientasi
+        function closeOrientationModal() {
+            document.getElementById('orientationModal').style.display = 'none';
+        }
+
+        // Fungsi konfirmasi trigger perubahan orientasi
+        function confirmOrientationChange() {
+            const index = document.getElementById('orientationPageSelect').value;
+            const mode = document.getElementById('orientationModeSelect').value;
+            handleChangeOrientation(parseInt(index), mode);
+            closeOrientationModal();
+        }
+
+        // CORE LOGIC: Fungsi utama mengubah orientasi halaman terpilih
+        function handleChangeOrientation(pageIndex, mode) {
+            const sheets = document.querySelectorAll('.sheet');
+            const sheet = sheets[pageIndex];
+            if (!sheet) return;
+
+            if (mode === 'landscape') {
+                sheet.classList.remove('portrait');
+                sheet.classList.add('landscape');
+
+                // Sisipkan tag .landscape-marker agar renderPages() mendeteksinya setelah direload
+                if (!sheet.querySelector('.landscape-marker')) {
+                    const marker = document.createElement('div');
+                    marker.className = 'landscape-marker';
+                    marker.style.display = 'none';
+                    sheet.insertBefore(marker, sheet.firstChild);
+                }
+            } else if (mode === 'portrait') {
+                sheet.classList.remove('landscape');
+                sheet.classList.add('portrait');
+
+                // Hilangkan marker jika ada
+                const markers = sheet.querySelectorAll('.landscape-marker');
+                markers.forEach(m => m.remove());
+            }
+
+            // Integrasi ke RawHTML khusus halaman embed agar marker tidak hilang
+            if (sheet.dataset.pageType === 'embed') {
+                const storage = sheet.querySelector('.raw-storage');
+                if (storage) {
+                    if (mode === 'landscape' && !storage.value.includes('landscape-marker')) {
+                         storage.value = '<div class="landscape-marker" style="display:none;"></div>\n' + storage.value;
+                    } else if (mode === 'portrait') {
+                         storage.value = storage.value.replace(/<div class="landscape-marker" style="display:none;"><\/div>\n?/g, '');
+                    }
+                    if (pagesDB[pageIndex]) pagesDB[pageIndex].rawHTML = storage.value;
+                }
+            } else {
+                 if (pagesDB[pageIndex]) pagesDB[pageIndex].html = sheet.innerHTML;
+            }
+
+            // Simpan status ke penyimpanan database agar tidak hilang saat direfresh
+            saveToStorage();
+            uxToast("Orientasi berhasil diubah ke " + (mode === 'landscape' ? 'Landscape' : 'Portrait'), "success");
+
+            // Gulung/Scroll layar agar pengguna melihat perubahannya langsung
+            setTimeout(() => {
+                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
     </script>
 </body>
 </html>
