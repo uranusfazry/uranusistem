@@ -1107,6 +1107,44 @@
             top: 20mm; bottom: 20mm; left: 25mm; right: 25mm;
         }
     </style>
+
+    <!-- =========================================
+         NEW: PAPER SIZE STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="paper-size-additive-styles">
+        .paper-size-badge {
+            position: absolute;
+            bottom: -30px; 
+            right: 20px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            font-family: 'Inter', sans-serif;
+            z-index: 100;
+        }
+        body.exporting .paper-size-badge { display: none !important; }
+        @media print { .paper-size-badge { display: none !important; } }
+        
+        #customPaperInputs { display: none; gap: 10px; margin-bottom: 25px; }
+        #customPaperInputs input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    </style>
+
+    <!-- =========================================
+         NEW: CUSTOM MARGIN STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="margin-additive-styles">
+        /* Menyesuaikan garis panduan (margin guides) secara dinamis menggunakan variabel lokal 
+           Bypass default margin-doc ketika diatur custom */
+        body.show-margin-guides .sheet::after {
+            top: var(--m-top, var(--margin-doc)) !important;
+            right: var(--m-right, var(--margin-doc)) !important;
+            bottom: var(--m-bottom, var(--margin-doc)) !important;
+            left: var(--m-left, var(--margin-doc)) !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -1153,6 +1191,16 @@
             <!-- NEW: BUTTON ORIENTASI (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#fef08a; color:#854d0e; border-color:#fde047;" onclick="openOrientationModal()">
                 <i class="ph ph-arrows-left-right"></i> 🔄 Ubah Orientasi
+            </button>
+
+            <!-- NEW: BUTTON PAPER SIZE (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#f3e8ff; color:#6b21a8; border-color:#d8b4fe;" onclick="openPaperSizeModal()">
+                <i class="ph ph-ruler"></i> 📏 Ubah Ukuran Kertas
+            </button>
+
+            <!-- NEW: BUTTON MARGIN (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fee2e2; color:#991b1b; border-color:#fca5a5;" onclick="openMarginModal()">
+                <i class="ph ph-bounding-box"></i> 📐 Atur Margin Halaman
             </button>
 
             <!-- NEW: BUTTON GESER LAYOUT (ADDITIVE) -->
@@ -1301,6 +1349,73 @@
        </div>
     </div>
 
+    <!-- NEW MODAL: PAPER SIZE (ADDITIVE) -->
+    <div id="paperSizeModal" class="modal">
+       <div class="modal-box">
+           <h3><i class="ph ph-ruler" style="color:#6b21a8"></i> Ubah Ukuran Kertas</h3>
+           <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman dan ukuran kertas:</p>
+
+           <select id="paperSizePageSelect"></select>
+           <select id="paperSizePresetSelect" onchange="toggleCustomPaperInputs()">
+               <option value="F4">F4 (215 x 330 mm)</option>
+               <option value="A4">A4 (210 x 297 mm)</option>
+               <option value="Letter">Letter (216 x 279 mm)</option>
+               <option value="Legal">Legal (216 x 356 mm)</option>
+               <option value="Custom">Custom Ukuran...</option>
+           </select>
+           
+           <div id="customPaperInputs">
+               <div style="flex:1;">
+                   <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Lebar (mm)</label>
+                   <input type="number" id="customPaperW" placeholder="210" value="210">
+               </div>
+               <div style="flex:1;">
+                   <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Tinggi (mm)</label>
+                   <input type="number" id="customPaperH" placeholder="297" value="297">
+               </div>
+           </div>
+
+           <div class="modal-actions">
+               <button onclick="confirmPaperSizeChange()" style="background:#9333ea; color:white;">💾 Simpan</button>
+               <button onclick="closePaperSizeModal()">Batal</button>
+           </div>
+       </div>
+    </div>
+
+    <!-- NEW MODAL: MARGIN HALAMAN (ADDITIVE) -->
+    <div id="marginModal" class="modal">
+       <div class="modal-box">
+           <h3><i class="ph ph-bounding-box" style="color:#b91c1c"></i> Atur Margin Kertas</h3>
+           <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Pilih halaman dan atur margin (mm):</p>
+
+           <select id="marginPageSelect"></select>
+           
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+               <div>
+                   <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Atas (mm)</label>
+                   <input type="number" id="marginTopInput" value="20" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+               </div>
+               <div>
+                   <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Kanan (mm)</label>
+                   <input type="number" id="marginRightInput" value="20" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+               </div>
+               <div>
+                   <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Bawah (mm)</label>
+                   <input type="number" id="marginBottomInput" value="20" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+               </div>
+               <div>
+                   <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Kiri (mm)</label>
+                   <input type="number" id="marginLeftInput" value="20" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+               </div>
+           </div>
+
+           <div class="modal-actions">
+               <button onclick="confirmMarginChange()" style="background:#dc2626; color:white;">💾 Simpan</button>
+               <button onclick="closeMarginModal()">Batal</button>
+           </div>
+       </div>
+    </div>
+
     <!-- NEW MODAL: DUPLICATE MULTIPLE SYSTEM -->
     <div id="duplicateMultiModal" class="modal">
        <div class="modal-box" style="width: 500px; max-width: 90vw;">
@@ -1402,6 +1517,19 @@
                 const isPortrait = sheet.classList.contains('portrait');
                 let orientationStr = isLandscape ? 'landscape' : (isPortrait ? 'portrait' : 'portrait');
 
+                // ADDITIVE: Ekstrak nilai Paper Size secara persisten dari DOM ke JSON
+                const paperPreset = sheet.getAttribute('data-paper-preset') || 'F4';
+                const paperW = parseFloat(sheet.getAttribute('data-paper-width')) || 215;
+                const paperH = parseFloat(sheet.getAttribute('data-paper-height')) || 330;
+                const paperSize = { preset: paperPreset, width: paperW, height: paperH };
+
+                // ADDITIVE: Ekstrak nilai Margin secara persisten dari DOM ke JSON
+                const marginT = parseFloat(sheet.getAttribute('data-margin-top')) || 20;
+                const marginR = parseFloat(sheet.getAttribute('data-margin-right')) || 20;
+                const marginB = parseFloat(sheet.getAttribute('data-margin-bottom')) || 20;
+                const marginL = parseFloat(sheet.getAttribute('data-margin-left')) || 20;
+                const marginObj = { top: marginT, right: marginR, bottom: marginB, left: marginL };
+
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
                     // Ambil dari hidden textarea yang kita tanam saat renderPages()
@@ -1413,7 +1541,9 @@
                         layoutX: lx,
                         layoutY: ly,
                         layoutScale: ls,
-                        orientation: orientationStr
+                        orientation: orientationStr,
+                        paperSize: paperSize, // Additive injection
+                        margin: marginObj // Additive injection
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
@@ -1424,7 +1554,9 @@
                         layoutX: lx,
                         layoutY: ly,
                         layoutScale: ls,
-                        orientation: orientationStr
+                        orientation: orientationStr,
+                        paperSize: paperSize, // Additive injection
+                        margin: marginObj // Additive injection
                     };
                 }
             });
@@ -1514,6 +1646,57 @@
                     sheet.classList.add('portrait');
                     sheet.classList.remove('landscape');
                 }
+
+                // ADDITIVE: PAPER SIZE OVERRIDE
+                if (!page.paperSize) {
+                    page.paperSize = { preset: "F4", width: 215, height: 330 };
+                }
+                sheet.setAttribute('data-paper-preset', page.paperSize.preset);
+                sheet.setAttribute('data-paper-width', page.paperSize.width);
+                sheet.setAttribute('data-paper-height', page.paperSize.height);
+
+                let w = page.paperSize.width;
+                let h = page.paperSize.height;
+
+                // Jika landscape aktif → swap, gunakan !important agar menimpa css style asli
+                if (sheet.classList.contains('landscape')) {
+                    sheet.style.setProperty('width', h + "mm", 'important');
+                    sheet.style.setProperty('min-height', w + "mm", 'important');
+                } else {
+                    sheet.style.setProperty('width', w + "mm", 'important');
+                    sheet.style.setProperty('min-height', h + "mm", 'important');
+                }
+
+                // Visual Badge untuk Info Ukuran Kertas
+                if (!sheet.querySelector('.paper-size-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = "paper-size-badge no-print-in-pdf";
+                    badge.innerText = `${page.paperSize.preset} (${w}×${h}mm)`;
+                    sheet.appendChild(badge);
+                } else {
+                    sheet.querySelector('.paper-size-badge').innerText = `${page.paperSize.preset} (${w}×${h}mm)`;
+                }
+
+                // --- ADDITIVE: MARGIN OVERRIDE SECARA INLINE ---
+                if (!page.margin) {
+                    page.margin = { top: 20, right: 20, bottom: 20, left: 20 };
+                }
+                
+                sheet.setAttribute('data-margin-top', page.margin.top);
+                sheet.setAttribute('data-margin-right', page.margin.right);
+                sheet.setAttribute('data-margin-bottom', page.margin.bottom);
+                sheet.setAttribute('data-margin-left', page.margin.left);
+
+                sheet.style.setProperty('padding-top', page.margin.top + "mm", 'important');
+                sheet.style.setProperty('padding-right', page.margin.right + "mm", 'important');
+                sheet.style.setProperty('padding-bottom', page.margin.bottom + "mm", 'important');
+                sheet.style.setProperty('padding-left', page.margin.left + "mm", 'important');
+
+                // Custom property untuk menyesuaikan visual guide margin
+                sheet.style.setProperty('--m-top', page.margin.top + "mm");
+                sheet.style.setProperty('--m-right', page.margin.right + "mm");
+                sheet.style.setProperty('--m-bottom', page.margin.bottom + "mm");
+                sheet.style.setProperty('--m-left', page.margin.left + "mm");
 
                 // --- NEW ADDITION: ENFORCE LAYOUT STRUCTURE SECARA ADDITIVE ---
                 if (!isStrictRestore) { // ONLY RESTRUCTURE IF NOT IMPORTING STRICTLY
@@ -1835,11 +2018,16 @@
             try {
                 const firstIsLandscape = sheets[0].classList.contains('landscape');
                 
+                // ADDITIVE: Ambil paper size dari halaman pertama untuk set awal PDF
+                const firstPage = pagesDB[0] || {};
+                const fw = firstPage.paperSize?.width || 215;
+                const fh = firstPage.paperSize?.height || 330;
+                
                 // PENGATURAN WAJIB 2: PDF Kualitas Maksimal
                 const pdf = new jsPDF({
                     orientation: firstIsLandscape ? 'landscape' : 'portrait',
                     unit: 'mm',
-                    format: firstIsLandscape ? [330, 215] : [215, 330],
+                    format: firstIsLandscape ? [fh, fw] : [fw, fh],
                     compress: false, // compress: false sesuai instruksi agar tidak ada loss
                     precision: 16  // precision 16 untuk layouting mm ke px yang sangat presisi
                 });
@@ -1869,15 +2057,20 @@
                     // PENGATURAN WAJIB 3: Format PNG untuk ketajaman vektor teks/tabel
                     const imgData = canvas.toDataURL('image/png', 1.0);
 
+                    // ADDITIVE: Ambil paper size spesifik halaman ini (PDF Dinamis)
+                    const pageData = pagesDB[i];
+                    let pWidth = pageData?.paperSize?.width || 215;
+                    let pHeight = pageData?.paperSize?.height || 330;
+
                     if(i !== 0){
-                        pdf.addPage(isLandscape ? [330, 215] : [215, 330], isLandscape ? 'landscape' : 'portrait');
+                        pdf.addPage(isLandscape ? [pHeight, pWidth] : [pWidth, pHeight], isLandscape ? 'landscape' : 'portrait');
                     }
 
-                    // Tambahkan ke PDF sesuai ukuran kertas F4
+                    // Tambahkan ke PDF sesuai ukuran dinamis
                     if (isLandscape) {
-                        pdf.addImage(imgData, 'PNG', 0, 0, 330, 215, undefined, 'FAST');
+                        pdf.addImage(imgData, 'PNG', 0, 0, pHeight, pWidth, undefined, 'FAST');
                     } else {
-                        pdf.addImage(imgData, 'PNG', 0, 0, 215, 330, undefined, 'FAST');
+                        pdf.addImage(imgData, 'PNG', 0, 0, pWidth, pHeight, undefined, 'FAST');
                     }
                 }
 
@@ -2673,6 +2866,9 @@
                 }
             `;
 
+            // ADDITIVE: Konversi mm ke inch khusus untuk Export Word Docx
+            const mmToIn = mm => mm * 0.0393701;
+
             // 3. Bangun HTML untuk Word
             let htmlContent = `
             <!DOCTYPE html>
@@ -2854,8 +3050,42 @@
                 pageNumDiv.innerText = `- ${index + 1} -`;
                 clone.appendChild(pageNumDiv);
 
+                // ADDITIVE: Dinamiskan @page style untuk Word berdasarkan Paper Size halaman ini
+                const pageData = pagesDB[index] || {};
+                let wMM = pageData.paperSize?.width || 215;
+                let hMM = pageData.paperSize?.height || 330;
+                
+                // ADDITIVE: Konversi Margin ke inch
+                let mTopIn = mmToIn(pageData.margin?.top || 20).toFixed(2);
+                let mRightIn = mmToIn(pageData.margin?.right || 20).toFixed(2);
+                let mBottomIn = mmToIn(pageData.margin?.bottom || 20).toFixed(2);
+                let mLeftIn = mmToIn(pageData.margin?.left || 20).toFixed(2);
+
+                let dynamicStyle = "";
+                const sectionClass = `SectionDyn${index}`;
+                
+                if (isLandscape) {
+                    const widthIn = mmToIn(hMM).toFixed(2);
+                    const heightIn = mmToIn(wMM).toFixed(2);
+                    dynamicStyle = `
+                        <style>
+                            @page ${sectionClass} { size: ${widthIn}in ${heightIn}in; mso-page-orientation: landscape; margin: ${mTopIn}in ${mRightIn}in ${mBottomIn}in ${mLeftIn}in; }
+                            div.${sectionClass} { page: ${sectionClass}; }
+                        </style>
+                    `;
+                } else {
+                    const widthIn = mmToIn(wMM).toFixed(2);
+                    const heightIn = mmToIn(hMM).toFixed(2);
+                    dynamicStyle = `
+                        <style>
+                            @page ${sectionClass} { size: ${widthIn}in ${heightIn}in; mso-page-orientation: portrait; margin: ${mTopIn}in ${mRightIn}in ${mBottomIn}in ${mLeftIn}in; }
+                            div.${sectionClass} { page: ${sectionClass}; }
+                        </style>
+                    `;
+                }
+
                 // --- BUNGKUS DENGAN SECTION KERTAS ---
-                const sectionClass = isLandscape ? 'SectionLandscape' : 'SectionPortrait';
+                htmlContent += dynamicStyle;
                 htmlContent += `<div class="${sectionClass}">\n`;
                 htmlContent += clone.innerHTML;
                 htmlContent += `\n</div>\n`;
@@ -3525,7 +3755,9 @@
                 layoutX: original.layoutX,
                 layoutY: original.layoutY,
                 layoutScale: original.layoutScale,
-                orientation: original.orientation
+                orientation: original.orientation,
+                paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
+                margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 } // Additive property clone
             };
 
             // Insert tepat setelah halaman yang di-duplicate
@@ -3656,7 +3888,9 @@
                             layoutX: original.layoutX,
                             layoutY: original.layoutY,
                             layoutScale: original.layoutScale,
-                            orientation: original.orientation
+                            orientation: original.orientation,
+                            paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
+                            margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 } // Additive property clone
                         });
                     }
                 });
@@ -3956,6 +4190,250 @@
             }
 
             return targetTable;
+        }
+    </script>
+
+    <!-- =========================================
+         19. NEW: PAPER SIZE LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="paper-size-logic">
+        const PAPER_PRESETS = {
+            A4: { width: 210, height: 297 },
+            F4: { width: 215, height: 330 },
+            Letter: { width: 216, height: 279 },
+            Legal: { width: 216, height: 356 }
+        };
+
+        function openPaperSizeModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if(sheets.length === 0){
+                uxToast("Tidak ada halaman untuk diubah ukurannya.", "error");
+                return;
+            }
+
+            const dropdown = document.getElementById('paperSizePageSelect');
+            dropdown.innerHTML = '';
+            
+            sheets.forEach((sheet, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = "Halaman " + (i+1);
+                const content = sheet.textContent || sheet.innerText;
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+                
+                const w = sheet.getAttribute('data-paper-width') || 215;
+                const h = sheet.getAttribute('data-paper-height') || 330;
+                const preset = sheet.getAttribute('data-paper-preset') || 'F4';
+                title += ` [${preset}]`;
+
+                option.textContent = title;
+                dropdown.appendChild(option);
+            });
+
+            updatePaperSizeSelectTarget();
+            dropdown.onchange = updatePaperSizeSelectTarget;
+
+            document.getElementById('paperSizeModal').style.display = 'flex';
+        }
+
+        function updatePaperSizeSelectTarget() {
+            const index = document.getElementById('paperSizePageSelect').value;
+            const sheet = document.querySelectorAll('.sheet')[index];
+            if(sheet) {
+                const preset = sheet.getAttribute('data-paper-preset') || 'F4';
+                document.getElementById('paperSizePresetSelect').value = preset;
+                document.getElementById('customPaperW').value = sheet.getAttribute('data-paper-width') || 215;
+                document.getElementById('customPaperH').value = sheet.getAttribute('data-paper-height') || 330;
+                toggleCustomPaperInputs();
+            }
+        }
+
+        function toggleCustomPaperInputs() {
+            const val = document.getElementById('paperSizePresetSelect').value;
+            const customDiv = document.getElementById('customPaperInputs');
+            if(val === 'Custom') {
+                customDiv.style.display = 'flex';
+            } else {
+                customDiv.style.display = 'none';
+            }
+        }
+
+        function closePaperSizeModal() {
+            document.getElementById('paperSizeModal').style.display = 'none';
+        }
+
+        function confirmPaperSizeChange() {
+            const index = parseInt(document.getElementById('paperSizePageSelect').value);
+            const preset = document.getElementById('paperSizePresetSelect').value;
+            const customW = document.getElementById('customPaperW').value;
+            const customH = document.getElementById('customPaperH').value;
+            
+            handleChangePaperSize(index, preset, customW, customH);
+            closePaperSizeModal();
+        }
+
+        function handleChangePaperSize(index, preset, customW, customH) {
+            const sheets = document.querySelectorAll('.sheet');
+            const sheet = sheets[index];
+            if (!sheet) return;
+
+            let width, height;
+
+            if (preset !== "Custom") {
+                width = PAPER_PRESETS[preset].width;
+                height = PAPER_PRESETS[preset].height;
+            } else {
+                width = parseFloat(customW);
+                height = parseFloat(customH);
+                if (!width || !height) {
+                    uxToast("Lebar dan Tinggi harus diisi!", "error");
+                    return;
+                }
+            }
+
+            if (!pagesDB[index]) return;
+            if (!pagesDB[index].paperSize) {
+                pagesDB[index].paperSize = {};
+            }
+
+            pagesDB[index].paperSize = {
+                preset,
+                width,
+                height
+            };
+            
+            // Simpan attribute ke DOM agar saveToStorage tidak loss state
+            sheet.setAttribute('data-paper-preset', preset);
+            sheet.setAttribute('data-paper-width', width);
+            sheet.setAttribute('data-paper-height', height);
+
+            // Terapkan langsung ke DOM (Gunakan !important untuk override default class css jika perlu)
+            if (sheet.classList.contains('landscape')) {
+                sheet.style.setProperty('width', height + "mm", 'important');
+                sheet.style.setProperty('min-height', width + "mm", 'important');
+            } else {
+                sheet.style.setProperty('width', width + "mm", 'important');
+                sheet.style.setProperty('min-height', height + "mm", 'important');
+            }
+
+            // Update badge visual
+            const badge = sheet.querySelector('.paper-size-badge');
+            if(badge) {
+                badge.innerText = `${preset} (${width}×${height}mm)`;
+            }
+
+            saveToStorage();
+            triggerAutoFlowEngine(true); // Rapikan layout dengan batasan ukuran kertas yang baru
+            uxToast(`Ukuran kertas Halaman ${index+1} diubah ke ${preset}`, "success");
+            
+            setTimeout(() => {
+                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+    </script>
+
+    <!-- =========================================
+         20. NEW: MARGIN LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="margin-logic">
+        function openMarginModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if(sheets.length === 0){
+                uxToast("Tidak ada halaman untuk diubah marginnya.", "error");
+                return;
+            }
+
+            const dropdown = document.getElementById('marginPageSelect');
+            dropdown.innerHTML = '';
+            
+            sheets.forEach((sheet, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = "Halaman " + (i+1);
+                const content = sheet.textContent || sheet.innerText;
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+                
+                option.textContent = title;
+                dropdown.appendChild(option);
+            });
+
+            updateMarginSelectTarget();
+            dropdown.onchange = updateMarginSelectTarget;
+
+            document.getElementById('marginModal').style.display = 'flex';
+        }
+
+        function updateMarginSelectTarget() {
+            const index = document.getElementById('marginPageSelect').value;
+            const sheet = document.querySelectorAll('.sheet')[index];
+            if(sheet) {
+                document.getElementById('marginTopInput').value = sheet.getAttribute('data-margin-top') || 20;
+                document.getElementById('marginRightInput').value = sheet.getAttribute('data-margin-right') || 20;
+                document.getElementById('marginBottomInput').value = sheet.getAttribute('data-margin-bottom') || 20;
+                document.getElementById('marginLeftInput').value = sheet.getAttribute('data-margin-left') || 20;
+            }
+        }
+
+        function closeMarginModal() {
+            document.getElementById('marginModal').style.display = 'none';
+        }
+
+        function confirmMarginChange() {
+            const index = parseInt(document.getElementById('marginPageSelect').value);
+            const top = document.getElementById('marginTopInput').value;
+            const right = document.getElementById('marginRightInput').value;
+            const bottom = document.getElementById('marginBottomInput').value;
+            const left = document.getElementById('marginLeftInput').value;
+            
+            handleChangeMargin(index, top, right, bottom, left);
+            closeMarginModal();
+        }
+
+        function handleChangeMargin(index, top, right, bottom, left) {
+            const sheets = document.querySelectorAll('.sheet');
+            const sheet = sheets[index];
+            if (!sheet) return;
+
+            top = parseFloat(top) || 0;
+            right = parseFloat(right) || 0;
+            bottom = parseFloat(bottom) || 0;
+            left = parseFloat(left) || 0;
+
+            if (!pagesDB[index]) return;
+            if (!pagesDB[index].margin) {
+                pagesDB[index].margin = {};
+            }
+
+            pagesDB[index].margin = { top, right, bottom, left };
+
+            // Save attributes to DOM
+            sheet.setAttribute('data-margin-top', top);
+            sheet.setAttribute('data-margin-right', right);
+            sheet.setAttribute('data-margin-bottom', bottom);
+            sheet.setAttribute('data-margin-left', left);
+
+            // Apply visual padding to DOM
+            sheet.style.setProperty('padding-top', top + "mm", 'important');
+            sheet.style.setProperty('padding-right', right + "mm", 'important');
+            sheet.style.setProperty('padding-bottom', bottom + "mm", 'important');
+            sheet.style.setProperty('padding-left', left + "mm", 'important');
+
+            // Set local CSS variables for the visual margin guides
+            sheet.style.setProperty('--m-top', top + "mm");
+            sheet.style.setProperty('--m-right', right + "mm");
+            sheet.style.setProperty('--m-bottom', bottom + "mm");
+            sheet.style.setProperty('--m-left', left + "mm");
+
+            saveToStorage();
+            triggerAutoFlowEngine(true);
+
+            uxToast(`Margin halaman ${index+1} berhasil diubah`, "success");
+
+            setTimeout(() => {
+                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
         }
     </script>
 </body>
