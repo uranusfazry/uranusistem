@@ -1149,6 +1149,171 @@
             left: var(--m-left, var(--margin-doc)) !important;
         }
     </style>
+
+    <!-- =========================================
+         NEW: TABLE MODE STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="table-mode-styles">
+        .table-toolbar {
+            position: absolute;
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 5px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+            animation: fadeIn 0.2s ease;
+        }
+        .table-toolbar button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .table-toolbar button:hover {
+            background: #059669;
+        }
+        /* Sembunyikan saat ekspor/print */
+        body.exporting .table-toolbar { display: none !important; }
+        @media print { .table-toolbar { display: none !important; } }
+
+        /* Highlight visual tabel saat mode tabel aktif */
+        body.table-mode table {
+            outline: 2px dashed rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+        }
+        body.table-mode table:hover {
+            outline: 2px dashed rgba(16, 185, 129, 0.8);
+            background: rgba(16, 185, 129, 0.02);
+        }
+    </style>
+
+    <!-- =========================================
+         NEW: FIND & REPLACE STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="find-replace-styles">
+        .find-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            z-index: 99999;
+        }
+
+        .find-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 340px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.25);
+            animation: fadeIn .25s ease;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .find-box h3 { 
+            margin: 0 0 10px 0; 
+            color: #1e293b; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 18px; 
+            font-weight: 600; 
+        }
+
+        .find-box input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .find-box input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .find-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 5px;
+        }
+
+        .find-actions button {
+            flex: 1 1 30%;
+            padding: 6px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .find-actions button:nth-child(1),
+        .find-actions button:nth-child(2) {
+            background: #3b82f6;
+            color: white;
+        }
+        .find-actions button:nth-child(1):hover,
+        .find-actions button:nth-child(2):hover { background: #2563eb; }
+
+        .find-actions button:nth-child(3),
+        .find-actions button:nth-child(4) {
+            background: #f59e0b;
+            color: white;
+        }
+        .find-actions button:nth-child(3):hover,
+        .find-actions button:nth-child(4):hover { background: #d97706; }
+
+        .find-actions button:nth-child(5) {
+            background: #6b7280;
+            color: white;
+        }
+        .find-actions button:nth-child(5):hover { background: #4b5563; }
+
+        .find-actions button:nth-child(6) {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .find-actions button:nth-child(6):hover { background: #d1d5db; }
+
+        .find-highlight {
+            background: #fff59d; /* Kuning soft profesional */
+            border-radius: 2px;
+            color: #000;
+        }
+
+        .find-active {
+            background: #ffb74d !important; /* Oranye aktif */
+            color: #000 !important;
+            font-weight: 600;
+        }
+        
+        #findCounter {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-align: right;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
 
@@ -1171,6 +1336,21 @@
             <button class="btn btn-add" style="border-style: dashed;" onclick="openEmbedModal()"><i class="ph ph-code"></i> Embed HTML / Code</button>
 
             <div class="section-divider">Actions</div>
+
+            <!-- NEW: HISTORY BUTTONS (ADDITIVE) -->
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="btn btn-edit" style="margin: 0; flex: 1; background: #f8fafc; border-color: #cbd5e1; color: #475569;" onclick="handleUndo()" title="Undo (Ctrl+Z)">
+                    <i class="ph ph-arrow-counter-clockwise"></i> Undo
+                </button>
+                <button class="btn btn-edit" style="margin: 0; flex: 1; background: #f8fafc; border-color: #cbd5e1; color: #475569;" onclick="handleRedo()" title="Redo (Ctrl+Y)">
+                    <i class="ph ph-arrow-clockwise"></i> Redo
+                </button>
+            </div>
+
+            <!-- NEW: BUTTON FIND & REPLACE (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fffbeb; color:#d97706; border-color:#fde68a;" onclick="openFindModal()" title="Cari (Ctrl+F)">
+                <i class="ph ph-magnifying-glass"></i> 🔎 Cari & Ganti Teks
+            </button>
             
             <!-- BUTTON DELETE DI SIDEBAR -->
             <button class="btn btn-danger" onclick="openDeleteModal()">
@@ -1185,6 +1365,16 @@
             <!-- BUTTON EDIT HTML -->
             <button class="btn btn-html-edit" onclick="openHtmlEditSelectionModal()">
                 <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
+            </button>
+
+            <!-- NEW: BUTTON PAGE STYLE INSPECTOR (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#f0fdf4; color:#15803d; border-color:#bbf7d0;" onclick="openPageStyleModal()">
+                <i class="ph ph-paint-brush"></i> 🎨 Gaya & Tipografi Halaman
+            </button>
+
+            <!-- NEW: BUTTON TABLE MODE (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fdf4ff; color:#a21caf; border-color:#f5d0fe;" onclick="toggleTableMode(this)">
+                <i class="ph ph-table"></i> 🧾 Mode Tabel
             </button>
 
             <!-- NEW: BUTTON DUPLICATE MULTI (ADDITIVE) -->
@@ -1457,6 +1647,97 @@
        </div>
     </div>
 
+    <!-- NEW MODAL: FIND & REPLACE (ADDITIVE) -->
+    <div id="findReplaceModal" class="find-modal no-print-in-pdf">
+        <div class="find-box">
+            <h3><i class="ph ph-magnifying-glass" style="color:#d97706"></i> Cari & Ganti Teks</h3>
+
+            <input type="text" id="findInput" placeholder="Cari teks..." />
+            <input type="text" id="replaceInput" placeholder="Ganti dengan..." />
+
+            <div class="find-actions">
+                <button onclick="executeFind()" style="background: #3b82f6; color: white;">Cari</button>
+                <button onclick="findPrevious()" style="background: #3b82f6; color: white;">Sebelumnya</button>
+                <button onclick="findNext()" style="background: #3b82f6; color: white;">Selanjutnya</button>
+            </div>
+            <div class="find-actions">
+                <button onclick="replaceOne()">Ganti</button>
+                <button onclick="replaceAll()">Ganti Semua</button>
+                <button onclick="clearFindResults()">Clear</button>
+                <button onclick="closeFindModal()">Tutup</button>
+            </div>
+
+            <div id="findCounter">0 hasil ditemukan</div>
+        </div>
+    </div>
+
+    <!-- NEW MODAL: PAGE STYLE INSPECTOR (ADDITIVE) -->
+    <div id="pageStyleModal" class="modal">
+      <div class="modal-box">
+        <h3><i class="ph ph-paint-brush" style="color:#15803d"></i> Pengaturan Gaya Halaman</h3>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman</label>
+        <select id="pageStyleSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;"></select>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Font Family</label>
+                <select id="pageFontSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Calibri">Calibri</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Tahoma">Tahoma</option>
+                  <option value="Courier New">Courier New</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Ukuran Font (px)</label>
+                <input type="number" id="pageFontSizeInput" value="16" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <!-- Gunakan preventDefault agar saat diklik tidak menghilangkan fokus blok teks (Selection) -->
+            <button onmousedown="event.preventDefault()" onclick="togglePageBold()" style="flex:1; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; font-weight:bold; cursor:pointer;">B</button>
+            <button onmousedown="event.preventDefault()" onclick="togglePageItalic()" style="flex:1; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; font-style:italic; font-family:serif; cursor:pointer;">I</button>
+            <button onmousedown="event.preventDefault()" onclick="togglePageUnderline()" style="flex:1; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; text-decoration:underline; cursor:pointer;">U</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Alignment</label>
+                <select id="pageAlignSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                  <option value="left">Left (Kiri)</option>
+                  <option value="center">Center (Tengah)</option>
+                  <option value="right">Right (Kanan)</option>
+                  <option value="justify">Justify (Rata)</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Line Height</label>
+                <input type="number" step="0.1" id="pageLineHeightInput" value="1.5" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Spasi Huruf (px)</label>
+                <input type="number" id="pageLetterSpacingInput" value="0" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Warna Teks</label>
+                <input type="color" id="pageColorInput" value="#000000" style="width:100%; height:38px; padding:2px; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer; outline:none;">
+            </div>
+        </div>
+
+        <div class="modal-actions">
+          <button onclick="applyPageStyle()" style="background:#15803d; color:white;">💾 Terapkan</button>
+          <button onclick="closePageStyleModal()">Tutup</button>
+        </div>
+      </div>
+    </div>
+
     <!-- =========================================
        9. NEW GLOBAL UI OVERLAYS (INJECTED)
        ========================================= -->
@@ -1498,6 +1779,87 @@
         let isImportingZip = false; // FLAG PENTING: Mencegah auto-paginate memecah halaman saat import
         let isStrictRestore = false; // FLAG PENTING: Mencegah modifikasi struktur DOM saat import
 
+        /* =========================================
+           UNDO / REDO HISTORY ENGINE (ADDITIVE)
+           ========================================= */
+        let historyStack = [];
+        let redoStack = [];
+        let isRestoringHistory = false;
+        const MAX_HISTORY = 50;
+
+        function pushHistoryState() {
+            if (isRestoringHistory) return;
+            if (typeof isAutoFlowing !== 'undefined' && isAutoFlowing) return; // Hindari konflik auto flow
+
+            const snapshot = JSON.stringify(pagesDB);
+
+            // Hindari duplikasi state yang sama berturut-turut
+            if (historyStack.length > 0 && historyStack[historyStack.length - 1] === snapshot) {
+                return;
+            }
+
+            historyStack.push(snapshot);
+
+            // Batasi jumlah history agar memori browser tidak berat
+            if (historyStack.length > MAX_HISTORY) {
+                historyStack.shift();
+            }
+
+            // Reset redo stack jika ada perubahan state baru yang ter-push
+            redoStack = [];
+        }
+
+        function handleUndo() {
+            if (historyStack.length <= 1) {
+                uxToast("Tidak ada perubahan untuk di-Undo", "info");
+                return;
+            }
+
+            isRestoringHistory = true;
+
+            // Ambil state terakhir saat ini dan simpan ke redo stack
+            const currentState = historyStack.pop();
+            redoStack.push(currentState);
+
+            // Terapkan state sebelumnya sebagai state aktif
+            const previousState = historyStack[historyStack.length - 1];
+            pagesDB = JSON.parse(previousState);
+
+            localStorage.setItem(STORAGE_KEY, previousState);
+            renderPages();
+
+            uxToast("Undo berhasil", "success");
+
+            // Beri sedikit jeda waktu sebelum user bisa undo lagi untuk stabilitas DOM
+            setTimeout(() => {
+                isRestoringHistory = false;
+            }, 100);
+        }
+
+        function handleRedo() {
+            if (redoStack.length === 0) {
+                uxToast("Tidak ada perubahan untuk di-Redo", "info");
+                return;
+            }
+
+            isRestoringHistory = true;
+
+            // Ambil state dari redo stack dan kembalikan ke history stack
+            const nextState = redoStack.pop();
+            historyStack.push(nextState);
+
+            pagesDB = JSON.parse(nextState);
+
+            localStorage.setItem(STORAGE_KEY, nextState);
+            renderPages();
+
+            uxToast("Redo berhasil", "success");
+
+            setTimeout(() => {
+                isRestoringHistory = false;
+            }, 100);
+        }
+
         // ================= STORAGE HELPER FUNCTIONS (HARDENED) =================
         function saveToStorage() {
             // Kita harus mensinkronkan DOM saat ini kembali ke pagesDB
@@ -1534,6 +1896,16 @@
                 const marginL = parseFloat(sheet.getAttribute('data-margin-left')) || 20;
                 const marginObj = { top: marginT, right: marginR, bottom: marginB, left: marginL };
 
+                // ADDITIVE: Ekstrak nilai Page Style persisten
+                const pageStyleObj = {
+                    font: sheet.getAttribute('data-style-font') || '',
+                    size: sheet.getAttribute('data-style-size') || '',
+                    align: sheet.getAttribute('data-style-align') || '',
+                    lineHeight: sheet.getAttribute('data-style-lineheight') || '',
+                    letterSpacing: sheet.getAttribute('data-style-letterspacing') || '',
+                    color: sheet.getAttribute('data-style-color') || ''
+                };
+
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
                     // Ambil dari hidden textarea yang kita tanam saat renderPages()
@@ -1547,7 +1919,8 @@
                         layoutScale: ls,
                         orientation: orientationStr,
                         paperSize: paperSize, // Additive injection
-                        margin: marginObj // Additive injection
+                        margin: marginObj, // Additive injection
+                        pageStyle: pageStyleObj // Additive injection
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
@@ -1560,13 +1933,17 @@
                         layoutScale: ls,
                         orientation: orientationStr,
                         paperSize: paperSize, // Additive injection
-                        margin: marginObj // Additive injection
+                        margin: marginObj, // Additive injection
+                        pageStyle: pageStyleObj // Additive injection
                     };
                 }
             });
             
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+                
+                // ADDITIVE: Simpan history state setiap kali penyimpanan berhasil di trigger
+                pushHistoryState();
             } catch (e) {
                 console.error("Storage Full or Error", e);
             }
@@ -1701,6 +2078,27 @@
                 sheet.style.setProperty('--m-right', page.margin.right + "mm");
                 sheet.style.setProperty('--m-bottom', page.margin.bottom + "mm");
                 sheet.style.setProperty('--m-left', page.margin.left + "mm");
+
+                // --- ADDITIVE: PAGE STYLE OVERRIDE ---
+                if (page.pageStyle) {
+                    sheet.setAttribute('data-style-font', page.pageStyle.font || '');
+                    sheet.setAttribute('data-style-size', page.pageStyle.size || '');
+                    sheet.setAttribute('data-style-align', page.pageStyle.align || '');
+                    sheet.setAttribute('data-style-lineheight', page.pageStyle.lineHeight || '');
+                    sheet.setAttribute('data-style-letterspacing', page.pageStyle.letterSpacing || '');
+                    sheet.setAttribute('data-style-color', page.pageStyle.color || '');
+
+                    // Terapkan paksa style dominan ke konten
+                    const contentArea = sheet.querySelector('.page-content');
+                    if (contentArea) {
+                        if(page.pageStyle.font) contentArea.style.fontFamily = page.pageStyle.font;
+                        if(page.pageStyle.size) contentArea.style.fontSize = page.pageStyle.size + "px";
+                        if(page.pageStyle.align) contentArea.style.textAlign = page.pageStyle.align;
+                        if(page.pageStyle.lineHeight) contentArea.style.lineHeight = page.pageStyle.lineHeight;
+                        if(page.pageStyle.letterSpacing) contentArea.style.letterSpacing = page.pageStyle.letterSpacing + "px";
+                        if(page.pageStyle.color) contentArea.style.color = page.pageStyle.color;
+                    }
+                }
 
                 // --- NEW ADDITION: ENFORCE LAYOUT STRUCTURE SECARA ADDITIVE ---
                 if (!isStrictRestore) { // ONLY RESTRUCTURE IF NOT IMPORTING STRICTLY
@@ -2294,6 +2692,8 @@
             } else {
                 renderPages();
             }
+            // ADDITIVE: Simpan inisialisasi awal ke history
+            pushHistoryState();
         }
 
     </script>
@@ -3298,6 +3698,7 @@
                     // JANGAN PANGGIL saveToStorage() KARENA AKAN MEMBACA ULANG DARI DOM DAN MERUSAK STRUKTUR ASLI
                     // Sebagai gantinya kita masukkan array asli ke storage persisten:
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB)); 
+                    pushHistoryState(); // Simpan state import pertama
                     
                     isImportingZip = false;
                     isStrictRestore = false;
@@ -3886,7 +4287,8 @@
                 layoutScale: original.layoutScale,
                 orientation: original.orientation,
                 paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
-                margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 } // Additive property clone
+                margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 }, // Additive property clone
+                pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined // Additive property clone
             };
 
             // Insert tepat setelah halaman yang di-duplicate
@@ -4019,7 +4421,8 @@
                             layoutScale: original.layoutScale,
                             orientation: original.orientation,
                             paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
-                            margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 } // Additive property clone
+                            margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 }, // Additive property clone
+                            pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined // Additive property clone
                         });
                     }
                 });
@@ -4563,6 +4966,895 @@
             setTimeout(() => {
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 300);
+        }
+    </script>
+
+    <!-- =========================================
+         21. NEW: TABLE ADD ROW & AUTO SPLIT LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="table-mode-logic">
+        let currentActiveTable = null;
+
+        // Toggle Table Mode dari Sidebar
+        function toggleTableMode(btn) {
+            document.body.classList.toggle('table-mode');
+            
+            if (document.body.classList.contains('table-mode')) {
+                btn.style.background = '#a21caf';
+                btn.style.color = '#ffffff';
+                btn.innerHTML = '<i class="ph ph-check-circle"></i> ✅ Selesai Mode Tabel';
+                
+                // Matikan mode drag layout jika aktif agar tidak bentrok
+                if (document.body.classList.contains('layout-drag-mode')) {
+                    const dragBtn = Array.from(document.querySelectorAll('aside .btn')).find(b => b.innerText.includes('Selesai Geser'));
+                    if(dragBtn) toggleLayoutDragMode(dragBtn);
+                }
+
+                uxToast("Mode Tabel Aktif! Klik pada tabel untuk memunculkan opsi tambah baris.", "success");
+            } else {
+                btn.style.background = '#fdf4ff';
+                btn.style.color = '#a21caf';
+                btn.innerHTML = '<i class="ph ph-table"></i> 🧾 Mode Tabel';
+                removeExistingToolbar();
+                currentActiveTable = null;
+                uxToast("Mode Tabel Dinonaktifkan", "info");
+            }
+        }
+
+        // Event Listener untuk mendeteksi klik pada tabel
+        document.addEventListener('click', function(e) {
+            if (!document.body.classList.contains('table-mode')) return;
+            
+            // Abaikan klik jika yang diklik adalah toolbar itu sendiri
+            if (e.target.closest('.table-toolbar')) return;
+
+            const table = e.target.closest('table');
+            if (!table) {
+                removeExistingToolbar();
+                currentActiveTable = null;
+                return;
+            }
+
+            showTableToolbar(table);
+        });
+
+        function removeExistingToolbar() {
+            const existing = document.querySelectorAll('.table-toolbar');
+            existing.forEach(tb => tb.remove());
+        }
+
+        function showTableToolbar(table) {
+            if (currentActiveTable === table && document.querySelector('.table-toolbar')) return;
+
+            removeExistingToolbar();
+
+            const toolbar = document.createElement('div');
+            toolbar.className = 'table-toolbar no-print-in-pdf';
+
+            toolbar.innerHTML = `
+                <button type="button" onclick="addTableRow()">
+                    <i class="ph ph-plus-circle"></i> Tambah Baris
+                </button>
+            `;
+
+            // Atur posisi relative di parent agar toolbar melayang dengan tepat
+            if (window.getComputedStyle(table.parentElement).position === 'static') {
+                table.parentElement.style.position = "relative";
+            }
+            
+            table.parentElement.appendChild(toolbar);
+            
+            // Kalkulasi posisi di atas tabel
+            toolbar.style.top = (table.offsetTop - 45) + "px";
+            toolbar.style.right = "0px";
+
+            currentActiveTable = table;
+        }
+
+        function addTableRow() {
+            if (!currentActiveTable) return;
+
+            const tbody = currentActiveTable.querySelector('tbody') || currentActiveTable;
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length === 0) return;
+            
+            // Pilih baris terakhir sebagai template clone agar style sama persis
+            let templateRow = rows[rows.length - 1];
+            
+            const newRow = templateRow.cloneNode(true);
+
+            // Kosongkan isi text/input
+            newRow.querySelectorAll('td').forEach(cell => {
+                // Jika td berisi input, kosongkan valuenya, jika text kosongkan HTMLnya
+                const input = cell.querySelector('input');
+                if(input) {
+                    input.value = "";
+                    input.setAttribute('value', "");
+                } else {
+                    cell.innerHTML = "&nbsp;";
+                }
+            });
+            
+            // Proteksi: Jangan duplikat jika user tidak sengaja klik tabel yang isinya hanya <th>
+            if (!newRow.querySelector('td') && newRow.querySelector('th')) {
+                 uxToast("Tidak bisa menambah baris pada area Header Tabel.", "warning");
+                 return;
+            }
+
+            tbody.appendChild(newRow);
+
+            // Simpan status sebelum di-split
+            saveToStorage();
+
+            // Delay kalkulasi overflow agar browser selesai me-render baris baru
+            setTimeout(() => {
+                checkTableOverflow(currentActiveTable);
+            }, 50);
+        }
+
+        // Fungsi Helper untuk mengecek overflow spesifik baris yang baru ditambah
+        function checkTableOverflow(table) {
+            const sheet = table.closest('.sheet');
+            if (!sheet) return;
+
+            const computedStyle = window.getComputedStyle(sheet);
+            const paddingTop = parseFloat(computedStyle.paddingTop);
+            const paddingBottom = parseFloat(computedStyle.paddingBottom);
+
+            // Hitung limit margin fisik kertas
+            const limitHeightPx = sheet.clientHeight - paddingTop - paddingBottom - 5;
+
+            let scaleApp = 1;
+            const matrix = new DOMMatrixReadOnly(computedStyle.transform);
+            if (matrix.a !== 1) scaleApp = matrix.a;
+
+            // Cari batas container (page-content)
+            const contentArea = sheet.querySelector('.page-content') || sheet.querySelector('.layout-movable') || sheet;
+            const sourceTop = contentArea.getBoundingClientRect().top;
+            const tableRect = table.getBoundingClientRect();
+
+            // Posisi relaitf bawah tabel terhadap kanvas kertas
+            const relativeBottom = (tableRect.bottom - sourceTop) / scaleApp;
+
+            if (relativeBottom > limitHeightPx) {
+                splitTableManual(table);
+            }
+        }
+
+        // Fungsi Esensial: Membuat Sheet Baru (Juga memperbaiki issue di Auto Flow Engine lama)
+        function createNewCustomSheet() {
+            const sheet = document.createElement('div');
+            sheet.className = 'sheet';
+            sheet.dataset.id = Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+            sheet.dataset.pageType = 'standard';
+            
+            const stage = document.createElement('div');
+            stage.className = 'layout-stage';
+            
+            const movable = document.createElement('div');
+            movable.className = 'layout-movable';
+            movable.setAttribute('data-x', '0');
+            movable.setAttribute('data-y', '0');
+            movable.setAttribute('data-scale', '1');
+            
+            const content = document.createElement('div');
+            content.className = 'page-content';
+            content.setAttribute('contenteditable', 'true'); 
+            content.style.flex = "1";
+            content.style.outline = "none";
+            content.style.padding = "10px";
+            
+            movable.appendChild(content);
+            stage.appendChild(movable);
+            sheet.appendChild(stage);
+            
+            const pageNum = document.createElement('div');
+            pageNum.className = 'page-number';
+            sheet.appendChild(pageNum);
+
+            return sheet;
+        }
+
+        function getSheetIndex(sheet) {
+            return Array.from(document.querySelectorAll('.sheet')).indexOf(sheet);
+        }
+
+        // Logic Memindahkan Baris yang Meluber secara Manual
+        function splitTableManual(sourceTable) {
+            const sheet = sourceTable.closest('.sheet');
+            if (!sheet) return;
+
+            const nextSheet = sheet.nextElementSibling;
+            let targetSheet = nextSheet;
+
+            // Jika halaman selanjutnya tidak valid, buat halaman baru
+            if (!targetSheet || targetSheet.dataset.pageType === 'embed') {
+                targetSheet = createNewCustomSheet();
+                
+                // Wariskan atribut (Orientasi, Paper Size, Margin)
+                if (sheet.classList.contains('landscape')) targetSheet.classList.add('landscape');
+                if (sheet.classList.contains('portrait')) targetSheet.classList.add('portrait');
+                
+                targetSheet.setAttribute('data-paper-preset', sheet.getAttribute('data-paper-preset') || 'F4');
+                targetSheet.setAttribute('data-paper-width', sheet.getAttribute('data-paper-width') || 215);
+                targetSheet.setAttribute('data-paper-height', sheet.getAttribute('data-paper-height') || 330);
+                targetSheet.setAttribute('data-margin-top', sheet.getAttribute('data-margin-top') || 20);
+                targetSheet.setAttribute('data-margin-right', sheet.getAttribute('data-margin-right') || 20);
+                targetSheet.setAttribute('data-margin-bottom', sheet.getAttribute('data-margin-bottom') || 20);
+                targetSheet.setAttribute('data-margin-left', sheet.getAttribute('data-margin-left') || 20);
+
+                sheet.parentNode.insertBefore(targetSheet, sheet.nextSibling);
+
+                // Update Array Memory (pagesDB)
+                pagesDB.splice(
+                    getSheetIndex(sheet) + 1,
+                    0,
+                    {
+                        id: targetSheet.dataset.id,
+                        type: 'standard',
+                        html: targetSheet.innerHTML,
+                        layoutX: 0, layoutY: 0, layoutScale: 1,
+                        orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait',
+                        paperSize: {
+                            preset: sheet.getAttribute('data-paper-preset') || 'F4',
+                            width: parseFloat(sheet.getAttribute('data-paper-width')) || 215,
+                            height: parseFloat(sheet.getAttribute('data-paper-height')) || 330
+                        },
+                        margin: {
+                            top: parseFloat(sheet.getAttribute('data-margin-top')) || 20,
+                            right: parseFloat(sheet.getAttribute('data-margin-right')) || 20,
+                            bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
+                            left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
+                        }
+                    }
+                );
+            }
+
+            const targetContent = targetSheet.querySelector('.layout-movable .page-content') || targetSheet.querySelector('.layout-movable');
+
+            // Copy Header (thead & colgroup)
+            const newTable = sourceTable.cloneNode(false);
+            const thead = sourceTable.querySelector('thead');
+            if (thead) newTable.appendChild(thead.cloneNode(true));
+            const colgroup = sourceTable.querySelector('colgroup');
+            if (colgroup) newTable.appendChild(colgroup.cloneNode(true));
+
+            // Siapkan body tabel baru
+            const newTbody = document.createElement('tbody');
+            newTable.appendChild(newTbody);
+
+            // Pindahkan baris terakhir (yang meluber) ke tabel di halaman baru
+            const rows = sourceTable.querySelectorAll('tbody tr');
+            if (rows.length > 1) {
+                newTbody.appendChild(rows[rows.length - 1]);
+            }
+
+            // Letakkan tabel lanjutan di atas kontainer halaman baru
+            if (targetContent.firstChild) {
+                targetContent.insertBefore(newTable, targetContent.firstChild);
+            } else {
+                targetContent.appendChild(newTable);
+            }
+
+            // Rapikan memory dan render ulang DOM agar sinkron
+            saveToStorage();
+            renderPages(); 
+            
+            // Scroll fokus ke tabel lanjutan
+            setTimeout(() => {
+                const sheets = document.querySelectorAll('.sheet');
+                const newIndex = getSheetIndex(sheet) + 1;
+                if (sheets[newIndex]) {
+                    sheets[newIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Kembalikan toolbar otomatis ke tabel baru jika user masih di Mode Tabel
+                    const newlyRenderedTable = sheets[newIndex].querySelector('table');
+                    if(newlyRenderedTable && document.body.classList.contains('table-mode')) {
+                        showTableToolbar(newlyRenderedTable);
+                    }
+                }
+            }, 100);
+            
+            uxToast("Baris meluber! Dilanjutkan otomatis di halaman baru.", "info");
+        }
+    </script>
+
+    <!-- =========================================
+         22. NEW: HISTORY SHORTCUTS (ADDITIVE)
+         ========================================= -->
+    <script id="history-shortcuts-logic">
+        document.addEventListener('keydown', function(e) {
+            // Kita harus tetap membiarkan default undo jika user sedang mengetik 
+            // text secara spesifik di dalam input field untuk UX yang lebih natural, 
+            // tapi mengikat Shortcut Global ke sistem History pagesDB kita.
+            const activeElement = document.activeElement;
+            const isInput = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+
+            // Ctrl + Z (Undo)
+            if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
+                if (!isInput) {
+                    e.preventDefault();
+                    handleUndo();
+                }
+            }
+
+            // Ctrl + Y (Redo)
+            if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+                if (!isInput) {
+                    e.preventDefault();
+                    handleRedo();
+                }
+            }
+
+            // Ctrl + F (Find)
+            if (e.ctrlKey && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                openFindModal();
+            }
+        });
+    </script>
+
+    <!-- =========================================
+         23. NEW: FIND & REPLACE LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="find-replace-logic">
+        let findResults = [];
+        let currentFindIndex = -1;
+        let currentFindQuery = "";
+
+        function openFindModal() {
+            document.getElementById("findReplaceModal").style.display = "flex";
+            
+            // Highlight text sebelumnya di form input form
+            const input = document.getElementById("findInput");
+            input.focus();
+            input.select();
+        }
+
+        function closeFindModal() {
+            // Cukup sembunyikan modal, highlight tetap menyala dan state tersimpan
+            document.getElementById("findReplaceModal").style.display = "none";
+        }
+
+        // Pemisahan fungsi Clear untuk Trigger Manual/Sistem
+        function clearFindResults(silent = false) {
+            document.querySelectorAll(".find-highlight, .find-active").forEach(el => {
+                const parent = el.parentNode;
+                if(parent) {
+                    // Extract isinya tanpa tag span (hapus highlight)
+                    parent.replaceChild(document.createTextNode(el.innerText), el);
+                    parent.normalize(); // Gabungkan text node yang terpisah agar DOM rapi kembali
+                }
+            });
+
+            findResults = [];
+            currentFindIndex = -1;
+            currentFindQuery = "";
+
+            document.getElementById("findCounter").innerText = "";
+            
+            if (!silent) {
+                uxToast("Highlight dibersihkan", "info");
+            }
+        }
+
+        function executeFind() {
+            const query = document.getElementById("findInput").value.trim();
+            if (!query) return;
+
+            // Proteksi: Cegah rendering ulang span jika mencari hal yang sama berturut-turut
+            if (currentFindQuery === query && findResults.length > 0) return;
+
+            // Selalu bersihkan pencarian lama secara diam-diam sebelum memproses yang baru
+            clearFindResults(true);
+
+            currentFindQuery = query;
+
+            const sheets = document.querySelectorAll(".sheet");
+
+            sheets.forEach(sheet => {
+                const content = sheet.querySelector(".layout-movable");
+                if(content) highlightInElement(content, query);
+            });
+
+            findResults = Array.from(document.querySelectorAll(".find-highlight"));
+            
+            // Redirect langsung ke hasil pertama jika ada
+            if (findResults.length > 0) {
+                currentFindIndex = 0;
+                updateActiveResult();
+            } else {
+                uxToast("Teks tidak ditemukan", "warning");
+            }
+        }
+
+        // FUNGSI HIGHLIGHT AMAN UNTUK CONTENTEDITABLE (MENGHINDARI TAG HTML RUSAK)
+        function highlightInElement(element, query) {
+            // Kita gunakan TreeWalker untuk mencari murni dari TEXT NODE (isi teks)
+            const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function(node) {
+                        // Jangan sentuh area yang tidak terlihat atau di dalam input
+                        const parentTag = node.parentNode.tagName;
+                        if (parentTag === 'STYLE' || parentTag === 'SCRIPT' || parentTag === 'TEXTAREA' || parentTag === 'INPUT') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                },
+                false
+            );
+
+            const nodes = [];
+            while (walker.nextNode()) {
+                nodes.push(walker.currentNode);
+            }
+
+            // Escape string regex (hindari error jika kata yang dicari mengandung titik, kurung, dll)
+            const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp("(" + safeQuery + ")", "gi");
+
+            nodes.forEach(node => {
+                const text = node.nodeValue;
+
+                if (regex.test(text)) {
+                    // Buat wadah container
+                    const span = document.createElement("span");
+                    // Bungkus teks yang cocok dengan tag khusus
+                    span.innerHTML = text.replace(regex, match => `<span class="find-highlight">${match}</span>`);
+                    // Ganti teks biasa dengan HTML ini
+                    node.parentNode.replaceChild(span, node);
+                }
+            });
+        }
+
+        function findPrevious() {
+            if (findResults.length === 0) return;
+
+            currentFindIndex--;
+            if (currentFindIndex < 0) {
+                currentFindIndex = findResults.length - 1; // Balik ke paling akhir jika sudah di elemen pertama
+            }
+
+            updateActiveResult();
+        }
+
+        function findNext() {
+            if (findResults.length === 0) return;
+
+            currentFindIndex++;
+            if (currentFindIndex >= findResults.length) {
+                currentFindIndex = 0; // Balik ke awal jika habis
+            }
+
+            updateActiveResult();
+        }
+
+        function updateActiveResult() {
+            // Hapus status aktif lama
+            document.querySelectorAll(".find-active")
+                .forEach(el => el.classList.remove("find-active"));
+
+            if (findResults.length === 0) return;
+
+            // Terapkan ke hasil saat ini
+            const active = findResults[currentFindIndex];
+            active.classList.add("find-active");
+            
+            // 🔥 STEP 1: Cari halaman (.sheet) tempat kata berada
+            const sheet = active.closest(".sheet");
+
+            if (sheet) {
+                // 🔥 STEP 2: Jika halaman tidak terlihat penuh di viewport → scroll ke tengah
+                const rect = sheet.getBoundingClientRect();
+
+                if (rect.top < 0 || rect.bottom > window.innerHeight) {
+                    sheet.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+                }
+            }
+
+            // 🔥 STEP 3: Scroll ke kata secara presisi dengan sedikit delay agar rendering mulus
+            setTimeout(() => {
+                active.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+                // Tambah animasi visual glow
+                active.style.transition = "box-shadow 0.3s ease";
+                active.style.boxShadow = "0 0 0 3px rgba(255,165,0,0.5)";
+
+                setTimeout(() => {
+                    active.style.boxShadow = "none";
+                }, 800);
+
+            }, 200);
+
+            // 🔥 Update counter
+            document.getElementById("findCounter").innerText = `${currentFindIndex + 1} dari ${findResults.length}`;
+        }
+
+        function replaceOne() {
+            if (findResults.length === 0) return;
+
+            const replacement = document.getElementById("replaceInput").value;
+            const active = findResults[currentFindIndex];
+
+            const parent = active.parentNode;
+            if(parent) {
+                // Menghapus elemen .find-highlight dan menggantinya dengan teks langsung
+                active.outerHTML = replacement;
+                parent.normalize();
+            }
+
+            saveToStorage(); // Picu history untuk Undo/Redo
+
+            // Reset query agar executeFind mendeteksi ulang indeks hasil tersisa
+            currentFindQuery = ""; 
+            executeFind();
+        }
+
+        function replaceAll() {
+            if (findResults.length === 0) {
+                currentFindQuery = "";
+                executeFind();
+            }
+            if (findResults.length === 0) return;
+
+            const replacement = document.getElementById("replaceInput").value;
+
+            findResults.forEach(el => {
+                const parent = el.parentNode;
+                if(parent) {
+                    el.outerHTML = replacement;
+                    parent.normalize();
+                }
+            });
+
+            saveToStorage(); // Picu history untuk Undo/Redo
+            clearFindResults(true); // Silent clear
+            uxToast("Semua teks berhasil diganti", "success");
+        }
+
+        // PRO UX: Shortcut Esc untuk menutup modal dengan aman
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape") {
+                const modal = document.getElementById("findReplaceModal");
+                if (modal && modal.style.display === "flex") {
+                    closeFindModal();
+                }
+            }
+        });
+    </script>
+
+    <!-- =========================================
+         24. NEW: SMART PASTE CLEANER (ADDITIVE)
+         ========================================= -->
+    <script id="smart-paste-cleaner">
+        document.addEventListener("paste", function(e) {
+            // Pastikan event paste terjadi di dalam area konten yang bisa diedit
+            const target = e.target.closest(".page-content");
+            if (!target) return;
+
+            e.preventDefault(); // Hentikan paste bawaan browser
+
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let htmlData = clipboardData.getData("text/html");
+            let plainText = clipboardData.getData("text/plain");
+
+            let cleanedHTML = "";
+
+            if (htmlData) {
+                // Jika data berbentuk HTML (dari Word, Web, dll), bersihkan!
+                cleanedHTML = cleanPastedHTML(htmlData);
+            } else {
+                // Jika hanya plain text murni (dari Notepad), format spasi dan line break-nya
+                cleanedHTML = plainText
+                    .replace(/\n/g, "<br>")
+                    .replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+            }
+
+            // Masukkan HTML yang sudah steril tepat di mana kursor berada
+            insertCleanHTMLAtCursor(cleanedHTML);
+
+            // Trigger sistem penyimpanan & rapikan halaman (Auto Flow)
+            if (typeof saveToStorage === "function") {
+                saveToStorage();
+            }
+
+            if (typeof debouncedAutoFlow === "function") {
+                debouncedAutoFlow();
+            }
+
+            if (typeof uxToast === "function") {
+                uxToast("Paste dibersihkan & dinormalisasi", "success");
+            }
+        });
+
+        // ========================
+        // ENGINE PEMBERSIH HTML
+        // ========================
+        function cleanPastedHTML(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+
+            // 1. Hapus tag yang tidak diperlukan (script, style global)
+            doc.querySelectorAll("script, style, meta, link, title").forEach(el => el.remove());
+
+            // --- 1️⃣ WHITELIST TAG FILTER ---
+            // Hanya mengizinkan tag dasar, selebihnya "di-unwrap" (isinya tetap diambil)
+            const allowedTags = [
+                "P","BR","B","STRONG","I","EM","U",
+                "UL","OL","LI",
+                "TABLE","THEAD","TBODY","TR","TD","TH","COLGROUP","COL",
+                "H1","H2","H3","H4","H5","H6",
+                "DIV","SPAN"
+            ];
+
+            doc.body.querySelectorAll("*").forEach(el => {
+                if (el.tagName && !allowedTags.includes(el.tagName.toUpperCase())) {
+                    const parent = el.parentNode;
+                    if (parent) {
+                        // Pindahkan isi child ke luar sebelum menghapus parent-nya yang ilegal
+                        while (el.firstChild) parent.insertBefore(el.firstChild, el);
+                        parent.removeChild(el);
+                    }
+                }
+            });
+
+            // 2. Hapus SEMUA atribut kotor (style inline, class bawaan word, id)
+            doc.querySelectorAll("*").forEach(el => {
+                if (!el.tagName) return;
+
+                el.removeAttribute("style");
+                el.removeAttribute("class");
+                el.removeAttribute("id");
+
+                // --- 2️⃣ JANGAN HAPUS SEMUA data- ATTRIBUTE ---
+                // --- 5️⃣ SECURITY SANITIZER (Hapus on*) ---
+                [...el.attributes].forEach(attr => {
+                    // Hapus attribute sampah dari Word
+                    if (attr.name.startsWith("mso-")) {
+                        el.removeAttribute(attr.name);
+                    }
+                    // Hapus Security Threat (XSS)
+                    if (attr.name.toLowerCase().startsWith("on")) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+
+                // --- 3️⃣ PENERAPAN STYLE GLOBAL (Menghapus injeksi "inherit" yang redundant) ---
+                // Biarkan CSS eksternal aplikasi yang menormalkan tampilannya
+            });
+
+            // 3. Bersihkan <span> yang kosong agar DOM tidak bengkak
+            doc.querySelectorAll("span").forEach(span => {
+                if (!span.textContent.trim() && span.children.length === 0) {
+                    span.remove();
+                }
+            });
+
+            // --- 6️⃣ SMART PARAGRAPH MERGE ---
+            // Normalisasi paragraf Word yang kosong menjadi baris baru (br)
+            doc.querySelectorAll("p").forEach(p => {
+                const content = p.innerHTML.trim();
+                if (content === "&nbsp;" || content === "") {
+                    p.innerHTML = "<br>";
+                }
+            });
+
+            // --- 4️⃣ TABLE NORMALIZER ---
+            // Memastikan tabel yang di-paste rapi dan memiliki border/padding default
+            doc.querySelectorAll("table").forEach(table => {
+                table.style.borderCollapse = "collapse";
+                table.querySelectorAll("td, th").forEach(cell => {
+                    if (!cell.getAttribute("border")) {
+                        cell.style.border = "1px solid #000";
+                    }
+                    cell.style.padding = "4px";
+                });
+            });
+
+            // 5. Bersihkan komentar HTML buatan Word (<!--[if gte mso 9]> dll)
+            const walker = document.createTreeWalker(doc, NodeFilter.SHOW_COMMENT, null, false);
+            let comment;
+            const commentsToRemove = [];
+            while (comment = walker.nextNode()) {
+                commentsToRemove.push(comment);
+            }
+            commentsToRemove.forEach(c => c.remove());
+
+            return doc.body.innerHTML;
+        }
+
+        // ========================
+        // INJEKSI KE KURSOR (PRESISI)
+        // ========================
+        function insertCleanHTMLAtCursor(html) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            
+            // Hapus jika user sedang mem-blok teks saat melakukan paste
+            range.deleteContents();
+
+            // Buat HTML menjadi DOM Fragment yang aman
+            const fragment = range.createContextualFragment(html);
+            
+            // Masukkan ke posisi kursor
+            range.insertNode(fragment);
+
+            // Pindahkan kursor otomatis ke akhir hasil paste agar user bisa lanjut mengetik
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    </script>
+
+    <!-- =========================================
+         25. NEW: PAGE STYLE INSPECTOR LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="page-style-inspector">
+        // 1️⃣ Buka Modal
+        function openPageStyleModal() {
+            const dropdown = document.getElementById("pageStyleSelect");
+            dropdown.innerHTML = "";
+
+            const sheets = document.querySelectorAll(".sheet");
+            if (sheets.length === 0) {
+                uxToast("Tidak ada halaman untuk diatur.", "error");
+                return;
+            }
+
+            sheets.forEach((sheet, i) => {
+                const opt = document.createElement("option");
+                opt.value = i;
+                
+                let title = "Halaman " + (i + 1);
+                const content = sheet.textContent || sheet.innerText;
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+
+                opt.textContent = title;
+                dropdown.appendChild(opt);
+            });
+
+            loadPageStyle(0);
+            dropdown.onchange = () => loadPageStyle(dropdown.value);
+
+            document.getElementById("pageStyleModal").style.display = "flex";
+        }
+
+        // 2️⃣ Load Style Halaman secara spesifik
+        function loadPageStyle(index) {
+            const sheet = document.querySelectorAll(".sheet")[index];
+            if (!sheet) return;
+            const content = sheet.querySelector(".page-content");
+            if (!content) return;
+
+            const style = window.getComputedStyle(content);
+
+            // Membersihkan string font-family dari tanda kutip bawaan browser
+            let fontFamily = style.fontFamily.replace(/['"]/g, '').split(',')[0].trim();
+
+            const fontSelect = document.getElementById("pageFontSelect");
+            // Cek jika font yang aktif belum ada di dropdown, tambahkan sementara
+            let fontExists = Array.from(fontSelect.options).some(opt => opt.value.toLowerCase() === fontFamily.toLowerCase());
+            if (!fontExists && fontFamily) {
+                const newOpt = document.createElement("option");
+                newOpt.value = fontFamily;
+                newOpt.textContent = fontFamily;
+                fontSelect.appendChild(newOpt);
+            }
+            fontSelect.value = fontExists ? Array.from(fontSelect.options).find(opt => opt.value.toLowerCase() === fontFamily.toLowerCase()).value : fontFamily;
+
+            document.getElementById("pageFontSizeInput").value = parseFloat(style.fontSize) || 16;
+            document.getElementById("pageAlignSelect").value = style.textAlign || "left";
+            
+            // Konversi nilai line-height (bisa normal/px -> angka relatif)
+            let lh = style.lineHeight;
+            if (lh === "normal") {
+                lh = 1.2; 
+            } else {
+                lh = parseFloat(lh) / parseFloat(style.fontSize);
+            }
+            document.getElementById("pageLineHeightInput").value = !isNaN(lh) ? lh.toFixed(1) : 1.5;
+
+            let ls = style.letterSpacing;
+            document.getElementById("pageLetterSpacingInput").value = ls === "normal" ? 0 : parseFloat(ls) || 0;
+            
+            document.getElementById("pageColorInput").value = rgbToHex(style.color || "rgb(0,0,0)");
+        }
+
+        // Helper RGB to HEX 
+        function rgbToHex(rgb) {
+            if (!rgb || rgb === 'transparent') return '#000000';
+            const result = rgb.match(/\d+/g);
+            if (!result || result.length < 3) return "#000000";
+            return "#" + result.slice(0,3).map(x => {
+                const hex = parseInt(x).toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+            }).join('');
+        }
+
+        // 3️⃣ Apply Style Ke Halaman & Memory
+        function applyPageStyle() {
+            const index = document.getElementById("pageStyleSelect").value;
+            const sheet = document.querySelectorAll(".sheet")[index];
+            if (!sheet) return;
+            const content = sheet.querySelector(".page-content");
+            if (!content) return;
+
+            const font = document.getElementById("pageFontSelect").value;
+            const size = document.getElementById("pageFontSizeInput").value;
+            const align = document.getElementById("pageAlignSelect").value;
+            const lineHeight = document.getElementById("pageLineHeightInput").value;
+            const letterSpacing = document.getElementById("pageLetterSpacingInput").value;
+            const color = document.getElementById("pageColorInput").value;
+
+            // Injeksi langsung ke DOM agar instan terlihat
+            content.style.fontFamily = font;
+            content.style.fontSize = size + "px";
+            content.style.textAlign = align;
+            content.style.lineHeight = lineHeight;
+            content.style.letterSpacing = letterSpacing + "px";
+            content.style.color = color;
+
+            // Simpan Attribute agar dikenali oleh saveToStorage() layaknya sistem margin
+            sheet.setAttribute('data-style-font', font);
+            sheet.setAttribute('data-style-size', size);
+            sheet.setAttribute('data-style-align', align);
+            sheet.setAttribute('data-style-lineheight', lineHeight);
+            sheet.setAttribute('data-style-letterspacing', letterSpacing);
+            sheet.setAttribute('data-style-color', color);
+
+            // Simpan Data
+            if (!pagesDB[index]) return;
+            if (!pagesDB[index].pageStyle) pagesDB[index].pageStyle = {};
+
+            pagesDB[index].pageStyle = { font, size, align, lineHeight, letterSpacing, color };
+
+            saveToStorage();
+
+            // Karena ukuran font atau line height berubah, AutoFlow perlu menyesuaikan tinggi baris yang baru
+            if(typeof triggerAutoFlowEngine === 'function') triggerAutoFlowEngine(true); 
+
+            uxToast(`Gaya Halaman ${parseInt(index) + 1} diperbarui`, "success");
+
+            // Auto-scroll ke halaman yang diedit
+            setTimeout(() => {
+                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+
+        function closePageStyleModal() {
+            document.getElementById("pageStyleModal").style.display = "none";
+        }
+
+        // 4️⃣ Bold / Italic / Underline (Dengan Trigger Save)
+        function togglePageBold() {
+            document.execCommand("bold", false, null);
+            triggerInputSave();
+        }
+        function togglePageItalic() {
+            document.execCommand("italic", false, null);
+            triggerInputSave();
+        }
+        function togglePageUnderline() {
+            document.execCommand("underline", false, null);
+            triggerInputSave();
+        }
+
+        // Helper untuk memancing auto-save saat menekan format B/I/U
+        function triggerInputSave() {
+            if (document.activeElement && document.activeElement.closest('.page-content')) {
+                 document.activeElement.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }
     </script>
 </body>
