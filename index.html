@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Laporan Administrasi Sekolah - Ultimate Enterprise Edition</title>
+    <title>Sistem Laporan Administrasi Sekolah - Ultimate Enterprise Edition by Uranusfazry</title>
     
     <!-- LIBRARIES FOR PDF GENERATION -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -821,7 +821,6 @@
 
     <!-- =========================================
          NEW OVERRIDE STYLES (NON-DESTRUCTIVE)
-         Memenuhi semua instruksi override tanpa menghapus/merusak style lama
          ========================================= -->
     <style id="custom-override-styles">
         /* 1. OVERRIDE COVER TANPA HAPUS CODE LAMA */
@@ -893,30 +892,12 @@
         <!-- SIDEBAR -->
         <aside>
             <h2>
-                <i class="ph ph-buildings" style="font-size: 24px;"></i> Admin Sekolah
+                <i class="ph ph-buildings" style="font-size: 24px;"></i> Uranus Word
             </h2>
             
-            <div class="section-divider">Laporan Kegiatan</div>
-            <!-- UPDATED ONCLICK HANDLERS TO UX WRAPPERS -->
-            <button class="btn btn-add" onclick="handleAddPage('cover', this)"><i class="ph ph-file-text"></i> Halaman Cover</button>
-            <button class="btn btn-add" onclick="handleAddPage('laporan', this)"><i class="ph ph-file-plus"></i> Laporan Kegiatan</button>
-            <button class="btn btn-add" onclick="handleAddPage('laporan_convert', this)"><i class="ph ph-file-arrow-up"></i> Laporan (Convert)</button>
-            <button class="btn btn-add" onclick="handleAddPage('foto', this)"><i class="ph ph-camera"></i> Dokumentasi Foto</button>
-            <button class="btn btn-add" onclick="handleAddPage('jadwal', this)"><i class="ph ph-calendar"></i> Jadwal Asesmen</button>
-
-            <div class="section-divider">Administrasi PJP</div>
-            <button class="btn btn-add" onclick="handleAddPage('program_semester', this)"><i class="ph ph-chart-bar"></i> Program Semester</button>
-            <button class="btn btn-add" onclick="handleAddPage('rekap_nilai', this)"><i class="ph ph-calculator"></i> Rekap Nilai Harian</button>
-            <button class="btn btn-add" onclick="handleAddPage('rekap_ujian', this)"><i class="ph ph-graduation-cap"></i> Rekap Ujian BTQ</button>
+            <div class="section-divider">Halaman</div>
             
-            <!-- TEMPLATE BARU DITAMBAHKAN DI SINI -->
-            <button class="btn btn-add" onclick="handleAddPage('setoran_hafalan_juz30', this)">
-                <i class="ph ph-book-open"></i> Setoran Hafalan Juz 30
-            </button>
-
-            <button class="btn btn-add" onclick="handleAddPage('absensi_guru', this)"><i class="ph ph-users-three"></i> Absensi Guru (Grid)</button>
-            <button class="btn btn-add" onclick="handleAddPage('absensi_siswa', this)"><i class="ph ph-student"></i> Absensi Siswa (Super)</button>
-            <button class="btn btn-add" onclick="handleAddPage('hadir_ujian', this)"><i class="ph ph-pencil-simple-line"></i> Tanda Tangan Ujian</button>
+            <!-- TEMPLATE CUSTOM & EMBED (THE ONLY ONES LEFT) -->
             <button class="btn btn-add" onclick="handleAddPage('custom', this)"><i class="ph ph-magic-wand"></i> Halaman Custom</button>
             <button class="btn btn-add" style="border-style: dashed;" onclick="openEmbedModal()"><i class="ph ph-code"></i> Embed HTML / Code</button>
 
@@ -966,7 +947,7 @@
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.6 HQ Print Ready • Word Export Ready • Orientation Control
+                v9.7 HQ Print Ready • Word Export Ready • Orientation Control
             </p>
         </aside>
 
@@ -1394,16 +1375,9 @@
                 option.value = i;
                 
                 let title = "Halaman " + (i+1);
-                // Simple content detection for clearer names
                 const content = sheet.textContent || sheet.innerText;
-                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
-                else if(content.includes('JADWAL')) title += " (Jadwal)";
-                else if(content.includes('REKAP NILAI')) title += " (Nilai)";
-                else if(content.includes('REKAP SETORAN HAFALAN')) title += " (Hafalan)"; // Indikator title baru
-                else if(content.includes('ABSENSI')) title += " (Absen)";
-                else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
-                else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+                
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
                 
                 option.textContent = title;
                 dropdown.appendChild(option);
@@ -1459,7 +1433,7 @@
                     unit: 'mm',
                     format: firstIsLandscape ? [330, 215] : [215, 330],
                     compress: false, // compress: false sesuai instruksi agar tidak ada loss
-                    precision: 16    // precision 16 untuk layouting mm ke px yang sangat presisi
+                    precision: 16  // precision 16 untuk layouting mm ke px yang sangat presisi
                 });
 
                 for(let i=0; i<sheets.length; i++){
@@ -1527,49 +1501,6 @@
         });
 
         // ================= DATA LOGIC =================
-        
-        function calculateScore(row) {
-            const getVal = (cls) => {
-                const el = row.querySelector('.' + cls);
-                return el ? (parseFloat(el.innerText.replace(/,/g, '.')) || 0) : 0;
-            };
-            const s1 = getVal('score-lancar');
-            const s2 = getVal('score-tajwid');
-            const s3 = getVal('score-irama');
-            const s4 = getVal('score-adab');
-            const total = s1 + s2 + s3 + s4;
-            const totalEl = row.querySelector('.score-total');
-            const finalEl = row.querySelector('.score-final');
-            if(totalEl) totalEl.innerText = total;
-            if(finalEl) finalEl.innerText = total;
-        }
-
-        function calculateExamScore(row) {
-            const getVal = (cls) => {
-                const el = row.querySelector('.' + cls);
-                return el ? (parseFloat(el.innerText.replace(/,/g, '.')) || 0) : 0;
-            };
-            const s1 = getVal('exam-lancar');
-            const s2 = getVal('exam-tajwid');
-            const s3 = getVal('exam-irama');
-            const s4 = getVal('exam-adab');
-            const total = s1 + s2 + s3 + s4;
-            const finalEl = row.querySelector('.exam-final');
-            if(finalEl) finalEl.innerText = total;
-        }
-
-        /* NEW FUNCTION: Logic for Setoran Hafalan Checkboxes */
-        function calculateSetoranRow(checkbox) {
-            const row = checkbox.closest('tr');
-            if(!row) return;
-            const checkboxes = row.querySelectorAll('input[type="checkbox"]');
-            let total = 0;
-            checkboxes.forEach(cb => {
-                if(cb.checked) total++;
-            });
-            const totalEl = row.querySelector('.total-setor');
-            if(totalEl) totalEl.innerText = total;
-        }
 
         function addPage(type) {
             const htmlContent = templates[type];
@@ -1691,8 +1622,7 @@
                 
                 let title = "Halaman " + (i+1);
                 const content = sheet.textContent || sheet.innerText;
-                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
                 
                 option.textContent = title;
                 dropdown.appendChild(option);
@@ -1795,51 +1725,6 @@
 
         // ================= TEMPLATES =================
 
-        const getKop = () => `
-            <div class="kop-surat">
-                <div class="kop-img" onclick="triggerUpload(this)" title="Klik untuk ganti logo">
-                    <img src="https://via.placeholder.com/100x120?text=LOGO" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
-                    <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
-                </div>
-                <div class="kop-text">
-                    <h3>PEMERINTAH KOTA BANJAR</h3>
-                    <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-                    <h2 class="data-sekolah">UPTD SD NEGERI 1 BATULAWANG</h2>
-                    <p class="data-alamat">Alamat Sekolah Here</p>
-                    <p>Email: sdn1batulawang@banjarkota.go.id</p>
-                </div>
-            </div>
-        `;
-
-        const getTTD = (jabatan = "Guru PJP PAI") => `
-            <div class="signature-section">
-                <div class="ttd-box">
-                    <p>Mengetahui,<br>Kepala Sekolah</p>
-                    <div class="ttd-space"></div>
-                    <p class="text-bold text-upper"><u class="data-kepsek">NAMA KEPALA</u></p>
-                    <p>NIP. <span class="data-nip1">...</span></p>
-                </div>
-                <div class="ttd-box">
-                    <p>Banjar, <span contenteditable="true" class="data-tgl">...</span><br>${jabatan}</p>
-                    <div class="ttd-space"></div>
-                    <p class="text-bold text-upper"><u class="data-guru">NAMA GURU</u></p>
-                    <p>NIP. <span class="data-nip2">...</span></p>
-                </div>
-            </div>
-        `;
-
-        const get31DaysHeader = () => {
-            let cols = '';
-            for(let i=1; i<=31; i++) { cols += `<th>${i}</th>`; }
-            return cols;
-        };
-
-        const get31DaysCells = () => {
-            let cols = '';
-            for(let i=1; i<=31; i++) { cols += `<td contenteditable="true"></td>`; }
-            return cols;
-        };
-
         const templates = {
             // STEP 1: Add Content Wrapper for Custom Page
             custom: `
@@ -1852,681 +1737,13 @@
                     </div>
                     <div class="page-number"></div>
                 </div>
-            `,
-            laporan_convert: `
-                ${getKop()}
-                <div class="text-center" style="margin-bottom:20px;">
-                    <h3 class="text-bold" style="text-decoration: underline;">LAPORAN PELAKSANAAN KEGIATAN</h3>
-                    <p>Nomor: 421.2/...../SD/..../2025</p>
-                </div>
-
-                <div style="margin-bottom: 15px; text-align: justify;">
-                    <p class="text-bold">A. PENDAHULUAN</p>
-                    <div contenteditable="true" style="margin-left: 20px;">
-                        <p>Puji syukur ke hadirat Allah SWT, berkat rahmat dan karunia-Nya, kami dapat menyelesaikan penyusunan laporan kegiatan ini. Laporan ini disusun sebagai bentuk pertanggungjawaban atas pelaksanaan tugas dinas di lingkungan <span class="data-sekolah">...</span>.</p>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 15px;">
-                    <p class="text-bold">B. DATA PELAKSANA</p>
-                    <table class="list-data" style="margin-left: 20px;">
-                        <tr><td width="150">Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
-                        <tr><td>NIP</td><td>:</td><td class="data-nip2">...</td></tr>
-                        <tr><td>Jabatan</td><td>:</td><td>Guru PJP PAI</td></tr>
-                        <tr><td>Unit Kerja</td><td>:</td><td class="data-sekolah">...</td></tr>
-                    </table>
-                </div>
-
-                <div style="margin-bottom: 15px;">
-                    <p class="text-bold">C. HASIL KEGIATAN</p>
-                    <table class="dinas">
-                        <thead>
-                            <tr>
-                                <th width="5%">No</th>
-                                <th width="30%">Nama Kegiatan</th>
-                                <th width="20%">Waktu</th>
-                                <th width="45%">Hasil / Output</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-center">1</td>
-                                <td contenteditable="true">Bimbingan Baca Tulis Al-Qur'an (BTQ)</td>
-                                <td contenteditable="true">Setiap Hari Senin-Jumat (13.00 - 14.00)</td>
-                                <td contenteditable="true">Siswa mampu membaca Iqra jilid 4-6 dengan lancar.</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">2</td>
-                                <td contenteditable="true">Pembinaan Akhlak Mulia</td>
-                                <td contenteditable="true">Insidental / Terintegrasi</td>
-                                <td contenteditable="true">Peningkatan kedisiplinan siswa dalam beribadah.</td>
-                            </tr>
-                            <tr>
-                                <td class="text-center">3</td>
-                                <td contenteditable="true">Evaluasi Hafalan Juz Amma</td>
-                                <td contenteditable="true">Akhir Bulan</td>
-                                <td contenteditable="true">80% siswa tuntas hafalan target semester.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="margin-bottom: 15px; text-align: justify;">
-                    <p class="text-bold">D. PENUTUP</p>
-                    <div contenteditable="true" style="margin-left: 20px;">
-                        <p>Demikian laporan ini kami buat dengan sebenar-benarnya untuk dapat dipergunakan sebagaimana mestinya. Kami menyadari masih banyak kekurangan dalam pelaksanaan kegiatan ini, oleh karena itu saran dan masukan sangat kami harapkan.</p>
-                    </div>
-                </div>
-
-                <div style="flex:1"></div>
-                ${getTTD()}
-                <div class="page-number"></div>
-            `,
-            cover: `
-                <div class="cover-border">
-                    <div class="mt-2">
-                        <h2 class="text-bold">LAPORAN KEGIATAN</h2>
-                        <h2 class="text-bold">GURU PENAMBAHAN JAM PELAJARAN PAI</h2>
-                        <h3 class="text-bold">TAHUN PELAJARAN 2025/2026</h3>
-                    </div>
-                    <div>
-                        <h3 class="text-bold data-sekolah">UPTD SD NEGERI 1 BATULAWANG</h3>
-                        <h3 class="text-bold text-upper data-tgl">BULAN ...</h3>
-                    </div>
-                    <div style="width:150px; height:180px; margin:0 auto; cursor:pointer;" onclick="triggerUpload(this)" title="Klik Ganti Logo">
-                        <img src="https://via.placeholder.com/150x180?text=LOGO+BESAR" style="width:100%; height:100%; object-fit:contain;">
-                        <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
-                    </div>
-                    <div>
-                        <p>DISUSUN OLEH :</p>
-                        <h3 class="text-bold text-upper data-guru">NAMA GURU</h3>
-                        <p class="data-nip2">NIP</p>
-                    </div>
-                    <div class="mb-2">
-                        <h3 class="text-bold">PEMERINTAH KOTA BANJAR</h3>
-                        <h3 class="text-bold">DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-                        <h3 class="text-bold">TAHUN 2025</h3>
-                    </div>
-                </div>
-                <div class="page-number"></div>
-            `,
-
-            laporan: `
-                <div style="min-height:100%; display:flex; flex-direction:column; font-family:'Times New Roman'; font-size:12pt; line-height:1.2;">
-
-                    ${getKop()}
-
-                    <div style="text-align:center; margin-bottom:15px;">
-                        <div style="font-weight:bold;">LAPORAN KEGIATAN</div>
-                        <div style="font-weight:bold;">TENAGA PENDIDIK PELAKSANA PENAMBAHAN JAM PELAJARAN (PJP)</div>
-                        <div style="font-weight:bold;">PENDIDIKAN AGAMA ISLAM (PAI)</div>
-                    </div>
-
-                    <div style="flex:1;">
-
-                        <!-- Info Dasar -->
-                        <table style="width:100%; margin-bottom:15px; border-collapse:collapse;">
-                            <tr>
-                                <td style="width:120px; vertical-align:top; padding:2px 0;">Nama</td>
-                                <td style="width:15px; vertical-align:top; padding:2px 0;">:</td>
-                                <td class="data-guru text-bold" style="vertical-align:top; padding:2px 0;">USAMAH DHIYA UL HAQ, S.Pd.</td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:2px 0;">Sekolah</td>
-                                <td style="vertical-align:top; padding:2px 0;">:</td>
-                                <td class="data-sekolah" style="vertical-align:top; padding:2px 0;">UPTD SD NEGERI 1 BATULAWANG</td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:2px 0;">Kelas</td>
-                                <td style="vertical-align:top; padding:2px 0;">:</td>
-                                <td contenteditable="true" style="vertical-align:top; padding:2px 0;">V (Lima)</td>
-                            </tr>
-                        </table>
-
-                        <!-- Isi Laporan (Tabel 3 Kolom agar Titik Dua Sejajar Presisi) -->
-                        <table style="width:100%; border-collapse:collapse;">
-                            <tr>
-                                <td style="width:280px; vertical-align:top; padding:4px 0;"><b>1. Jumlah Peserta Didik (PD) yang Dihadapi</b></td>
-                                <td style="width:15px; vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Kelas V = 10 Orang Siswa</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>2. Tempat Pelaksanaan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">KELAS</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>3. Tanggal Pelaksanaan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">Tanggal 01 s.d. 20 Agustus 2025</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>4. Waktu Pelaksanaan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Kelas V : Pukul 10.00 s.d. 11.00 (hari Senin - Kamis)</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>5. Materi yang Diberikan</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">1. Dasar Pengenalan Huruf Hijaiyah dan Harakat #3</p>
-                                        <p style="margin:2px 0;">2. Setor bacaan dan hafalan Iqra/Al-Quran</p>
-                                        <p style="margin:0;">3. Ujian lisan dan tulisan BTQ</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>6. Kondisi Awal PD yang Dihadapi</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Siswa yang Lancar Baca/Tulis = 6 Siswa</p>
-                                        <p style="margin:2px 0;">b. Siswa yang Belum Lancar Baca/Tulis = 3 Siswa</p>
-                                        <p style="margin:0;">c. Siswa yang Tidak Bisa Baca/Tulis = 1 Siswa</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="vertical-align:top; padding:4px 0;"><b>7. Perkembangan PD yang Dihadapi</b></td>
-                                <td style="vertical-align:top; padding:4px 0;"><b>:</b></td>
-                                <td style="vertical-align:top; padding:4px 0;">
-                                    <div contenteditable="true">
-                                        <p style="margin:0;">a. Siswa yang Lancar Baca/Tulis = 6 Siswa</p>
-                                        <p style="margin:2px 0;">b. Siswa yang Belum Lancar Baca/Tulis = 3 Siswa</p>
-                                        <p style="margin:0;">c. Siswa yang Tidak Bisa Baca/Tulis = 1 Siswa</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                    </div>
-
-                    <div style="margin-top:50px;">
-                        ${getTTD("Guru PJP PAI")}
-                    </div>
-
-                    <div class="page-number"></div>
-
-                </div>
-            `,
-
-            foto: `
-                <div class="text-center text-bold" style="margin-bottom:15px; border-bottom:1px solid #000; padding-bottom:10px;">
-                    <h3>LAPORAN DOKUMENTASI KEGIATAN</h3>
-                    <p class="data-tgl" style="font-size:10pt; font-weight:normal;">...</p>
-                </div>
-                <div class="photo-grid">
-                    ${Array(6).fill(0).map((_, i) => `
-                    <div class="photo-card">
-                        <div class="photo-placeholder" onclick="triggerUpload(this)">
-                            <img src="" alt="Klik Upload" style="display:none;">
-                            <span style="color:#999; font-size:10pt;">+ Foto ${i+1}</span>
-                            <input type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
-                        </div>
-                        <div class="photo-caption" contenteditable="true">Kegiatan Siswa ${i+1}...</div>
-                    </div>`).join('')}
-                </div>
-                <div class="page-number"></div>
-            `,
-
-            jadwal: `
-                ${getKop()}
-                <div class="text-center" style="margin-bottom:20px;">
-                    <h3 class="text-bold">JADWAL ASESMEN SUMATIF<br>AKHIR SEMESTER GANJIL</h3>
-                </div>
-                <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="20%">Hari / Tanggal</th>
-                            <th width="10%">Jam Ke</th>
-                            <th width="15%">Pukul</th>
-                            <th width="35%">Mata Pelajaran</th>
-                            <th width="15%">Ket</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Array(5).fill(0).map((_, i) => `
-                        <tr>
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true">Senin, ...</td>
-                            <td class="text-center" contenteditable="true">1</td>
-                            <td class="text-center" contenteditable="true">07.30 - 09.00</td>
-                            <td contenteditable="true">PAI & Budi Pekerti</td>
-                            <td contenteditable="true"></td>
-                        </tr>`).join('')}
-                    </tbody>
-                </table>
-                <p style="font-size:10pt; margin-top:10px;" contenteditable="true">* Jadwal dapat berubah sewaktu-waktu.</p>
-                <div style="flex:1"></div>
-                ${getTTD()}
-                <div class="page-number"></div>
-            `,
-
-            rekap_nilai: `
-                <div class="text-center text-bold" style="margin-bottom:15px; text-transform:uppercase; line-height:1.5;">
-                    <h3>REKAP NILAI HARIAN BTQ SISWA KELAS V (LIMA)</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
-                    <h3>KECAMATAN PATARUMAN</h3>
-                    <h3>KOTA BANJAR</h3>
-                </div>
-
-                <table class="table-padat">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" width="4%">No</th>
-                            <th rowspan="2" width="10%">NISN</th>
-                            <th rowspan="2" width="20%">Nama Siswa</th>
-                            <th colspan="4">Komponen Penilaian</th>
-                            <th rowspan="2" width="5%">Jml</th>
-                            <th rowspan="2" width="5%">NA</th>
-                            <th rowspan="2" width="15%">Deskripsi</th>
-                            <th colspan="3" width="9%">Absensi</th>
-                        </tr>
-                        <tr>
-                            <th width="6%">Lancar (30)</th>
-                            <th width="6%">Tajwid (40)</th>
-                            <th width="6%">Irama (20)</th>
-                            <th width="6%">Adab (10)</th>
-                            <th width="3%">S</th>
-                            <th width="3%">I</th>
-                            <th width="3%">A</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Array(20).fill(0).map((_, i) => `
-                        <tr oninput="calculateScore(this)">
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true">Nama Siswa ${i+1}</td>
-                            <!-- Score Inputs -->
-                            <td contenteditable="true" class="text-center score-lancar">0</td>
-                            <td contenteditable="true" class="text-center score-tajwid">0</td>
-                            <td contenteditable="true" class="text-center score-irama">0</td>
-                            <td contenteditable="true" class="text-center score-adab">0</td>
-                            <!-- Auto Calc -->
-                            <td class="text-center text-bold score-total" style="background:#f1f5f9;">0</td>
-                            <td class="text-center text-bold score-final" style="background:#f1f5f9;">0</td>
-                            <!-- Ket -->
-                            <td contenteditable="true" style="font-size:8pt;">Sangat Baik</td>
-                            <!-- Absen -->
-                            <td contenteditable="true" class="text-center">-</td>
-                            <td contenteditable="true" class="text-center">-</td>
-                            <td contenteditable="true" class="text-center">-</td>
-                        </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <div style="margin-top:20px; text-align:right;">
-                    <div style="display:inline-block; width:200px; text-align:center;">
-                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p>Guru BTQ</p>
-                        <br><br><br>
-                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
-                    </div>
-                </div>
-                <div class="page-number"></div>
-            `,
-
-            rekap_ujian: `
-                ${getKop()}
-                <div class="text-center text-bold text-upper" style="margin-bottom:20px;">
-                    <h3>REKAPITULASI HASIL UJIAN BACA TULIS AL-QURAN</h3>
-                    <h3>KELAS V SEMESTER 1</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
-                </div>
-
-                <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="25%">Nama Siswa</th>
-                            <th width="10%">Kelancaran (30)</th>
-                            <th width="10%">Tajwid Makhorij (40)</th>
-                            <th width="10%">Irama Tartil (20)</th>
-                            <th width="10%">Adab (10)</th>
-                            <th width="10%" class="col-nilai-akhir">Nilai Akhir</th>
-                            <th width="20%">Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                         ${Array(20).fill(0).map((_, i) => `
-                        <tr oninput="calculateExamScore(this)">
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true">Nama Siswa ${i+1}</td>
-                            <td contenteditable="true" class="text-center exam-lancar">0</td>
-                            <td contenteditable="true" class="text-center exam-tajwid">0</td>
-                            <td contenteditable="true" class="text-center exam-irama">0</td>
-                            <td contenteditable="true" class="text-center exam-adab">0</td>
-                            <td class="text-center col-nilai-akhir exam-final">0</td>
-                            <td contenteditable="true" class="text-center">LULUS</td>
-                        </tr>`).join('')}
-                    </tbody>
-                </table>
-
-                <div style="flex:1"></div>
-                ${getTTD()}
-                <div class="page-number"></div>
-            `,
-
-            // ===============================================
-            // TEMPLATE BARU: SETORAN HAFALAN JUZ 30
-            // ===============================================
-            setoran_hafalan_juz30: `
-                <div class="landscape-marker" style="display:none;"></div>
-                
-                <!-- Header / Kop -->
-                ${getKop()}
-                
-                <!-- Judul -->
-                <div class="text-center" style="margin-top: 15px; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 1px solid #000;">
-                    <h3 style="margin: 0 0 6px 0; font-weight: 700; letter-spacing: 1px; font-size: 14pt; text-transform: uppercase; line-height: 1.2;">REKAP SETORAN HAFALAN JUZ 30</h3>
-                    <h3 style="margin: 0 0 6px 0; font-weight: 700; letter-spacing: 1px; font-size: 12pt; text-transform: uppercase; line-height: 1.2;">KELAS V (LIMA)</h3>
-                    <h3 class="data-sekolah" style="margin: 0; font-weight: 700; letter-spacing: 1px; font-size: 12pt; text-transform: uppercase; line-height: 1.2;">UPTD SD NEGERI 1 BATULAWANG</h3>
-                </div>
-
-                <!-- Tabel -->
-                <table style="width: 100%; border-collapse: collapse; font-family: 'Times New Roman', Times, serif; font-size: 7pt; border: 2px solid #000; table-layout: fixed;">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" style="width: 3%; border: 1px solid #000; background-color: #e5e7eb; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">No</th>
-                            <th rowspan="2" style="width: 16%; border: 1px solid #000; background-color: #e5e7eb; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">Nama Siswa</th>
-                            <th colspan="37" style="border: 1px solid #000; background-color: #e5e7eb; padding: 4px 3px; vertical-align: middle; font-weight: bold; letter-spacing: 1px; text-align: center;">SURAH JUZ 30</th>
-                            <th rowspan="2" style="width: 5%; border: 1px solid #000; background-color: #eef2ff; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">Jml<br>Setor</th>
-                            <th rowspan="2" style="width: 8%; border: 1px solid #000; background-color: #e5e7eb; padding: 2px 3px; vertical-align: middle; font-weight: bold; text-align: center;">Ket</th>
-                        </tr>
-                        <tr>
-                            ${[
-                                "ANB","ANZ","ABS","ATK","AIF","AMF","AIS","ABR","ATR","AAL",
-                                "AGS","AFJ","ABL","ASY","ALL","ADH","SRH","ATN","ALQ","AQD",
-                                "ABY","AZL","ADY","AQR","TKT","ASR","AHM","AFL","QRS","AMN",
-                                "AKT","AKF","NSR","LHB","IKH","FLQ","NAS"
-                            ].map(surah => `
-                                <th style="border: 1px solid #000; background-color: #e5e7eb; height: 80px; width: 12px; padding: 0; vertical-align: middle; text-align: center;">
-                                    <div style="transform: rotate(-90deg); white-space: nowrap; font-size: 6.5pt; font-weight: bold; letter-spacing: 0.5px; mso-rotate: 90; writing-mode: vertical-rl;">${surah}</div>
-                                </th>
-                            `).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${[
-                            "Annisa", "Arda", "Azzam", "Darnel", "Felari", "Lutfi",
-                            "Nadira", "Nur Fauzah A", "Salma", "Septi", "Nayla"
-                        ].map((nama, i) => `
-                        <tr>
-                            <td class="text-center" style="border: 1px solid #000; padding: 2px 3px; vertical-align: middle;">${i+1}</td>
-                            <td contenteditable="true" style="border: 1px solid #000; padding: 2px 3px 2px 5px; vertical-align: middle; text-align: left; white-space: nowrap; overflow: hidden;">${nama}</td>
-                            ${Array(37).fill(0).map(() => `
-                                <td class="text-center" style="border: 1px solid #000; padding: 0; vertical-align: middle;">
-                                    <input type="checkbox" onchange="calculateSetoranRow(this)" style="margin: 0 auto; transform: scale(0.7); cursor: pointer; display: block;">
-                                </td>
-                            `).join('')}
-                            <td contenteditable="true" class="text-center text-bold total-setor" style="border: 1px solid #000; padding: 2px 3px; vertical-align: middle; background-color: #eef2ff;">0</td>
-                            <td contenteditable="true" class="text-center" style="border: 1px solid #000; padding: 2px 3px; vertical-align: middle;">-</td>
-                        </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-
-                <!-- Footer TTD -->
-                <div style="margin-top: 30px; display: flex; justify-content: flex-end; padding-right: 25px; page-break-inside: avoid;">
-                    <div style="text-align: center; width: 220px; font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-                        <p style="margin: 0 0 5px 0; line-height: 1.5;">Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p style="margin: 0; line-height: 1.5;">Guru PAI / BTQ</p>
-                        <div style="height: 65px;"></div>
-                        <p class="text-bold text-upper" style="margin: 0; text-decoration: underline;"><span class="data-guru">Nama Guru</span></p>
-                        <p style="margin: 5px 0 0 0;">NIP. <span class="data-nip2">...</span></p>
-                    </div>
-                </div>
-                
-                <div class="page-number"></div>
-            `,
-
-            absensi_guru: `
-                ${getKop()}
-                <div class="text-center text-bold text-upper" style="margin-bottom:20px;">
-                    <h3>DAFTAR HADIR GURU PJP PAI</h3>
-                    <h3>KEGIATAN PEMBINAAN BACA TULIS AL QURAN</h3>
-                    <h3 class="data-tgl">BULAN ...</h3>
-                </div>
-
-                <table class="table-grid">
-                    <thead>
-                        <tr>
-                            <th width="40px" rowspan="2">No</th>
-                            <th width="200px" rowspan="2">Nama Guru / NIP</th>
-                            <th colspan="31">Tanggal</th>
-                        </tr>
-                        <tr>
-                            ${get31DaysHeader()}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="text-center">1</td>
-                            <td style="text-align:left; padding-left:5px;">
-                                <span class="text-bold text-upper data-guru">Nama Guru</span><br>
-                                NIP. <span class="data-nip2">-</span>
-                            </td>
-                            ${get31DaysCells()}
-                        </tr>
-                         <tr>
-                            <td class="text-center">2</td>
-                             <td style="text-align:left; padding-left:5px;">
-                                <span class="text-bold text-upper data-kepsek">Nama Kepala</span><br>
-                                NIP. <span class="data-nip1">-</span>
-                            </td>
-                            ${get31DaysCells()}
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="flex:1"></div>
-                ${getTTD()}
-                <div class="page-number"></div>
-            `,
-
-            absensi_siswa: `
-                <div class="text-center text-bold text-upper" style="margin-bottom:15px;">
-                    <h3>DAFTAR HADIR SISWA</h3>
-                    <h3>KEGIATAN PEMBINAAN BACA TULIS AL QURAN</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
-                </div>
-
-                <table class="table-grid">
-                    <thead>
-                        <tr>
-                            <th width="30px" rowspan="2">No</th>
-                            <th width="150px" rowspan="2">Nama Siswa</th>
-                            <th colspan="31">Tanggal</th>
-                        </tr>
-                        <tr>
-                            ${get31DaysHeader()}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Array(25).fill(0).map((_, i) => `
-                        <tr>
-                            <td class="text-center">${i+1}</td>
-                            <td contenteditable="true" style="text-align:left; padding-left:4px; white-space:nowrap; overflow:hidden;">Nama Siswa ${i+1}</td>
-                            ${get31DaysCells()}
-                        </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <div style="flex:1"></div>
-                 <div style="margin-top:20px; text-align:right;">
-                    <div style="display:inline-block; width:200px; text-align:center;">
-                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p>Guru BTQ</p>
-                        <br><br><br>
-                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
-                    </div>
-                </div>
-                <div class="page-number"></div>
-            `,
-
-            program_semester: `
-                ${getKop()}
-                <div class="text-center text-bold text-upper" style="margin-bottom:15px; border-bottom:1px solid #000; padding-bottom:10px;">
-                    <h3>PROGRAM KEGIATAN SEMESTER</h3>
-                    <h3>TENAGA PENDIDIK PELAKSANA PENAMBAHAN JAM PELAJARAN (PJP)</h3>
-                    <h3>PENDIDIKAN AGAMA ISLAM (PAI)</h3>
-                    <h3>SEMESTER GANJIL TAHUN PELAJARAN 2025/2026</h3>
-                </div>
-
-                <div style="margin-bottom:15px;">
-                    <table class="list-data">
-                        <tr><td>Nama</td><td>:</td><td class="data-guru text-bold">...</td></tr>
-                        <tr><td>Sekolah</td><td>:</td><td class="data-sekolah">...</td></tr>
-                    </table>
-                </div>
-
-                <div class="text-bold" style="margin-bottom:5px;">I. PELAKSANAAN PEMBELAJARAN</div>
-                <div style="margin-left:20px; margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:5px;"><input type="checkbox" checked> Bimbingan Klasikal</label>
-                    <label style="display:block;"><input type="checkbox"> Bimbingan Individual</label>
-                </div>
-
-                <div class="text-bold" style="margin-bottom:5px;">II. TEMPAT PELAKSANAAN</div>
-                <div style="margin-left:20px; margin-bottom:10px;">
-                    <label style="display:inline-block; margin-right:20px;"><input type="checkbox" checked> Sekolah</label>
-                    <label style="display:inline-block; margin-right:20px;"><input type="checkbox"> Masjid / Madrasah</label>
-                    <label style="display:inline-block;"><input type="checkbox"> Lainnya: <span contenteditable="true" style="border-bottom:1px dotted #000; min-width:100px; display:inline-block;">...</span></label>
-                </div>
-                <div style="margin-left:20px; margin-bottom:15px;">
-                    <span style="font-size:10pt;">Alasan Pemilihan Tempat:</span>
-                    <textarea class="print-safe" rows="2">Tempat kondusif dan sarana memadai.</textarea>
-                </div>
-
-                <div class="text-bold" style="margin-bottom:5px;">III. WAKTU PELAKSANAAN</div>
-                <div style="margin-left:20px; margin-bottom:15px;">
-                    <p style="margin:0;">• Durasi: 1 jam (60 menit) per hari.</p>
-                    <p style="margin:0;">• Hari: Senin s.d Jumat</p>
-                    <p style="margin:5px 0;">• Pukul <span contenteditable="true" style="font-weight:bold;">13.00</span> s.d <span contenteditable="true" style="font-weight:bold;">14.00</span> WIB</p>
-                    <p style="margin:0;">• Kelas: <span contenteditable="true">V (Lima)</span></p>
-                    <div style="margin-top:5px;">
-                         <span style="font-size:10pt;">Alasan / Saran Waktu:</span>
-                         <textarea class="print-safe" rows="2">Dilaksanakan setelah jam pelajaran reguler.</textarea>
-                    </div>
-                </div>
-
-                <div class="text-bold" style="margin-bottom:5px;">IV. DAFTAR MATERI DAN PELAKSANAANNYA</div>
-                <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" width="40%">Materi</th>
-                            <th colspan="6">Bulan Pelaksanaan (2025)</th>
-                        </tr>
-                        <tr>
-                            <th width="10%">Jul</th><th width="10%">Agt</th><th width="10%">Sep</th>
-                            <th width="10%">Okt</th><th width="10%">Nov</th><th width="10%">Des</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td contenteditable="true">Membaca Al-Qur'an / Iqra</td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true">Menulis Huruf Hijaiyah</td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                        </tr>
-                         <tr>
-                            <td contenteditable="true">Hafalan Surat Pendek</td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                            <td class="text-center"><input type="checkbox"></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="text-bold" style="margin-top:15px; margin-bottom:5px;">V. CATATAN KEGIATAN</div>
-                <div contenteditable="true" style="border:1px solid #ccc; padding:10px; min-height:80px; font-size:10pt;">
-                    • Metode Pembelajaran: Ceramah, Demonstrasi, Drill<br>
-                    • Media: Buku Iqra, Juz Amma, Papan Tulis<br>
-                    • Evaluasi: Tes Lisan Harian
-                </div>
-
-                <div style="flex:1"></div>
-                ${getTTD()}
-                <div class="page-number"></div>
-            `,
-
-            hadir_ujian: `
-                <div class="text-center text-bold text-upper" style="margin-bottom:20px; padding-top:20px;">
-                    <h3>DAFTAR HADIR UJIAN BTQ SISWA KELAS V</h3>
-                    <h3 class="data-sekolah">UPTD SD NEGERI ...</h3>
-                    <h3>TAHUN PELAJARAN 2025/2026</h3>
-                </div>
-
-                <table class="dinas">
-                    <thead>
-                        <tr>
-                            <th width="5%">No</th>
-                            <th width="15%">NISN</th>
-                            <th width="35%">Nama Siswa</th>
-                            <th width="45%">Tanda Tangan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                         ${Array(20).fill(0).map((_, i) => `
-                        <tr>
-                            <td class="text-center" style="height:35px;">${i+1}</td>
-                            <td contenteditable="true"></td>
-                            <td contenteditable="true">Nama Siswa ${i+1}</td>
-                            <td style="vertical-align:top; font-size:9pt; color:#ccc;">${i+1}....................</td>
-                        </tr>`).join('')}
-                    </tbody>
-                </table>
-
-                <div style="flex:1"></div>
-                 <div style="margin-top:20px; text-align:right;">
-                    <div style="display:inline-block; width:200px; text-align:center;">
-                        <p>Banjar, <span contenteditable="true" class="data-tgl">...</span></p>
-                        <p>Penguji</p>
-                        <br><br><br>
-                        <p class="text-bold text-upper"><u class="data-guru">Nama Guru</u></p>
-                    </div>
-                </div>
-                <div class="page-number"></div>
             `
         };
 
         // Init Default Page
         window.onload = function() {
             if (!loadFromStorage()) {
-                addPage('cover');
-                addPage('laporan');
+                addPage('custom');
             } else {
                 renderPages();
             }
@@ -2744,8 +1961,7 @@
                 const content = sheet.textContent || sheet.innerText;
                 const type = sheet.dataset.pageType === 'embed' ? ' [EMBED]' : '';
                 
-                if(content.includes('LAPORAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
                 
                 option.textContent = title + type;
                 dropdown.appendChild(option);
@@ -3473,14 +2689,7 @@
                 let title = "Halaman " + (i+1);
                 const content = sheet.textContent || sheet.innerText;
                 
-                if(content.includes('LAPORAN KEGIATAN')) title += " (Laporan)";
-                else if(content.includes('DOKUMENTASI')) title += " (Foto)";
-                else if(content.includes('JADWAL')) title += " (Jadwal)";
-                else if(content.includes('REKAP NILAI')) title += " (Nilai)";
-                else if(content.includes('REKAP SETORAN HAFALAN')) title += " (Hafalan)";
-                else if(content.includes('ABSENSI')) title += " (Absen)";
-                else if(content.includes('PROGRAM KEGIATAN')) title += " (Program)";
-                else if(content.includes('CUSTOM PAGE')) title += " (Custom)";
+                if(content.includes('CUSTOM PAGE')) title += " (Custom)";
 
                 // Tampilkan label orientasi saat ini di pilihan
                 const isLandscape = sheet.classList.contains('landscape');
