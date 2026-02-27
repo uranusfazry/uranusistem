@@ -54,7 +54,10 @@
         /* EXPORTING MODE */
         body.exporting .btn-remove-page, 
         body.exporting .no-print-in-pdf,
-        body.exporting .edit-badge {
+        body.exporting .edit-badge,
+        body.exporting .zoom-controls,
+        body.exporting .duplicate-controls,
+        body.exporting .zoom-indicator {
             display: none !important;
         }
 
@@ -404,7 +407,7 @@
             text-align: center;
         }
 
-        .page-number { position: absolute; bottom: 10mm; left: 0; right: 0; text-align: center; font-size: 9pt; color: #444; }
+        .page-number { position: absolute; bottom: 10mm; left: 0; right: 0; text-align: center; font-size: 9pt; color: #444; z-index: 10;}
 
         /* KELAS KHUSUS LANDSCAPE */
         .sheet.landscape {
@@ -645,6 +648,7 @@
             padding: 2px 5px;
             opacity: 0.5;
             pointer-events: none;
+            z-index: 20;
         }
     </style>
 
@@ -686,10 +690,12 @@
         .ux-toast.visible { transform: translateX(0); }
         .ux-toast.success { border-color: #10b981; }
         .ux-toast.error { border-color: #ef4444; }
+        .ux-toast.warning { border-color: #eab308; }
         .ux-toast.info { border-color: #3b82f6; }
         .ux-toast i { font-size: 1.4rem; }
         .ux-toast.success i { color: #10b981; }
         .ux-toast.error i { color: #ef4444; }
+        .ux-toast.warning i { color: #eab308; }
         .ux-toast.info i { color: #3b82f6; }
 
         /* UX Loading Overlay */
@@ -880,6 +886,227 @@
             padding: 20mm 25mm !important;
         }
     </style>
+
+    <!-- =========================================
+         NEW: LAYOUT DRAG & ZOOM STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="layout-drag-styles">
+        .sheet {
+            /* Hapus flex agar tinggi alami (F4/Overflow) tidak rusak */
+            display: block !important;
+        }
+        .layout-stage {
+            position: relative;
+            width: 100%;
+            min-height: 100%; 
+            overflow: hidden;
+            display: block;
+        }
+        .layout-movable {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100%;
+            transform-origin: top left !important; /* PENTING UNTUK ZOOM PRESISI */
+            transition: box-shadow 0.2s ease, outline 0.2s ease;
+        }
+        
+        /* DRAG MODE ACTIVE */
+        body.layout-drag-mode .layout-movable {
+            cursor: move !important;
+            user-select: none !important;
+            outline: 2px dashed #3b82f6 !important;
+            background: rgba(59, 130, 246, 0.05) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+            z-index: 50;
+        }
+        
+        body.layout-drag-mode .sheet.editing {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        body.layout-drag-mode [contenteditable="true"] {
+            pointer-events: none !important;
+        }
+
+        /* --- ADDITIVE ZOOM UI STYLES --- */
+        .zoom-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 100;
+            opacity: 0.1; /* Transparan default agar tidak ganggu dokumen */
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            border: 1px solid #cbd5e1;
+        }
+        .sheet:hover .zoom-controls {
+            opacity: 1; /* Muncul penuh saat sheet di-hover */
+        }
+        body.layout-drag-mode .zoom-controls {
+            display: none !important; /* Sembunyikan saat mode drag full */
+        }
+        .zoom-btn {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+        }
+        .zoom-btn:hover { background: #e2e8f0; }
+
+        /* PERBAIKAN ZOOM: Button UI & Value Status */
+        .zoom-value {
+            min-width: 48px;
+            font-variant-numeric: tabular-nums;
+            transition: all 0.2s ease;
+        }
+        .zoom-btn:disabled {
+            opacity: 0.4 !important;
+            cursor: not-allowed !important;
+            background: #e2e8f0 !important;
+            color: #94a3b8 !important;
+        }
+
+        .zoom-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 200;
+            backdrop-filter: blur(4px);
+        }
+        .zoom-indicator.show { opacity: 1; }
+
+        /* --- ADDITIVE: DUPLICATE UI STYLES --- */
+        .duplicate-controls {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            opacity: 0.1;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .sheet:hover .duplicate-controls {
+            opacity: 1;
+        }
+        body.layout-drag-mode .duplicate-controls,
+        body.exporting .duplicate-controls {
+            display: none !important;
+        }
+        .duplicate-btn-sheet {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        .duplicate-btn-sheet:hover {
+            background: #d1fae5;
+            border-color: #34d399;
+            transform: translateY(-1px);
+        }
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        /* --- ADDITIVE: AUTO FLOW & GUIDES STYLES --- */
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+            width: 100%;
+            height: 1px;
+            border-top: 2px dashed #f43f5e;
+            margin: 20px 0;
+            position: relative;
+            clear: both;
+        }
+        .page-break::after {
+            content: '--- PAGE BREAK ---';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 10px;
+            color: #f43f5e;
+            font-size: 10px;
+            font-family: monospace;
+        }
+        
+        .no-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        @media print {
+            .page-break::after { display: none !important; }
+            .page-break { border-top: none !important; margin: 0 !important; }
+        }
+
+        body.show-margin-guides .sheet::after {
+            content: '';
+            position: absolute;
+            top: var(--margin-doc);
+            bottom: var(--margin-doc);
+            left: var(--margin-doc);
+            right: var(--margin-doc);
+            border: 1px dashed rgba(59, 130, 246, 0.4);
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        /* Landscape Guide Override */
+        body.show-margin-guides .sheet.landscape::after {
+            top: 20mm; bottom: 20mm; left: 25mm; right: 25mm;
+        }
+    </style>
 </head>
 <body>
 
@@ -918,19 +1145,41 @@
                 <i class="ph ph-code-block"></i> 🧩 Edit HTML Halaman
             </button>
 
+            <!-- NEW: BUTTON DUPLICATE MULTI (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#ccfbf1; color:#065f46; border-color:#99f6e4;" onclick="openDuplicateMultiModal()">
+                <i class="ph ph-copy"></i> 📄 Duplicate Multi Halaman
+            </button>
+
             <!-- NEW: BUTTON ORIENTASI (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#fef08a; color:#854d0e; border-color:#fde047;" onclick="openOrientationModal()">
                 <i class="ph ph-arrows-left-right"></i> 🔄 Ubah Orientasi
+            </button>
+
+            <!-- NEW: BUTTON GESER LAYOUT (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#dcfce7; color:#166534; border-color:#bbf7d0;" onclick="toggleLayoutDragMode(this)">
+                <i class="ph ph-arrows-out-cardinal"></i> 🧭 Mode Geser Layout
+            </button>
+
+            <div class="section-divider">Smart Layout Engine</div>
+            
+            <!-- NEW: AUTO FLOW TRIGGER -->
+            <button class="btn btn-edit" style="background:#e0e7ff; color:#3730a3; border-color:#a5b4fc;" onclick="triggerAutoFlowEngine()">
+                <i class="ph ph-magic-wand"></i> Rapikan Halaman (Auto Flow)
+            </button>
+
+            <!-- NEW: MARGIN GUIDES TOGGLE -->
+            <button class="btn btn-edit" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1;" onclick="toggleMarginGuides(this)">
+                <i class="ph ph-frame-corners"></i> Tampilkan Garis Margin
             </button>
 
             <div class="section-divider">Data Management</div>
 
             <!-- FITUR BARU: EXPORT & IMPORT ZIP -->
             <button class="btn btn-add" style="background:#4f46e5; border-color:#4338ca;" onclick="exportToZip()">
-                <i class="ph ph-package"></i> Export ZIP (Dengan Gambar)
+                <i class="ph ph-package"></i> Export ZIP (Backup Data)
             </button>
             <button class="btn btn-add" style="background:#0284c7; border-color:#3730a3;" onclick="importFromZipTrigger()">
-                <i class="ph ph-file-zip"></i> Import ZIP
+                <i class="ph ph-file-zip"></i> Import ZIP (Restore)
             </button>
             <!-- Hidden input file untuk sistem Load ZIP -->
             <input type="file" id="zipLoader" accept=".zip" style="display:none;" onchange="processZipImport(event)">
@@ -947,7 +1196,7 @@
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v9.7 HQ Print Ready • Word Export Ready • Orientation Control
+                v10.0 Auto Flow | Multi-Duplicate | F4 Engine
             </p>
         </aside>
 
@@ -1020,6 +1269,11 @@
                 <textarea id="htmlCodeInput" class="code-textarea" spellcheck="false"></textarea>
             </div>
 
+            <div class="alert-box" style="background:#fffbeb; color:#9f1239; border:1px solid #fecdd3; padding:10px; border-radius:6px; font-size:0.8rem; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                <i class="ph ph-warning-circle" style="font-size:1.2rem;"></i>
+                Perhatian: Jangan menghapus tag dengan class 'layout-stage' atau 'layout-movable' agar fitur geser/zoom berfungsi optimal. (Gunakan &lt;div class="page-break"&gt;&lt;/div&gt; untuk break manual).
+            </div>
+
             <div class="modal-actions">
                 <button class="btn-preview-html" onclick="handlePreviewHtml()">👁 Preview</button>
                 <button class="btn-save-html" onclick="handleSaveHtmlChange()">💾 Simpan Perubahan</button>
@@ -1043,6 +1297,26 @@
            <div class="modal-actions">
                <button onclick="confirmOrientationChange()" style="background:#eab308; color:white;">💾 Simpan</button>
                <button onclick="closeOrientationModal()">Batal</button>
+           </div>
+       </div>
+    </div>
+
+    <!-- NEW MODAL: DUPLICATE MULTIPLE SYSTEM -->
+    <div id="duplicateMultiModal" class="modal">
+       <div class="modal-box" style="width: 500px; max-width: 90vw;">
+           <h3><i class="ph ph-copy" style="color:#059669"></i> Duplicate Multiple Halaman</h3>
+           <p style="font-size:0.9rem; color:#64748b; margin-bottom:5px;">Pilih halaman yang ingin diduplikasi sekaligus:</p>
+           
+           <div style="margin-bottom: 10px;">
+               <button type="button" class="btn-reset" style="margin-top:0; padding:4px 8px; font-size:0.75rem;" onclick="selectAllDuplicate(true)">Pilih Semua</button>
+               <button type="button" class="btn-reset" style="margin-top:0; padding:4px 8px; font-size:0.75rem;" onclick="selectAllDuplicate(false)">Batal Pilih</button>
+           </div>
+
+           <div id="duplicateCheckboxContainer" class="checkbox-grid"></div>
+
+           <div class="modal-actions">
+               <button onclick="confirmDuplicateMulti()" style="background:#10b981; color:white;">📄 Proses Duplicate</button>
+               <button onclick="closeDuplicateMultiModal()">Batal</button>
            </div>
        </div>
     </div>
@@ -1102,6 +1376,8 @@
         // ================= GLOBAL STATE MANAGEMENT =================
         let pagesDB = [];
         const STORAGE_KEY = "school_pages_db";
+        let isImportingZip = false; // FLAG PENTING: Mencegah auto-paginate memecah halaman saat import
+        let isStrictRestore = false; // FLAG PENTING: Mencegah modifikasi struktur DOM saat import
 
         // ================= STORAGE HELPER FUNCTIONS (HARDENED) =================
         function saveToStorage() {
@@ -1115,6 +1391,17 @@
                 const isEmbed = sheet.dataset.pageType === 'embed';
                 const pageId = parseInt(sheet.dataset.id) || (Date.now() + index);
 
+                // Ekstrak Data-X, Data-Y, dan Data-Scale untuk disimpan (Bahkan dari Embed)
+                const movable = sheet.querySelector('.layout-movable');
+                const lx = movable ? (parseFloat(movable.getAttribute('data-x')) || 0) : 0;
+                const ly = movable ? (parseFloat(movable.getAttribute('data-y')) || 0) : 0;
+                const ls = movable ? (parseFloat(movable.getAttribute('data-scale')) || 1) : 1;
+
+                // Ekstrak nilai Orientasi secara persisten
+                const isLandscape = sheet.classList.contains('landscape');
+                const isPortrait = sheet.classList.contains('portrait');
+                let orientationStr = isLandscape ? 'landscape' : (isPortrait ? 'portrait' : 'portrait');
+
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
                     // Ambil dari hidden textarea yang kita tanam saat renderPages()
@@ -1122,14 +1409,22 @@
                     return {
                         id: pageId,
                         type: 'embed',
-                        rawHTML: rawStorage ? rawStorage.value : '' // Source of Truth
+                        rawHTML: rawStorage ? rawStorage.value : '', // Source of Truth
+                        layoutX: lx,
+                        layoutY: ly,
+                        layoutScale: ls,
+                        orientation: orientationStr
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
                     return {
                         id: pageId,
                         type: 'standard', // atau undefined (legacy support)
-                        html: sheet.innerHTML
+                        html: sheet.innerHTML,
+                        layoutX: lx,
+                        layoutY: ly,
+                        layoutScale: ls,
+                        orientation: orientationStr
                     };
                 }
             });
@@ -1169,7 +1464,7 @@
             const container = document.getElementById('document-area');
             container.innerHTML = ''; // Reset container
 
-            pagesDB.forEach(page => {
+            pagesDB.forEach((page, pageIndex) => {
                 const sheet = document.createElement('div');
                 sheet.className = 'sheet';
                 sheet.dataset.id = page.id || Date.now(); // Maintain Identity
@@ -1202,20 +1497,132 @@
                 } else {
                     // --- STANDARD RENDERING ---
                     // Inject langsung innerHTML (Contenteditable support)
+                    // (Ini sudah mengembalikan elemen stage dan movable yang tersimpan dari JSON)
                     sheet.innerHTML = page.html;
                 }
 
-                // Cek penanda landscape dari dalam template
+                // Cek penanda landscape dari dalam template (fallback lama)
                 if (sheet.querySelector('.landscape-marker')) {
                     sheet.classList.add('landscape');
                 }
 
+                // NEW ADDITION: Restore Orientasi secara eksplisit dari atribut JSON
+                if (page.orientation === 'landscape') {
+                    sheet.classList.add('landscape');
+                    sheet.classList.remove('portrait');
+                } else if (page.orientation === 'portrait') {
+                    sheet.classList.add('portrait');
+                    sheet.classList.remove('landscape');
+                }
+
+                // --- NEW ADDITION: ENFORCE LAYOUT STRUCTURE SECARA ADDITIVE ---
+                if (!isStrictRestore) { // ONLY RESTRUCTURE IF NOT IMPORTING STRICTLY
+                    let stage = sheet.querySelector('.layout-stage');
+                    if (!stage) {
+                        stage = document.createElement('div');
+                        stage.className = 'layout-stage';
+                        const movable = document.createElement('div');
+                        movable.className = 'layout-movable';
+                        
+                        // Kita memindahkan anak DOM lama yang bukan elemen sistem operasi aplikasi (page number, marker)
+                        const systemClasses = ['page-number', 'edit-badge', 'raw-storage', 'landscape-marker', 'zoom-controls', 'zoom-indicator', 'duplicate-controls'];
+                        const childrenToMove = [];
+                        Array.from(sheet.children).forEach(child => {
+                            if (child.tagName !== 'TEXTAREA' || !child.classList.contains('raw-storage')) {
+                               if (!systemClasses.some(cls => child.classList.contains(cls))) {
+                                   childrenToMove.push(child);
+                               }
+                            }
+                        });
+                        childrenToMove.forEach(c => movable.appendChild(c));
+                        stage.appendChild(movable);
+                        
+                        const marker = sheet.querySelector('.landscape-marker');
+                        if (marker) marker.after(stage);
+                        else sheet.insertBefore(stage, sheet.firstChild);
+                    }
+                }
+
+                // Restore posisi Layout Drag & Drop + Zoom (utamakan memori page, fallback attribut DOM lama)
+                const movable = sheet.querySelector('.layout-movable');
+                if (movable) {
+                    const lx = page.layoutX !== undefined ? page.layoutX : (parseFloat(movable.getAttribute('data-x')) || 0);
+                    const ly = page.layoutY !== undefined ? page.layoutY : (parseFloat(movable.getAttribute('data-y')) || 0);
+                    const ls = page.layoutScale !== undefined ? page.layoutScale : (parseFloat(movable.getAttribute('data-scale')) || 1);
+                    
+                    movable.setAttribute('data-x', lx);
+                    movable.setAttribute('data-y', ly);
+                    movable.setAttribute('data-scale', ls);
+                    movable.style.transform = `translate(${lx}px, ${ly}px) scale(${ls})`;
+                }
+
                 // B. SYSTEM COMPONENTS (Jika belum ada)
-                // Cek apakah page number sudah ada (untuk standard page yg tersimpan full HTML)
+                // Cek apakah page number sudah ada
                 if (!sheet.querySelector('.page-number')) {
                     const pageNum = document.createElement('div');
                     pageNum.className = 'page-number';
                     sheet.appendChild(pageNum);
+                }
+
+                // --- PERBAIKAN: Bersihkan zoom controls lama jika tidak memiliki class zoom-value ---
+                const existingZoomCtrl = sheet.querySelector('.zoom-controls');
+                if (existingZoomCtrl && !existingZoomCtrl.querySelector('.zoom-value')) {
+                    existingZoomCtrl.remove();
+                }
+
+                // --- ADDITIVE: Injeksi UI Zoom Controls jika belum ada ---
+                if (!sheet.querySelector('.zoom-controls')) {
+                    const zoomCtrl = document.createElement('div');
+                    zoomCtrl.className = 'zoom-controls no-print-in-pdf';
+                    zoomCtrl.innerHTML = `
+                        <button class="zoom-btn zoom-out-btn" onclick="handleZoomClick(this, 'out')" title="Zoom Out">➖</button>
+                        <button class="zoom-btn zoom-value" onclick="handleZoomClick(this, 'reset')" title="Reset 100%">100%</button>
+                        <button class="zoom-btn zoom-in-btn" onclick="handleZoomClick(this, 'in')" title="Zoom In">➕</button>
+                    `;
+                    sheet.appendChild(zoomCtrl);
+                }
+
+                // --- SINKRONISASI UI ZOOM CONTROLS ---
+                const activeMovable = sheet.querySelector('.layout-movable');
+                if (activeMovable) {
+                    const ls = parseFloat(activeMovable.getAttribute('data-scale')) || 1;
+                    const percent = Math.round(ls * 100);
+                    const zoomValueBtn = sheet.querySelector('.zoom-value');
+                    const outBtn = sheet.querySelector('.zoom-out-btn');
+                    const inBtn = sheet.querySelector('.zoom-in-btn');
+
+                    if (zoomValueBtn) {
+                        zoomValueBtn.innerText = percent + '%';
+                        zoomValueBtn.title = `Reset (Aktual: ${percent}%)`;
+                    }
+                    if (outBtn) outBtn.disabled = ls <= 0.5;
+                    if (inBtn) inBtn.disabled = ls >= 2.0;
+                }
+
+                // --- ADDITIVE: Injeksi Indikator Zoom ---
+                if (!sheet.querySelector('.zoom-indicator')) {
+                    const zoomInd = document.createElement('div');
+                    zoomInd.className = 'zoom-indicator';
+                    sheet.appendChild(zoomInd);
+                }
+
+                // --- ADDITIVE: Injeksi Duplicate Controls ---
+                if (!sheet.querySelector('.duplicate-controls')) {
+                    const dupCtrl = document.createElement('div');
+                    dupCtrl.className = 'duplicate-controls no-print-in-pdf';
+                    
+                    dupCtrl.innerHTML = `
+                        <button class="duplicate-btn-sheet" onclick="handleDuplicateSingle(${pageIndex})" title="Duplicate Halaman Ini (Ctrl+D)">
+                            <i class="ph ph-copy"></i> Duplicate
+                        </button>
+                    `;
+                    sheet.appendChild(dupCtrl);
+                } else {
+                    // Pastikan index update jika ada halaman yang dihapus/ditambah
+                    const dupCtrlBtn = sheet.querySelector('.duplicate-btn-sheet');
+                    if (dupCtrlBtn) {
+                        dupCtrlBtn.setAttribute('onclick', `handleDuplicateSingle(${pageIndex})`);
+                    }
                 }
 
                 container.appendChild(sheet);
@@ -1226,29 +1633,25 @@
 
         // ================= AUTO SAVE ENGINE (DEBOUNCE) =================
         let saveTimeout;
-        let paginationTimeout; // New debounce specifically for pagination
+        let flowDebounce; // New debounce specifically for Auto Flow
 
         document.addEventListener("input", function(e) {
             // Hanya trigger jika perubahan terjadi di dalam .sheet atau input/textarea
             if(e.target.closest('.sheet') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 
-                // --- STEP 7: AUTO TRIGGER PAGINATION ---
-                // Only run if input happened inside a Custom Page content wrapper
+                // DEPRECATED: Old naive autoPaginateCustomPages() is replaced by Advanced Auto Flow Engine
+                // We use debouncedAutoFlow() instead to prevent layout thrashing on every keystroke
                 if (e.target.closest('.page-content')) {
-                    clearTimeout(paginationTimeout);
-                    paginationTimeout = setTimeout(() => {
-                        autoPaginateCustomPages();
-                    }, 1000); // 1s debounce to avoid lag while typing fast
+                    clearTimeout(flowDebounce);
+                    flowDebounce = setTimeout(() => {
+                        debouncedAutoFlow();
+                    }, 1200); // 1.2s debounce to avoid lag while typing fast
                 }
 
                 // Standard Auto Save
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
                     saveToStorage();
-                    // Additional safety: Run pagination once more after save to catch any stragglers
-                    if (e.target.closest('.page-content')) {
-                         autoPaginateCustomPages();
-                    }
                 }, 500); 
             }
         });
@@ -1292,7 +1695,7 @@
 
                 // Step B: Create Page Object
                 const newPage = {
-                    id: Date.now(),
+                    id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
                     type: 'embed',
                     rawHTML: safeContent // Simpan Source Asli
                 };
@@ -1420,8 +1823,13 @@
                 return;
             }
 
+            // Jalankan Smart Layout Engine sesaat sebelum Print agar sempurna
+            if(!isAutoFlowing) await triggerAutoFlowEngine(true);
+
             // Persiapan DOM sebelum dirender html2canvas
             document.body.classList.add('exporting');
+            // Matikan Margin Guides khusus saat print
+            document.body.classList.remove('show-margin-guides');
             void document.body.offsetHeight; // force reflow
 
             try {
@@ -1507,7 +1915,7 @@
             if (!htmlContent) return;
 
             const newPage = {
-                id: Date.now(),
+                id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
                 type: 'standard',
                 html: htmlContent
             };
@@ -1647,96 +2055,38 @@
         }
 
         document.addEventListener('dblclick', function(e) {
+            // Cek pencegah edit jika sedang berada dalam mode geser layout
+            if (document.body.classList.contains('layout-drag-mode')) return;
+
             const sheet = e.target.closest('.sheet');
             if (sheet && 
                 !e.target.closest('.sheet-controls') && 
+                !e.target.closest('.zoom-controls') &&
+                !e.target.closest('.duplicate-controls') &&
                 e.target.tagName !== 'INPUT' && 
                 e.target.tagName !== 'TEXTAREA') {
                 toggleEditMode(sheet);
             }
         });
 
-        // ================= AUTO PAGINATION FEATURE =================
-        // STEP 2: Create Pagination Function
-        function autoPaginateCustomPages() {
-            const sheets = document.getElementsByClassName('sheet'); // Live collection
-            const MM_TO_PX = 3.78; // Conversion approx 1mm to px (96DPI)
-            const MAX_HEIGHT_PX = 330 * MM_TO_PX; // 330mm ~ 1247px
-            const LIMIT = MAX_HEIGHT_PX - 20; // Safe buffer
-
-            // STEP 3: Detect Overflow
-            for (let i = 0; i < sheets.length; i++) {
-                const sheet = sheets[i];
-                const content = sheet.querySelector('.page-content');
-                if (!content) continue; // Skip non-custom pages
-
-                // Check if current sheet height exceeds F4 Paper Height
-                // Note: sheet.scrollHeight includes overflowing content
-                while (sheet.scrollHeight > (MAX_HEIGHT_PX + 5)) {
-                    
-                    // STEP 4: Move Content Safely
-                    const lastChild = content.lastElementChild;
-                    
-                    // Prevent infinite loops if element is too big or it's the only child
-                    if (!lastChild || content.children.length <= 1) {
-                        break; 
-                    }
-
-                    // Find or create next sheet
-                    let nextSheet = sheet.nextElementSibling;
-                    let nextContent;
-
-                    // STEP 6: Prevent Page Explosion (Check existing next page)
-                    if (nextSheet && nextSheet.querySelector('.page-content')) {
-                          nextContent = nextSheet.querySelector('.page-content');
-                    } else {
-                        // STEP 5: Create New Sheet using existing style
-                        nextSheet = createNewCustomSheet();
-                        sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
-                        nextContent = nextSheet.querySelector('.page-content');
-                    }
-
-                    // Move last element to the TOP of the next page
-                    if (nextContent.firstChild) {
-                        nextContent.insertBefore(lastChild, nextContent.firstChild);
-                    } else {
-                        nextContent.appendChild(lastChild);
-                    }
-                }
-            }
-            // STEP 8: Update Page Numbers
-            updatePageNumbers();
-        }
-
-        function createNewCustomSheet() {
-            const div = document.createElement('div');
-            div.className = 'sheet';
-            div.dataset.id = Date.now() + Math.random(); // Unique ID
-            
-            // Use standard custom template structure
-            div.innerHTML = templates.custom; 
-            
-            // Clean content to start fresh (keep structure, remove placeholder text)
-            const content = div.querySelector('.page-content');
-            if(content) content.innerHTML = ''; 
-            
-            return div;
-        }
-
         // ================= TEMPLATES =================
 
         const templates = {
-            // STEP 1: Add Content Wrapper for Custom Page
+            // Struktur Template Custom baru dengan sistem layouting terintegrasi!
             custom: `
-                <div style="min-height: 100%; display: flex; flex-direction: column;">
-                    <div class="text-center text-bold" style="margin-bottom: 20px; font-size: 14pt;">CUSTOM PAGE</div>
-                    <div class="page-content" contenteditable="true" style="flex: 1; outline: none; border: 1px dashed #e2e8f0; padding: 10px;">
-                        <p>Silakan ketik atau tempel konten Anda di sini...</p>
-                        <p>&nbsp;</p>
-                        <p>&nbsp;</p>
+                <div class="layout-stage">
+                    <div class="layout-movable" data-x="0" data-y="0" data-scale="1" style="transform: translate(0px, 0px) scale(1);">
+                        <div style="min-height: 100%; display: flex; flex-direction: column;">
+                            <div class="text-center text-bold" style="margin-bottom: 20px; font-size: 14pt;">CUSTOM PAGE</div>
+                            <div class="page-content" contenteditable="true" style="flex: 1; outline: none; padding: 10px;">
+                                <p>Silakan ketik atau tempel konten Anda di sini...</p>
+                                <p>&nbsp;</p>
+                                <p>&nbsp;</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="page-number"></div>
                 </div>
+                <div class="page-number"></div>
             `
         };
 
@@ -1764,6 +2114,7 @@
             // Icon Logic
             let iconClass = 'ph-check-circle';
             if(type === 'error') iconClass = 'ph-warning-circle';
+            if(type === 'warning') iconClass = 'ph-warning';
             if(type === 'info') iconClass = 'ph-info';
 
             toast.className = `ux-toast ${type}`;
@@ -2042,8 +2393,61 @@
                     }
                     wrapper.innerHTML = safeCode;
                 } else {
-                    // For standard, direct innerHTML update
-                    sheet.innerHTML = safeCode;
+                    // For standard, direct innerHTML update (REPLACED WITH SAFE INJECTION)
+                    let movable = sheet.querySelector('.layout-movable');
+                    
+                    // VALIDASI: Extract content safely
+                    const tempParser = document.createElement('div');
+                    tempParser.innerHTML = safeCode;
+                    let contentToInject = safeCode;
+                    
+                    const parsedMovable = tempParser.querySelector('.layout-movable');
+                    if (parsedMovable) {
+                        // User retained the structure, copy inner part
+                        contentToInject = parsedMovable.innerHTML;
+                    } else {
+                        // User deleted layout-movable, clean system UI elements if any
+                        tempParser.querySelectorAll('.zoom-controls, .zoom-indicator, .page-number, .edit-badge, .landscape-marker, .duplicate-controls').forEach(el => el.remove());
+                        contentToInject = tempParser.innerHTML;
+                    }
+
+                    if (movable) {
+                        // Simpan nilai lama
+                        const x = movable.getAttribute('data-x') || '0';
+                        const y = movable.getAttribute('data-y') || '0';
+                        const scale = movable.getAttribute('data-scale') || '1';
+                        
+                        // Replace hanya area konten
+                        movable.innerHTML = contentToInject;
+                        
+                        // Restore atribut posisi & zoom
+                        movable.setAttribute('data-x', x);
+                        movable.setAttribute('data-y', y);
+                        movable.setAttribute('data-scale', scale);
+                        movable.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                    } else {
+                        // System auto re-wrap fallback jika hilang
+                        const stage = document.createElement('div');
+                        stage.className = 'layout-stage';
+                        movable = document.createElement('div');
+                        movable.className = 'layout-movable';
+                        movable.setAttribute('data-x', '0');
+                        movable.setAttribute('data-y', '0');
+                        movable.setAttribute('data-scale', '1');
+                        movable.innerHTML = contentToInject;
+                        stage.appendChild(movable);
+                        
+                        // Bersihkan elemen konten lama tapi biarkan UI sistem utuh
+                        Array.from(sheet.children).forEach(child => {
+                            if (!['page-number', 'zoom-controls', 'zoom-indicator', 'landscape-marker', 'edit-badge', 'duplicate-controls'].some(c => child.classList.contains(c))) {
+                                child.remove();
+                            }
+                        });
+                        
+                        const marker = sheet.querySelector('.landscape-marker');
+                        if (marker) marker.after(stage);
+                        else sheet.insertBefore(stage, sheet.firstChild);
+                    }
                 }
 
                 uxToast("Preview diperbarui", "info");
@@ -2099,11 +2503,64 @@
 
                 } else {
                     // Standard Page
-                    sheet.innerHTML = safeCode;
+                    let movable = sheet.querySelector('.layout-movable');
                     
-                    // Update DB (Memory)
+                    // Parsing safeCode to handle user tampering
+                    const tempParser = document.createElement('div');
+                    tempParser.innerHTML = safeCode;
+                    let contentToInject = safeCode;
+                    
+                    const parsedMovable = tempParser.querySelector('.layout-movable');
+                    if (parsedMovable) {
+                        // Ambil isi dalam layout-movable
+                        contentToInject = parsedMovable.innerHTML;
+                    } else {
+                        // Jika layout dihapus manual, buang elemen sistem yang terikut agar tidak double
+                        tempParser.querySelectorAll('.zoom-controls, .zoom-indicator, .page-number, .edit-badge, .landscape-marker, .duplicate-controls').forEach(el => el.remove());
+                        contentToInject = tempParser.innerHTML;
+                    }
+
+                    if (movable) {
+                        // Simpan nilai lama drag & zoom
+                        const x = movable.getAttribute('data-x') || '0';
+                        const y = movable.getAttribute('data-y') || '0';
+                        const scale = movable.getAttribute('data-scale') || '1';
+                        
+                        // Replace HANYA area konten yang movable
+                        movable.innerHTML = contentToInject;
+                        
+                        // Restore atribut
+                        movable.setAttribute('data-x', x);
+                        movable.setAttribute('data-y', y);
+                        movable.setAttribute('data-scale', scale);
+                        movable.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                    } else {
+                        // Auto-rewrap fallback jika user menghapus strukturnya
+                        const stage = document.createElement('div');
+                        stage.className = 'layout-stage';
+                        movable = document.createElement('div');
+                        movable.className = 'layout-movable';
+                        movable.setAttribute('data-x', '0');
+                        movable.setAttribute('data-y', '0');
+                        movable.setAttribute('data-scale', '1');
+                        movable.innerHTML = contentToInject;
+                        stage.appendChild(movable);
+                        
+                        // Bersihkan elemen konten lama tapi biarkan UI sistem utuh
+                        Array.from(sheet.children).forEach(child => {
+                            if (!['page-number', 'zoom-controls', 'zoom-indicator', 'landscape-marker', 'edit-badge', 'duplicate-controls'].some(c => child.classList.contains(c))) {
+                                child.remove();
+                            }
+                        });
+                        
+                        const marker = sheet.querySelector('.landscape-marker');
+                        if (marker) marker.after(stage);
+                        else sheet.insertBefore(stage, sheet.firstChild);
+                    }
+                    
+                    // Update DB (Memory) menggunakan sheet.innerHTML yang sudah ter-update & dipertahankan strukturnya
                     if(pagesDB[currentEditingIndex]) {
-                        pagesDB[currentEditingIndex].html = safeCode;
+                        pagesDB[currentEditingIndex].html = sheet.innerHTML;
                     }
                 }
 
@@ -2111,8 +2568,6 @@
                 saveToStorage();
 
                 // 4. Re-sync Dynamic Data (Variables & Page Numbers)
-                // This ensures if user deleted <span class="data-sekolah">, it won't crash, 
-                // but if they added it back, it gets populated.
                 updatePageNumbers();
 
                 uxToast("HTML Berhasil Disimpan", "success");
@@ -2122,6 +2577,9 @@
                 setTimeout(() => {
                     sheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 300);
+                
+                // Trigger Smart Flow Analysis
+                debouncedAutoFlow();
 
             } catch(e) {
                 uxToast("Gagal menyimpan. Cek error console.", "error");
@@ -2144,8 +2602,6 @@
 
     <!-- =========================================
        12. NEW: WORD (DOCX) EXPORT LOGIC (ADDITIVE)
-       Memastikan hasil 100% identik dengan mengubah struktur DOM sebelum diexport
-       serta mengatur ukuran twip Word F4.
        ========================================= -->
     <script id="word-export-logic">
         async function handleExportWordWrapper(btn) {
@@ -2153,7 +2609,9 @@
             uxBtnLoad(btn, true);
             
             try {
-                // Tunggu render loader
+                // Jalankan Smart Layout Engine jika belum di-run
+                if(!isAutoFlowing) await triggerAutoFlowEngine(true);
+                // Wait small delay to allow UI to render loader
                 await new Promise(r => setTimeout(r, 100));
                 await executeWordExport();
             } catch (e) {
@@ -2231,8 +2689,22 @@
                 const isLandscape = sheet.classList.contains('landscape');
                 const clone = sheet.cloneNode(true); // Clone agar DOM asli tidak rusak
 
-                // --- PEMBERSIHAN ELEMEN UI ---
-                clone.querySelectorAll('.edit-badge, .sheet-controls, .menu-toggle, aside, .page-number, input[type="file"]').forEach(el => el.remove());
+                // --- FIX POSISI DRAG & DROP UNTUK WORD ---
+                // Word mengabaikan CSS transform, jadi kita ubah ke margin (Skala/Zoom tidak disupport Word di sini, jadi dirender posisi original/scaled normal)
+                clone.querySelectorAll('.layout-movable').forEach(movable => {
+                    const x = parseFloat(movable.getAttribute('data-x')) || 0;
+                    const y = parseFloat(movable.getAttribute('data-y')) || 0;
+                    
+                    movable.style.position = 'relative';
+                    if (x !== 0 || y !== 0) {
+                        movable.style.left = `${x}px`;
+                        movable.style.top = `${y}px`;
+                        movable.style.transform = 'none'; // Bersihkan transform agar aman
+                    }
+                });
+
+                // --- PEMBERSIHAN ELEMEN UI (Termasuk Zoom Controls Baru & Duplicate) ---
+                clone.querySelectorAll('.edit-badge, .sheet-controls, .menu-toggle, aside, .page-number, input[type="file"], .zoom-controls, .zoom-indicator, .duplicate-controls').forEach(el => el.remove());
 
                 // --- TRANSFORMASI FORM ELEMENT KE TEKS ---
                 clone.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => {
@@ -2408,7 +2880,7 @@
     </script>
 
     <!-- =========================================
-       13. ZIP EXPORT & IMPORT LOGIC (PRESERVED)
+       13. ZIP EXPORT & IMPORT LOGIC (UPGRADED)
        ========================================= -->
     <script id="zip-logic">
         // Fungsi Export ZIP
@@ -2427,7 +2899,7 @@
                 else el.removeAttribute('checked');
             });
 
-            // 2. Simpan state terbaru ke pagesDB (Gunakan fungsi lama)
+            // 2. Simpan state terbaru ke pagesDB
             saveToStorage();
 
             // 3. Clone DB untuk dimanipulasi agar layar aktif tidak rusak
@@ -2438,7 +2910,7 @@
             const imgFolder = zip.folder("images");
             let imgCounter = 1;
 
-            // 5. Ekstrak gambar base64
+            // 5. Ekstrak gambar base64 ke bentuk file, dan simpan seluruh struktur asli
             exportDB.forEach((page, pageIndex) => {
                 if (page.type === 'standard' && page.html) {
                     const parser = new DOMParser();
@@ -2477,8 +2949,12 @@
                 }
             });
 
-            // 6. Masukkan data.json (tanpa base64) ke root ZIP
-            zip.file("data.json", JSON.stringify(exportDB, null, 2));
+            // 6. Masukkan data.json (beserta penanda versi & checksum) ke root ZIP
+            const exportData = {
+                version: "10.0",
+                pages: exportDB
+            };
+            zip.file("data.json", JSON.stringify(exportData, null, 2));
 
             // 7. Generate dan Download ZIP
             try {
@@ -2516,7 +2992,29 @@
 
                     // Parse data.json
                     const jsonDataStr = await jsonFile.async("string");
-                    let importedDB = JSON.parse(jsonDataStr);
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(jsonDataStr);
+                    } catch (e) {
+                        throw new Error("Format data.json rusak atau bukan JSON yang valid.");
+                    }
+
+                    let importedDB = [];
+                    let version = "Legacy";
+
+                    // CHECKSUM & VERSIONING VALIDATION
+                    if (Array.isArray(parsedData)) {
+                        importedDB = parsedData;
+                    } else if (parsedData && Array.isArray(parsedData.pages)) {
+                        importedDB = parsedData.pages;
+                        version = parsedData.version || "Unknown";
+                    } else {
+                        throw new Error("Struktur data.json tidak valid. Kehilangan array halaman.");
+                    }
+
+                    if (version !== "9.9" && version !== "10.0" && version !== "Legacy") {
+                        uxToast(`Warning: Memuat ZIP dari versi berbeda (${version})`, "warning");
+                    }
 
                     // Proses setiap halaman untuk mengembalikan path gambar menjadi base64/dataURI
                     for (let i = 0; i < importedDB.length; i++) {
@@ -2553,11 +3051,26 @@
                         }
                     }
 
+                    // --- FLAG PENTING ---
+                    // Mencegah auto-pagination memecah halaman saat di-render yang dapat merubah layout & tinggi
+                    isImportingZip = true;
+                    // Mencegah modifikasi struktur DOM, mempertahankan HTML persis seperti hasil zip
+                    isStrictRestore = true;
+
                     // Terapkan ke state utama
                     pagesDB = importedDB;
-                    renderPages();      // Render ulang menggunakan function bawaan
-                    saveToStorage();    // Simpan ke local browser 
+                    renderPages();      // Render ulang menggunakan function bawaan (HTML structure dipertahankan)
                     
+                    // JANGAN PANGGIL saveToStorage() KARENA AKAN MEMBACA ULANG DARI DOM DAN MERUSAK STRUKTUR ASLI
+                    // Sebagai gantinya kita masukkan array asli ke storage persisten:
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB)); 
+                    
+                    isImportingZip = false;
+                    isStrictRestore = false;
+
+                    // Run Auto Flow Analysis Post-Import
+                    triggerAutoFlowEngine(true);
+
                     uxToast("Import ZIP Berhasil!", "success");
                 } catch (err) {
                     console.error("Import error:", err);
@@ -2780,6 +3293,669 @@
             setTimeout(() => {
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 300);
+        }
+    </script>
+
+    <!-- =========================================
+         16. NEW: ZOOM & LAYOUT DRAG ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="layout-drag-logic-engine">
+        let isDraggingLayout = false;
+        let dragTarget = null;
+        let startMouseX = 0;
+        let startMouseY = 0;
+        let startObjX = 0;
+        let startObjY = 0;
+
+        // Fungsi Trigger Button Sidebar
+        function toggleLayoutDragMode(btn) {
+            const body = document.body;
+            if (body.classList.contains('layout-drag-mode')) {
+                body.classList.remove('layout-drag-mode');
+                btn.style.background = '#dcfce7';
+                btn.style.color = '#166534';
+                btn.innerHTML = '<i class="ph ph-arrows-out-cardinal"></i> 🧭 Mode Geser Layout';
+                uxToast("Mode Geser Layout Dinonaktifkan", "info");
+            } else {
+                body.classList.add('layout-drag-mode');
+                btn.style.background = '#166534';
+                btn.style.color = '#ffffff';
+                btn.innerHTML = '<i class="ph ph-check-circle"></i> ✅ Selesai Geser';
+                
+                // Matikan mode edit text di semua sheet jika sedang aktif
+                document.querySelectorAll('.sheet.editing').forEach(sheet => deactivateEditMode(sheet));
+                
+                uxToast("Mode Geser Layout Aktif! Tarik/drag konten halaman untuk memindahkannya.", "success");
+            }
+        }
+
+        // --- CORE EVENT LISTENERS UNTUK DRAG ---
+        document.addEventListener('mousedown', (e) => {
+            if (!document.body.classList.contains('layout-drag-mode')) return;
+            
+            const movable = e.target.closest('.layout-movable');
+            if (movable) {
+                isDraggingLayout = true;
+                dragTarget = movable;
+                startMouseX = e.clientX;
+                startMouseY = e.clientY;
+                startObjX = parseFloat(movable.getAttribute('data-x')) || 0;
+                startObjY = parseFloat(movable.getAttribute('data-y')) || 0;
+                
+                // Nonaktifkan CSS transition agar responsif ditarik
+                movable.style.transition = 'none';
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingLayout || !dragTarget) return;
+
+            // Kalkulasi zoom scale luar (app zoom) vs scale dalam (layout scale)
+            const sheet = dragTarget.closest('.sheet');
+            let scaleApp = 1;
+            if (sheet) {
+                const style = window.getComputedStyle(sheet);
+                const matrix = new DOMMatrixReadOnly(style.transform);
+                if (matrix.a !== 1) {
+                    scaleApp = matrix.a; // Asumsi 'a' pada matriks adalah scaleX/scaleY wrapper window
+                }
+            }
+
+            const dx = (e.clientX - startMouseX) / scaleApp;
+            const dy = (e.clientY - startMouseY) / scaleApp;
+            
+            let newX = startObjX + dx;
+            let newY = startObjY + dy;
+
+            // Baca Layout Scale yang tersimpan agar tidak di-reset saat drag
+            const ls = parseFloat(dragTarget.getAttribute('data-scale')) || 1;
+
+            // --- BATASAN KERTAS (LIMITER) ---
+            const stage = dragTarget.parentElement;
+            if (stage) {
+                const stageRect = stage.getBoundingClientRect();
+                
+                // Batas toleransi ditarik keluar adalah 90% (disesuaikan dengan skala app, tidak masalah dengan scale internal layout)
+                const limitX = (stageRect.width / scaleApp) * 0.9;
+                const limitY = (stageRect.height / scaleApp) * 0.9;
+
+                newX = Math.max(-limitX, Math.min(newX, limitX));
+                newY = Math.max(-limitY, Math.min(newY, limitY));
+            }
+
+            // Terapkan translasi dan scale sekaligus
+            dragTarget.style.transform = `translate(${newX}px, ${newY}px) scale(${ls})`;
+            
+            // Simpan posisi terkini ke dalam atribut (digunakan saat re-render / auto save)
+            dragTarget.setAttribute('data-x', newX);
+            dragTarget.setAttribute('data-y', newY);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDraggingLayout && dragTarget) {
+                // Kembalikan efek CSS transition
+                dragTarget.style.transition = 'box-shadow 0.2s ease, outline 0.2s ease';
+                
+                // Trigger Auto Save Sistem untuk menyimpan posisi x & y baru
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveToStorage();
+                }, 500);
+
+                isDraggingLayout = false;
+                dragTarget = null;
+            }
+        });
+
+        // --- ADDITIVE: ZOOM ENGINE ---
+        function updateZoom(movable, newScale) {
+            // Batasan Scale antara 50% hingga 200%
+            newScale = Math.max(0.5, Math.min(newScale, 2.0));
+            
+            const x = parseFloat(movable.getAttribute('data-x')) || 0;
+            const y = parseFloat(movable.getAttribute('data-y')) || 0;
+            
+            movable.setAttribute('data-scale', newScale);
+            movable.style.transform = `translate(${x}px, ${y}px) scale(${newScale})`;
+            
+            const percent = Math.round(newScale * 100);
+
+            // Tampilkan Indikator Zoom (Persentase)
+            const sheet = movable.closest('.sheet');
+            if (sheet) {
+                const indicator = sheet.querySelector('.zoom-indicator');
+                if (indicator) {
+                    indicator.innerText = percent + '%';
+                    indicator.classList.add('show');
+                    
+                    clearTimeout(indicator.hideTimeout);
+                    indicator.hideTimeout = setTimeout(() => {
+                        indicator.classList.remove('show');
+                    }, 800);
+                }
+
+                // SINKRONISASI TOMBOL ZOOM (PERBAIKAN UTAMA)
+                const zoomValueBtn = sheet.querySelector('.zoom-value');
+                const outBtn = sheet.querySelector('.zoom-out-btn');
+                const inBtn = sheet.querySelector('.zoom-in-btn');
+
+                if (zoomValueBtn) {
+                    zoomValueBtn.innerText = percent + '%';
+                    zoomValueBtn.title = `Reset (Aktual: ${percent}%)`;
+                }
+
+                if (outBtn) outBtn.disabled = newScale <= 0.5;
+                if (inBtn) inBtn.disabled = newScale >= 2.0;
+            }
+            
+            // Auto Save posisi scale baru
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => saveToStorage(), 500);
+        }
+
+        function handleZoomClick(btn, action) {
+            const sheet = btn.closest('.sheet');
+            const movable = sheet.querySelector('.layout-movable');
+            if (!movable) return;
+
+            let scale = parseFloat(movable.getAttribute('data-scale')) || 1;
+            
+            if (action === 'in') updateZoom(movable, scale + 0.1);
+            else if (action === 'out') updateZoom(movable, scale - 0.1);
+            else if (action === 'reset') updateZoom(movable, 1);
+        }
+
+        // Fitur Enterprise: Zoom dengan Ctrl + Mouse Scroll
+        document.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                // Cari sheet tempat kursor berada
+                const sheet = e.target.closest('.sheet');
+                if (sheet) {
+                    e.preventDefault(); // Cegah zooming browser bawaan
+                    
+                    const movable = sheet.querySelector('.layout-movable');
+                    if (movable) {
+                        let scale = parseFloat(movable.getAttribute('data-scale')) || 1;
+                        let delta = e.deltaY < 0 ? 0.05 : -0.05; // Scrol up = Zoom In, Scroll down = Zoom Out
+                        
+                        updateZoom(movable, scale + delta);
+                    }
+                }
+            }
+        }, { passive: false });
+    </script>
+
+    <!-- =========================================
+         17. NEW: DUPLICATE ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="duplicate-engine-logic">
+        // Generator ID Unik untuk memastikan page conflict tidak terjadi
+        const generateUniqueId = () => Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+
+        // Core Duplicate Function (Single Page)
+        async function handleDuplicateSingle(index) {
+            // Sinkronisasi data DOM ke DB (Pastikan ketikan/form yang belum disave tetap terbawa)
+            saveToStorage();
+
+            const confirmed = await uxConfirm(
+                "Duplicate Halaman", 
+                `Apakah Anda yakin ingin menduplikat halaman ke-${index + 1}?`
+            );
+
+            if (!confirmed) return;
+
+            uxShowLoader("Menduplikasi halaman...");
+            
+            setTimeout(() => {
+                executeDuplicate(index);
+                uxHideLoader();
+            }, 300);
+        }
+
+        function executeDuplicate(index) {
+            const original = pagesDB[index];
+            if (!original) return;
+
+            // Clone Object (Deep Copy untuk primitive/string, bypass resiko corrupt DOM)
+            const clonedPage = {
+                id: generateUniqueId(),
+                type: original.type,
+                html: original.html,
+                rawHTML: original.rawHTML,
+                layoutX: original.layoutX,
+                layoutY: original.layoutY,
+                layoutScale: original.layoutScale,
+                orientation: original.orientation
+            };
+
+            // Insert tepat setelah halaman yang di-duplicate
+            pagesDB.splice(index + 1, 0, clonedPage);
+
+            // Simpan state & Render ulang (Sistem existing akan otomatis apply Zoom/Drag)
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+            renderPages();
+
+            uxToast("Halaman berhasil diduplikat!", "success");
+
+            // Scroll dengan efek highlight ke halaman baru
+            setTimeout(() => {
+                const sheets = document.querySelectorAll('.sheet');
+                const newSheet = sheets[index + 1];
+                if (newSheet) {
+                    newSheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Highlight transisi (Visual cue)
+                    newSheet.style.transition = "box-shadow 0.5s ease";
+                    newSheet.style.boxShadow = "0 0 0 5px #10b981, 0 20px 50px -12px rgba(0,0,0,0.25)";
+                    setTimeout(() => {
+                        newSheet.style.boxShadow = "0 20px 50px -12px rgba(0,0,0,0.25)";
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        // Shortcut Cerdas Ctrl + D
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'd') {
+                e.preventDefault(); // Cegah fungsi bookmark browser bawaan
+
+                // Cari halaman yang sedang paling fokus (paling tengah posisinya di viewport)
+                const sheets = document.querySelectorAll('.sheet');
+                if (sheets.length === 0) return;
+
+                let targetIndex = -1;
+                let minDistance = Infinity;
+                const windowCenter = window.innerHeight / 2;
+
+                sheets.forEach((sheet, index) => {
+                    const rect = sheet.getBoundingClientRect();
+                    const sheetCenter = rect.top + (rect.height / 2);
+                    const distance = Math.abs(windowCenter - sheetCenter);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        targetIndex = index;
+                    }
+                });
+
+                if (targetIndex !== -1) {
+                    handleDuplicateSingle(targetIndex);
+                }
+            }
+        });
+
+        // ================= MULTIPLE DUPLICATE SYSTEM =================
+        function openDuplicateMultiModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if (sheets.length === 0) {
+                uxToast("Tidak ada halaman untuk diduplikat.", "error");
+                return;
+            }
+
+            const container = document.getElementById('duplicateCheckboxContainer');
+            container.innerHTML = '';
+
+            sheets.forEach((sheet, i) => {
+                const isLandscape = sheet.classList.contains('landscape');
+                const isEmbed = sheet.dataset.pageType === 'embed';
+                const labelStr = `Hal ${i + 1} ` + 
+                                 (isEmbed ? '[EMBED]' : '(Custom)') + 
+                                 (isLandscape ? ' [Landscape]' : ' [Portrait]');
+
+                const label = document.createElement('label');
+                label.className = 'checkbox-item';
+                label.innerHTML = `
+                    <input type="checkbox" class="dup-multi-check" value="${i}">
+                    <span>${labelStr}</span>
+                `;
+                container.appendChild(label);
+            });
+
+            document.getElementById('duplicateMultiModal').style.display = 'flex';
+        }
+
+        function closeDuplicateMultiModal() {
+            document.getElementById('duplicateMultiModal').style.display = 'none';
+        }
+
+        function selectAllDuplicate(state) {
+            document.querySelectorAll('.dup-multi-check').forEach(chk => chk.checked = state);
+        }
+
+        async function confirmDuplicateMulti() {
+            const checkboxes = document.querySelectorAll('.dup-multi-check:checked');
+            if (checkboxes.length === 0) {
+                uxToast("Pilih minimal satu halaman.", "warning");
+                return;
+            }
+
+            saveToStorage(); // Sinkronisasi sebelum clone
+
+            const confirmed = await uxConfirm(
+                "Duplicate Multiple", 
+                `Anda akan menduplikat ${checkboxes.length} halaman. Hasilnya akan ditambahkan ke akhir dokumen.`
+            );
+
+            if (!confirmed) return;
+
+            uxShowLoader("Memproses duplikasi massal...");
+            closeDuplicateMultiModal();
+
+            setTimeout(() => {
+                const indexesToClone = Array.from(checkboxes).map(c => parseInt(c.value));
+                let newPages = [];
+
+                indexesToClone.forEach(idx => {
+                    const original = pagesDB[idx];
+                    if (original) {
+                        newPages.push({
+                            id: generateUniqueId(),
+                            type: original.type,
+                            html: original.html,
+                            rawHTML: original.rawHTML,
+                            layoutX: original.layoutX,
+                            layoutY: original.layoutY,
+                            layoutScale: original.layoutScale,
+                            orientation: original.orientation
+                        });
+                    }
+                });
+
+                // Tambahkan koleksi batch ke akhir array
+                pagesDB = pagesDB.concat(newPages);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+                renderPages();
+
+                uxHideLoader();
+                uxToast(`${newPages.length} halaman berhasil diduplikat!`, "success");
+
+                // Auto-scroll ke blok duplikat yang pertama
+                setTimeout(() => {
+                    const sheets = document.querySelectorAll('.sheet');
+                    const firstNewIndex = pagesDB.length - newPages.length;
+                    if (sheets[firstNewIndex]) {
+                        sheets[firstNewIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 300);
+
+            }, 500);
+        }
+    </script>
+
+    <!-- =========================================
+         18. NEW: AUTO PAGE FLOW ENGINE (PROFESSIONAL)
+         ========================================= -->
+    <script id="auto-flow-engine">
+        let isAutoFlowing = false;
+
+        // Visual Margin Guide Toggle
+        function toggleMarginGuides(btn) {
+            document.body.classList.toggle('show-margin-guides');
+            if(document.body.classList.contains('show-margin-guides')) {
+                btn.innerHTML = '<i class="ph ph-frame-corners"></i> Sembunyikan Garis Margin';
+                btn.style.background = '#e2e8f0';
+            } else {
+                btn.innerHTML = '<i class="ph ph-frame-corners"></i> Tampilkan Garis Margin';
+                btn.style.background = '#f1f5f9';
+            }
+        }
+
+        // Wrapper Trigger untuk User (Manual) & Debounced Trigger (Auto)
+        async function triggerAutoFlowEngine(silent = false) {
+            if (isAutoFlowing) return;
+            isAutoFlowing = true;
+            
+            if (!silent) uxShowLoader("Menyesuaikan Layout Halaman...");
+
+            try {
+                // Tunggu sebentar agar browser selesai merender CSS terbaru (terutama jika setelah import)
+                await new Promise(r => setTimeout(r, 150));
+                
+                // Sinkronisasi data ke DOM terbaru sebelum diproses
+                saveToStorage();
+
+                let sheets = document.querySelectorAll('.sheet[data-page-type="standard"]');
+                let i = 0;
+                
+                // Gunakan loop While karena jumlah sheet bisa bertambah secara dinamis di tengah proses
+                while (i < sheets.length) {
+                    let sheet = sheets[i];
+                    let didFlow = executeNodeFlow(sheet, i);
+                    
+                    if (didFlow) {
+                        // Jika ada halaman baru ditambahkan akibat flow, perbarui NodeList
+                        sheets = document.querySelectorAll('.sheet[data-page-type="standard"]');
+                    }
+                    i++; // Pindah ke sheet berikutnya yang sudah aman
+                }
+
+                // Simpan hasil akhir yang sudah dirapikan kembali ke memori & LocalStorage
+                saveToStorage();
+                updatePageNumbers();
+                
+                if (!silent) uxToast("Layout halaman berhasil dirapikan", "success");
+
+            } catch (e) {
+                console.error("Auto Flow Engine Error:", e);
+                if (!silent) uxToast("Gagal merapikan layout otomatis", "error");
+            } finally {
+                isAutoFlowing = false;
+                if (!silent) uxHideLoader();
+            }
+        }
+
+        function debouncedAutoFlow() {
+            clearTimeout(flowDebounce);
+            flowDebounce = setTimeout(() => {
+                triggerAutoFlowEngine(true); // silent true
+            }, 1000);
+        }
+
+        // --- CORE ALGORITHM: NODE-LEVEL DOM MANIPULATION ---
+        function executeNodeFlow(sheet, currentIndex) {
+            const movable = sheet.querySelector('.layout-movable');
+            if (!movable) return false;
+
+            // Kontainer tempat pengguna mengetik (Asumsi: .page-content. Jika tidak ada, gunakan movable)
+            const contentArea = movable.querySelector('.page-content') || movable;
+            if (!contentArea || contentArea.children.length === 0) return false;
+
+            // Kalkulasi Batas Fisik Kertas F4 (Akurat berdasarkan computed padding CSS)
+            // sheet.clientHeight akan menghasilkan tinggi F4 (cth 1247px untuk portrait)
+            const computedStyle = window.getComputedStyle(sheet);
+            const paddingTop = parseFloat(computedStyle.paddingTop);
+            const paddingBottom = parseFloat(computedStyle.paddingBottom);
+            
+            // Batas maksimal konten = Tinggi Kertas - Padding Atas - Padding Bawah - 5px Safety Buffer
+            const limitHeightPx = sheet.clientHeight - paddingTop - paddingBottom - 5;
+            
+            // App Scale memengaruhi dimensi koordinat rect, kita harus menormalisasinya
+            let scaleApp = 1;
+            const matrix = new DOMMatrixReadOnly(computedStyle.transform);
+            if (matrix.a !== 1) scaleApp = matrix.a;
+
+            const sourceRect = contentArea.getBoundingClientRect();
+            const sourceTop = sourceRect.top;
+
+            let breachIndex = -1;
+            let breachNode = null;
+            let isManualBreak = false;
+
+            const children = Array.from(contentArea.children);
+
+            // 1. ITERASI TOP-DOWN: Cari elemen pertama yang melewati batas atau meminta Page Break
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                
+                // Deteksi Manual Page Break
+                if (child.classList.contains('page-break') || window.getComputedStyle(child).pageBreakBefore === 'always') {
+                    // Jika elemen page break ini adalah elemen pertama di halaman, JANGAN dipotong, biarkan saja
+                    // (Menghindari Infinite Loop halaman kosong)
+                    if (i > 0) {
+                        breachIndex = i;
+                        breachNode = child;
+                        isManualBreak = true;
+                        break;
+                    }
+                }
+
+                // Deteksi Overflow Bawah
+                const childRect = child.getBoundingClientRect();
+                // Relative Bottom = Jarak dari atas konten (sudah dinormalkan dari scale app zoom)
+                const relativeBottom = (childRect.bottom - sourceTop) / scaleApp;
+
+                if (relativeBottom > limitHeightPx) {
+                    // Jika node yang meluber ini adalah node PERTAMA di halaman,
+                    // dan tidak bisa dipecah (misal gambar / no-break), kita paksakan stay agar tidak infinite loop
+                    if (i === 0 && (child.tagName === 'IMG' || child.classList.contains('no-break'))) {
+                        continue; 
+                    }
+
+                    breachIndex = i;
+                    breachNode = child;
+                    break;
+                }
+            }
+
+            // Jika tidak ada pelanggaran, halaman ini aman.
+            if (breachIndex === -1) return false;
+
+            // 2. KITA MENEMUKAN PELANGGARAN. SIAPKAN HALAMAN TARGET (HALAMAN BERIKUTNYA)
+            let nextSheet = sheet.nextElementSibling;
+            let targetContentArea;
+
+            // Jika halaman berikutnya tidak ada, atau tipenya embed (tidak boleh ditimpa) -> Buat halaman baru
+            if (!nextSheet || nextSheet.dataset.pageType === 'embed') {
+                nextSheet = createNewCustomSheet();
+                
+                // Clone atribut orientasi agar konsisten
+                if (sheet.classList.contains('landscape')) {
+                    nextSheet.classList.add('landscape');
+                    const marker = document.createElement('div');
+                    marker.className = 'landscape-marker';
+                    marker.style.display = 'none';
+                    nextSheet.insertBefore(marker, nextSheet.firstChild);
+                } else if (sheet.classList.contains('portrait')) {
+                    nextSheet.classList.add('portrait');
+                }
+
+                // Sisipkan tepat di bawah halaman saat ini di DOM
+                sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
+                
+                // Sinkronisasi DB untuk menampung halaman baru
+                const newPageObj = {
+                    id: nextSheet.dataset.id,
+                    type: 'standard',
+                    html: nextSheet.innerHTML,
+                    layoutX: 0, layoutY: 0, layoutScale: 1,
+                    orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait'
+                };
+                pagesDB.splice(currentIndex + 1, 0, newPageObj);
+            }
+
+            targetContentArea = nextSheet.querySelector('.layout-movable .page-content');
+            if (!targetContentArea) return false;
+
+            // 3. EKSEKUSI PEMINDAHAN (SPLITTING)
+            
+            // Skenario A: Manual Break
+            if (isManualBreak) {
+                // Sembunyikan elemen break secara visual agar rapi (karena sudah berfungsi memotong)
+                breachNode.style.display = 'none'; 
+                
+                // Pindahkan elemen break dan SEMUA elemen setelahnya ke halaman baru (di posisi teratas)
+                moveSiblingsToTarget(children, breachIndex, targetContentArea);
+                return true;
+            }
+
+            // Skenario B: Memecah Table Profesional (Bawa Thead)
+            if (breachNode.tagName === 'TABLE' && !breachNode.classList.contains('no-break')) {
+                const targetTable = splitTableAndMove(breachNode, targetContentArea, sourceTop, scaleApp, limitHeightPx);
+                
+                // Setelah tabel terpotong, sisa node di bawah tabel juga HARUS ikut pindah
+                moveSiblingsToTarget(children, breachIndex + 1, targetContentArea);
+                return true;
+            }
+
+            // Skenario C: Normal Element (P, DIV, IMG, dll) -> Pindahkan utuh (Atomic Move)
+            moveSiblingsToTarget(children, breachIndex, targetContentArea);
+
+            return true;
+        }
+
+        // Helper: Pindahkan kumpulan sibling sekaligus agar urutan HTML tidak hancur
+        function moveSiblingsToTarget(childrenArray, startIndex, targetContainer) {
+            // Karena kita mau memindah ke halaman 'bawahnya', kita harus taruh di bagian ATAS (prepend)
+            // agar nyambung. Jadi kita insertBefore firstChild.
+            
+            // Buat fragment untuk optimasi (1x re-flow)
+            const fragment = document.createDocumentFragment();
+            for (let i = startIndex; i < childrenArray.length; i++) {
+                fragment.appendChild(childrenArray[i]);
+            }
+            
+            if (targetContainer.firstChild) {
+                targetContainer.insertBefore(fragment, targetContainer.firstChild);
+            } else {
+                targetContainer.appendChild(fragment);
+            }
+        }
+
+        // Helper: Algoritma Presisi Pemecah Tabel (Menyalin Header)
+        function splitTableAndMove(sourceTable, targetContainer, sourceTop, scaleApp, limitHeightPx) {
+            const targetTable = sourceTable.cloneNode(false); // Clone bungkus <table> saja
+            
+            // Clone thead dan colgroup jika ada (Penting untuk layout tabel presisi)
+            const thead = sourceTable.querySelector('thead');
+            if (thead) targetTable.appendChild(thead.cloneNode(true));
+            const colgroup = sourceTable.querySelector('colgroup');
+            if (colgroup) targetTable.appendChild(colgroup.cloneNode(true));
+
+            // Siapkan target tbody
+            const sourceTbody = sourceTable.querySelector('tbody') || sourceTable;
+            const targetTbody = document.createElement('tbody');
+            targetTable.appendChild(targetTbody);
+            
+            const rows = Array.from(sourceTbody.querySelectorAll('tr'));
+            let breachRowIndex = -1;
+
+            // Cari <tr> mana yang melewati batas bawah kertas
+            for (let i = 0; i < rows.length; i++) {
+                const tr = rows[i];
+                // Jangan pecah row yang merupakan bagian dari Header (th)
+                if (tr.querySelector('th') && sourceTbody === sourceTable) continue;
+
+                const trRect = tr.getBoundingClientRect();
+                const relBottom = (trRect.bottom - sourceTop) / scaleApp;
+                
+                if (relBottom > limitHeightPx) {
+                    breachRowIndex = i;
+                    break;
+                }
+            }
+
+            // Pindahkan baris yang meluber ke tabel baru
+            if (breachRowIndex !== -1) {
+                const fragment = document.createDocumentFragment();
+                for (let i = breachRowIndex; i < rows.length; i++) {
+                    fragment.appendChild(rows[i]);
+                }
+                targetTbody.appendChild(fragment);
+            } else {
+                // Fallback jika perhitungan margin meleset, ambil setidaknya baris terakhir
+                if (rows.length > 1) {
+                    targetTbody.appendChild(rows[rows.length - 1]);
+                }
+            }
+
+            // Taruh tabel baru ini di paling atas kontainer target
+            if (targetContainer.firstChild) {
+                targetContainer.insertBefore(targetTable, targetContainer.firstChild);
+            } else {
+                targetContainer.appendChild(targetTable);
+            }
+
+            return targetTable;
         }
     </script>
 </body>
