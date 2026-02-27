@@ -913,6 +913,10 @@
         }
         
         /* DRAG MODE ACTIVE */
+        body.layout-drag-mode {
+            touch-action: none; /* Mencegah layar scroll/pull-to-refresh saat geser di HP */
+        }
+        
         body.layout-drag-mode .layout-movable {
             cursor: move !important;
             user-select: none !important;
@@ -3633,6 +3637,131 @@
                 }, 500);
 
                 isDraggingLayout = false;
+                dragTarget = null;
+            }
+        });
+
+        // --- ADDITIVE: MOBILE TOUCH DRAG & PINCH ZOOM SUPPORT ---
+        let isTouchDragging = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartObjX = 0;
+        let touchStartObjY = 0;
+        let initialPinchDistance = null;
+        let initialPinchScale = 1;
+
+        document.addEventListener('touchstart', (e) => {
+            if (!document.body.classList.contains('layout-drag-mode')) return;
+            if (e.target.closest('[contenteditable="true"]')) return; // Mencegah konflik saat mode text
+
+            const movable = e.target.closest('.layout-movable');
+            if (!movable) return;
+
+            // BONUS: Mode Pinch Zoom (2 Jari)
+            if (e.touches.length === 2) {
+                isTouchDragging = false; // Batalkan drag jika user ingin zoom
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                initialPinchDistance = Math.hypot(dx, dy);
+                initialPinchScale = parseFloat(movable.getAttribute('data-scale')) || 1;
+                dragTarget = movable;
+                return;
+            }
+
+            // Mode Geser (1 Jari)
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                isTouchDragging = true;
+                dragTarget = movable;
+
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+
+                touchStartObjX = parseFloat(movable.getAttribute('data-x')) || 0;
+                touchStartObjY = parseFloat(movable.getAttribute('data-y')) || 0;
+
+                movable.style.transition = 'none'; // Matikan animasi saat jari menggeser
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!document.body.classList.contains('layout-drag-mode')) return;
+
+            e.preventDefault(); // Mencegah native scrolling di browser HP
+
+            // Logika Pinch Zoom (2 Jari)
+            if (e.touches.length === 2 && dragTarget && initialPinchDistance) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const currentDistance = Math.hypot(dx, dy);
+                
+                // Menghitung delta skala pinch
+                const scaleDiff = (currentDistance / initialPinchDistance) - 1;
+                const newScale = initialPinchScale + (scaleDiff * 0.8); // 0.8 adalah rasio speed zoom
+                
+                updateZoom(dragTarget, newScale);
+                return;
+            }
+
+            // Logika Geser Layout (1 Jari)
+            if (!isTouchDragging || !dragTarget || e.touches.length !== 1) return;
+
+            const touch = e.touches[0];
+            const sheet = dragTarget.closest('.sheet');
+
+            let scaleApp = 1;
+            if (sheet) {
+                const style = window.getComputedStyle(sheet);
+                const matrix = new DOMMatrixReadOnly(style.transform);
+                if (matrix.a !== 1) scaleApp = matrix.a;
+            }
+
+            const dx = (touch.clientX - touchStartX) / scaleApp;
+            const dy = (touch.clientY - touchStartY) / scaleApp;
+
+            let newX = touchStartObjX + dx;
+            let newY = touchStartObjY + dy;
+
+            const ls = parseFloat(dragTarget.getAttribute('data-scale')) || 1;
+
+            // --- BATASAN KERTAS (LIMITER) ---
+            const stage = dragTarget.parentElement;
+            if (stage) {
+                const stageRect = stage.getBoundingClientRect();
+                const limitX = (stageRect.width / scaleApp) * 0.9;
+                const limitY = (stageRect.height / scaleApp) * 0.9;
+
+                newX = Math.max(-limitX, Math.min(newX, limitX));
+                newY = Math.max(-limitY, Math.min(newY, limitY));
+            }
+
+            dragTarget.style.transform = `translate(${newX}px, ${newY}px) scale(${ls})`;
+            
+            dragTarget.setAttribute('data-x', newX);
+            dragTarget.setAttribute('data-y', newY);
+
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            // Reset state Pinch Zoom jika jari diangkat
+            if (e.touches.length < 2) {
+                initialPinchDistance = null; 
+            }
+
+            if (!isTouchDragging || !dragTarget) return;
+
+            dragTarget.style.transition = 'box-shadow 0.2s ease, outline 0.2s ease';
+
+            // Auto Save Sistem
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveToStorage();
+            }, 500);
+
+            isTouchDragging = false;
+            
+            // Lepas target hanya jika benar-benar tidak ada jari yang menyentuh layar
+            if (e.touches.length === 0) {
                 dragTarget = null;
             }
         });
