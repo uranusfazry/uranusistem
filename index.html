@@ -1372,6 +1372,11 @@
                 <i class="ph ph-paint-brush"></i> 🎨 Gaya & Tipografi Halaman
             </button>
 
+            <!-- NEW: BUTTON TEXT STYLE INSPECTOR (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;" onclick="openTextStyleModal()">
+                <i class="ph ph-text-t"></i> 🅰️ Gaya Teks (Per Kata)
+            </button>
+
             <!-- NEW: BUTTON TABLE MODE (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#fdf4ff; color:#a21caf; border-color:#f5d0fe;" onclick="toggleTableMode(this)">
                 <i class="ph ph-table"></i> 🧾 Mode Tabel
@@ -1731,9 +1736,77 @@
             </div>
         </div>
 
+        <div class="section-divider" style="margin: 10px 0;">Upload Font Custom (Halaman)</div>
+        <div style="margin-bottom: 20px;">
+            <input type="file" id="pageFontUploader" accept=".ttf,.otf,.woff,.woff2" style="font-size: 0.8rem; width: 100%;">
+        </div>
+
         <div class="modal-actions">
           <button onclick="applyPageStyle()" style="background:#15803d; color:white;">💾 Terapkan</button>
           <button onclick="closePageStyleModal()">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW MODAL: TEXT STYLE INSPECTOR (ADDITIVE) -->
+    <div id="textStyleModal" class="modal no-print-in-pdf">
+      <div class="modal-box">
+        <h3><i class="ph ph-text-t" style="color:#1d4ed8"></i> Gaya Teks Terpilih</h3>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:15px;">Blok teks di dokumen, lalu atur gayanya di sini.</p>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Font</label>
+                <select id="textFontSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none; margin:0;"></select>
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Ukuran (px)</label>
+                <input type="number" id="textFontSizeInput" value="14" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button onmousedown="event.preventDefault()" onclick="toggleTextStyleCmd('bold')" style="flex:1; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; font-weight:bold; cursor:pointer;">B</button>
+            <button onmousedown="event.preventDefault()" onclick="toggleTextStyleCmd('italic')" style="flex:1; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; font-style:italic; font-family:serif; cursor:pointer;">I</button>
+            <button onmousedown="event.preventDefault()" onclick="toggleTextStyleCmd('underline')" style="flex:1; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc; text-decoration:underline; cursor:pointer;">U</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Alignment</label>
+                <select id="textAlignSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                  <option value="">(Default)</option>
+                  <option value="left">Left (Kiri)</option>
+                  <option value="center">Center (Tengah)</option>
+                  <option value="right">Right (Kanan)</option>
+                  <option value="justify">Justify (Rata)</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Line Height</label>
+                <input type="number" step="0.1" id="textLineHeightInput" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;" placeholder="(Default)">
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Warna</label>
+                <input type="color" id="textColorInput" style="width:100%; height:38px; padding:2px; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer; outline:none;">
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Spasi Huruf (px)</label>
+                <input type="number" id="textLetterSpacingInput" value="0" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+            </div>
+        </div>
+
+        <div class="section-divider" style="margin: 10px 0;">Upload Font Custom</div>
+        <div style="margin-bottom: 20px;">
+            <input type="file" id="fontUploader" accept=".ttf,.otf,.woff,.woff2" style="font-size: 0.8rem; width: 100%;">
+        </div>
+
+        <div class="modal-actions">
+          <button onclick="applyTextStyle()" style="background:#1d4ed8; color:white;">💾 Terapkan ke Teks</button>
+          <button onclick="closeTextStyleModal()">Tutup</button>
         </div>
       </div>
     </div>
@@ -4517,6 +4590,10 @@
             }, 1000);
         }
 
+        function mmToPx(mm) {
+            return mm * (96 / 25.4);
+        }
+
         // --- CORE ALGORITHM: NODE-LEVEL DOM MANIPULATION ---
         function executeNodeFlow(sheet, currentIndex) {
             const movable = sheet.querySelector('.layout-movable');
@@ -4526,17 +4603,27 @@
             const contentArea = movable.querySelector('.page-content') || movable;
             if (!contentArea || contentArea.children.length === 0) return false;
 
-            // Kalkulasi Batas Fisik Kertas F4 (Akurat berdasarkan computed padding CSS)
-            // sheet.clientHeight akan menghasilkan tinggi F4 (cth 1247px untuk portrait)
-            const computedStyle = window.getComputedStyle(sheet);
-            const paddingTop = parseFloat(computedStyle.paddingTop);
-            const paddingBottom = parseFloat(computedStyle.paddingBottom);
+            // ==========================================
+            // MARGIN-AWARE LIMIT CALCULATION (UPGRADE)
+            // ==========================================
             
-            // Batas maksimal konten = Tinggi Kertas - Padding Atas - Padding Bawah - 5px Safety Buffer
-            const limitHeightPx = sheet.clientHeight - paddingTop - paddingBottom - 5;
+            // Tinggi fisik kertas
+            const sheetHeight = sheet.clientHeight;
+            
+            // Ambil margin dari attribute (mm)
+            const marginTopMM = parseFloat(sheet.getAttribute("data-margin-top")) || 20;
+            const marginBottomMM = parseFloat(sheet.getAttribute("data-margin-bottom")) || 20;
+            
+            // Konversi ke pixel
+            const marginTopPx = mmToPx(marginTopMM);
+            const marginBottomPx = mmToPx(marginBottomMM);
+            
+            // Hitung batas maksimal area konten
+            const limitHeightPx = sheetHeight - marginTopPx - marginBottomPx - 5;
             
             // App Scale memengaruhi dimensi koordinat rect, kita harus menormalisasinya
             let scaleApp = 1;
+            const computedStyle = window.getComputedStyle(sheet);
             const matrix = new DOMMatrixReadOnly(computedStyle.transform);
             if (matrix.a !== 1) scaleApp = matrix.a;
 
@@ -5856,6 +5943,379 @@
                  document.activeElement.dispatchEvent(new Event('input', { bubbles: true }));
             }
         }
+    </script>
+
+    <!-- =========================================
+         26. NEW: TEXT STYLE INSPECTOR & CUSTOM FONT (ADDITIVE)
+         ========================================= -->
+    <script id="text-style-inspector-logic-script">
+        // Auto Load Custom Fonts pada saat aplikasi dimuat
+        document.addEventListener("DOMContentLoaded", function() {
+            const fonts = JSON.parse(localStorage.getItem("customFonts") || "[]");
+            fonts.forEach(f => {
+                const fontFace = new FontFace(f.name, `url(${f.data})`);
+                fontFace.load().then(font => {
+                    document.fonts.add(font);
+                }).catch(e => console.error("Gagal meload custom font:", f.name, e));
+            });
+        });
+
+        // Event handler upload file Font
+        document.getElementById("fontUploader").addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            uxShowLoader("Mengunggah dan Memproses Font...");
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const fontName = file.name.replace(/\.[^/.]+$/, "");
+                
+                // Pengecekan apakah nama font sudah ada
+                let fonts = JSON.parse(localStorage.getItem("customFonts") || "[]");
+                if (fonts.some(f => f.name === fontName)) {
+                    uxHideLoader();
+                    uxToast("Font dengan nama ini sudah ada!", "warning");
+                    e.target.value = '';
+                    return;
+                }
+
+                const fontFace = new FontFace(fontName, `url(${event.target.result})`);
+
+                fontFace.load().then(function(loadedFont){
+                    document.fonts.add(loadedFont);
+
+                    // Simpan ke storage untuk digunakan kembali nanti
+                    fonts.push({
+                        name: fontName,
+                        data: event.target.result
+                    });
+                    
+                    try {
+                        localStorage.setItem("customFonts", JSON.stringify(fonts));
+                        loadFontDropdown();
+                        uxToast("Font " + fontName + " berhasil ditambahkan!", "success");
+                    } catch(err) {
+                        uxToast("Gagal menyimpan font (Penyimpanan Penuh)", "error");
+                        console.error(err);
+                    }
+                }).catch(function(error) {
+                    uxToast("Gagal memuat format file font ini", "error");
+                    console.error(error);
+                }).finally(() => {
+                    uxHideLoader();
+                    e.target.value = ''; // Reset uploader state
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Memuat font bawaan + font custom pengguna ke dalam dropdown
+        function loadFontDropdown() {
+            const select = document.getElementById("textFontSelect");
+            if (!select) return;
+
+            const defaultFonts = [
+                "Times New Roman",
+                "Arial",
+                "Calibri",
+                "Verdana",
+                "Tahoma",
+                "Courier New"
+            ];
+
+            select.innerHTML = "";
+
+            defaultFonts.forEach(f => {
+                const opt = document.createElement("option");
+                opt.value = f;
+                opt.textContent = f;
+                select.appendChild(opt);
+            });
+
+            const customFonts = JSON.parse(localStorage.getItem("customFonts") || "[]");
+            customFonts.forEach(f => {
+                const opt = document.createElement("option");
+                opt.value = f.name;
+                opt.textContent = f.name + " (Custom)";
+                select.appendChild(opt);
+            });
+        }
+
+        let savedSelectionRange = null;
+
+        // Membuka modal khusus style text & mengidentifikasi state seleksi
+        function openTextStyleModal() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) {
+                uxToast("Silakan blok/pilih teks di dokumen terlebih dahulu.", "warning");
+                return;
+            }
+
+            // Membekukan seleksi teks pengguna saat ini
+            savedSelectionRange = selection.getRangeAt(0).cloneRange();
+
+            loadFontDropdown();
+
+            // Analisis komputasi CSS dari kata yang sedang di-blok
+            let node = savedSelectionRange.startContainer;
+            if (node.nodeType === 3) { // Deteksi Node text biasa
+                node = node.parentNode;
+            }
+            
+            const style = window.getComputedStyle(node);
+
+            // Sterilisasi tanda kutip dari atribut font-family
+            let fontFamily = style.fontFamily.replace(/['"]/g, '').split(',')[0].trim();
+            
+            const fontSelect = document.getElementById("textFontSelect");
+            let fontExists = Array.from(fontSelect.options).some(opt => opt.value.toLowerCase() === fontFamily.toLowerCase());
+            
+            // Tambahkan sebagai opsi jika font teridentifikasi namun belum ada di daftar
+            if (!fontExists && fontFamily) {
+                const newOpt = document.createElement("option");
+                newOpt.value = fontFamily;
+                newOpt.textContent = fontFamily;
+                fontSelect.appendChild(newOpt);
+            }
+            fontSelect.value = fontExists ? Array.from(fontSelect.options).find(opt => opt.value.toLowerCase() === fontFamily.toLowerCase()).value : fontFamily;
+
+            document.getElementById("textFontSizeInput").value = parseFloat(style.fontSize) || 14;
+            // Memanfaatkan rgbToHex() yang ada dari page style inspector logic
+            document.getElementById("textColorInput").value = typeof rgbToHex !== "undefined" ? rgbToHex(style.color || "rgb(0,0,0)") : "#000000";
+            
+            let ls = style.letterSpacing;
+            document.getElementById("textLetterSpacingInput").value = ls === "normal" ? 0 : (parseFloat(ls) || 0);
+
+            // Analisis block parent untuk Alignment dan Line Height
+            let blockNode = node;
+            const blockTags = ['P', 'DIV', 'TD', 'TH', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
+            while (blockNode && blockNode !== document.body && !blockTags.includes(blockNode.tagName)) {
+                blockNode = blockNode.parentNode;
+            }
+            if (!blockNode || blockNode === document.body) blockNode = node;
+            
+            const blockStyle = window.getComputedStyle(blockNode);
+            // Tangkap nilai alignment, default ke string kosong agar memakai opsi (Default) jika tidak di-set secara spesifik
+            const currentAlign = blockNode.style.textAlign || blockStyle.textAlign;
+            document.getElementById("textAlignSelect").value = ['left', 'center', 'right', 'justify'].includes(currentAlign) ? currentAlign : "";
+            
+            let lh = blockStyle.lineHeight;
+            if (lh === "normal") {
+                lh = 1.2; 
+            } else {
+                lh = parseFloat(lh) / parseFloat(blockStyle.fontSize);
+            }
+            document.getElementById("textLineHeightInput").value = !isNaN(lh) ? lh.toFixed(1) : "";
+
+            document.getElementById("textStyleModal").style.display = "flex";
+        }
+
+        function closeTextStyleModal() {
+            document.getElementById("textStyleModal").style.display = "none";
+            savedSelectionRange = null;
+        }
+
+        // Fitur utama melilitkan tag Span (Bungkus) untuk membidik elemen spesifik
+        function applyTextStyle() {
+            if (!savedSelectionRange) {
+                uxToast("Memori blok teks hilang. Silakan blok kembali.", "error");
+                return;
+            }
+
+            // Kembalikan seleksi (berguna untuk browser tertentu yang rewel)
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedSelectionRange);
+
+            const font = document.getElementById("textFontSelect").value;
+            const size = document.getElementById("textFontSizeInput").value;
+            const color = document.getElementById("textColorInput").value;
+            const letterSpacing = document.getElementById("textLetterSpacingInput").value;
+            
+            const align = document.getElementById("textAlignSelect").value;
+            const lineHeight = document.getElementById("textLineHeightInput").value;
+
+            try {
+                const span = document.createElement("span");
+                span.style.fontFamily = font;
+                span.style.fontSize = size + "px";
+                span.style.color = color;
+                span.style.letterSpacing = letterSpacing + "px";
+
+                // Ekstrak konten yang dipilih secara murni tanpa merusak siblings
+                const extracted = savedSelectionRange.extractContents();
+                span.appendChild(extracted);
+                
+                // Suntik span ke dalam node asalnya
+                savedSelectionRange.insertNode(span);
+                
+                // Terapkan pengaturan block (Alignment & Line Height) ke parent terdekat
+                let blockNode = span;
+                const blockTags = ['P', 'DIV', 'TD', 'TH', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
+                while (blockNode && blockNode !== document.body && !blockTags.includes(blockNode.tagName)) {
+                    blockNode = blockNode.parentNode;
+                }
+                
+                if (blockNode && blockNode !== document.body && blockNode.closest('.sheet')) {
+                    if (align) blockNode.style.textAlign = align;
+                    if (lineHeight) blockNode.style.lineHeight = lineHeight;
+                }
+
+                // Rekam perubahan di sistem engine
+                if (typeof triggerInputSave === 'function') triggerInputSave();
+                saveToStorage();
+                
+                // Cek kemungkinan meluber (AutoFlow) 
+                if (typeof debouncedAutoFlow === 'function') debouncedAutoFlow();
+
+                closeTextStyleModal();
+                uxToast("Gaya teks spesifik diperbarui!", "success");
+            } catch (e) {
+                console.error("Gagal menerapkan gaya teks seleksi", e);
+                uxToast("Gagal membungkus style. Coba seleksi yang lebih rata (Jangan menyilang kolom tabel).", "error");
+            }
+        }
+
+        function toggleTextStyleCmd(cmd) {
+            // Karena button memuat mousedown preventDefault(), seleksi di layar tidak akan pudar
+            document.execCommand(cmd, false, null);
+            if (typeof triggerInputSave === 'function') triggerInputSave();
+            saveToStorage();
+        }
+    </script>
+
+    <!-- =========================================
+         27. NEW: PAGE CUSTOM FONT SYSTEM (ADDITIVE)
+         ========================================= -->
+    <script id="page-custom-font-system">
+        // 1️⃣ HANDLE UPLOAD FONT
+        document.getElementById("pageFontUploader").addEventListener("change", function(e){
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const allowedTypes = [
+                "font/ttf",
+                "font/otf",
+                "font/woff",
+                "font/woff2"
+            ];
+
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(ttf|otf|woff|woff2)$/i)) {
+                if (typeof uxToast === "function") uxToast("Format font tidak didukung", "error");
+                return;
+            }
+
+            if (typeof uxShowLoader === "function") uxShowLoader("Memproses font...");
+
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const fontName = file.name.replace(/\.[^/.]+$/, "");
+
+                const fontFace = new FontFace(
+                    fontName,
+                    `url(${event.target.result})`
+                );
+
+                fontFace.load().then(function(loadedFont){
+                    document.fonts.add(loadedFont);
+
+                    let fonts = JSON.parse(localStorage.getItem("customPageFonts") || "[]");
+
+                    // Hindari duplikat
+                    if (!fonts.find(f => f.name === fontName)) {
+                        fonts.push({
+                            name: fontName,
+                            data: event.target.result
+                        });
+
+                        try {
+                            localStorage.setItem("customPageFonts", JSON.stringify(fonts));
+                        } catch(err) {
+                            if (typeof uxToast === "function") uxToast("Penyimpanan Browser Penuh!", "error");
+                            console.error("Storage full:", err);
+                        }
+                    }
+
+                    refreshPageFontDropdown();
+                    if (typeof uxToast === "function") uxToast("Font berhasil ditambahkan", "success");
+                }).catch(function(err){
+                    console.error("Gagal load font:", err);
+                    if (typeof uxToast === "function") uxToast("File font korup atau tidak valid", "error");
+                }).finally(() => {
+                    if (typeof uxHideLoader === "function") uxHideLoader();
+                    e.target.value = ''; // Reset uploader status
+                });
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // 2️⃣ REFRESH DROPDOWN FONT PAGE STYLE
+        function refreshPageFontDropdown() {
+            const select = document.getElementById("pageFontSelect");
+            if (!select) return;
+
+            const currentValue = select.value;
+            select.innerHTML = "";
+
+            // Default fonts
+            const defaultFonts = [
+                "Times New Roman",
+                "Arial",
+                "Calibri",
+                "Verdana",
+                "Tahoma",
+                "Courier New"
+            ];
+
+            defaultFonts.forEach(f => {
+                const opt = document.createElement("option");
+                opt.value = f;
+                opt.textContent = f;
+                select.appendChild(opt);
+            });
+
+            // Custom fonts
+            const customFonts = JSON.parse(localStorage.getItem("customPageFonts") || "[]");
+
+            customFonts.forEach(f => {
+                const opt = document.createElement("option");
+                opt.value = f.name;
+                opt.textContent = f.name + " (Custom)";
+                select.appendChild(opt);
+            });
+
+            // Restore previously selected value if it exists in options
+            if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
+                select.value = currentValue;
+            } else if (currentValue) {
+                const opt = document.createElement("option");
+                opt.value = currentValue;
+                opt.textContent = currentValue;
+                select.appendChild(opt);
+                select.value = currentValue;
+            }
+        }
+
+        // 3️⃣ AUTO LOAD FONT SAAT PAGE LOAD
+        document.addEventListener("DOMContentLoaded", function(){
+            const fonts = JSON.parse(localStorage.getItem("customPageFonts") || "[]");
+
+            fonts.forEach(f => {
+                const fontFace = new FontFace(
+                    f.name,
+                    `url(${f.data})`
+                );
+
+                fontFace.load().then(font => {
+                    document.fonts.add(font);
+                }).catch(e => console.error("Gagal load font custom:", f.name, e));
+            });
+
+            refreshPageFontDropdown();
+        });
     </script>
 </body>
 </html>
