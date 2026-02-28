@@ -945,7 +945,6 @@
 
         /* --- ADDITIVE ZOOM UI STYLES --- */
         .zoom-controls {
-            display: none !important; /* SEPENUHNYA DIHILANGKAN, DIGANTI GLOBAL UI CONTROLS */
             position: absolute;
             top: 15px;
             right: 15px;
@@ -1016,7 +1015,6 @@
 
         /* --- ADDITIVE: DUPLICATE UI STYLES --- */
         .duplicate-controls {
-            display: none !important; /* SEPENUHNYA DIHILANGKAN, DIGANTI GLOBAL UI CONTROLS */
             position: absolute;
             top: 15px;
             left: 15px;
@@ -2650,7 +2648,8 @@
                 // Visual Badge untuk Info Ukuran Kertas
                 if (!sheet.querySelector('.paper-size-badge')) {
                     const badge = document.createElement('div');
-                    badge.className = "paper-size-badge no-print-in-pdf";
+                    // ADDED: Class proteksi global agar tidak masuk ke page source
+                    badge.className = "paper-size-badge no-print-in-pdf no-doc-ui no-save no-export no-edit sheet-ui";
                     badge.innerText = `${page.paperSize.preset} (${w}×${h}mm)`;
                     sheet.appendChild(badge);
                 } else {
@@ -2765,26 +2764,74 @@
                     oldPageNum.remove();
                 }
 
-                // --- PERBAIKAN TOTAL: PEMBERSIHAN KONTROL LAMA BERSARANG ---
-                // Menghapus zoom & duplicate bawaan yang ada di dalam kertas agar tidak double dengan UI Global
-                sheet.querySelectorAll('.zoom-controls, .duplicate-controls').forEach(el => el.remove());
+                // --- PERBAIKAN: Bersihkan zoom controls lama jika tidak memiliki class zoom-value ---
+                const existingZoomCtrl = sheet.querySelector('.zoom-controls');
+                if (existingZoomCtrl && !existingZoomCtrl.querySelector('.zoom-value')) {
+                    existingZoomCtrl.remove();
+                }
 
-                // --- SINKRONISASI INDIKATOR ZOOM VISUAL (Dipertahankan untuk feedback layar) ---
+                // --- ADDITIVE: Injeksi UI Zoom Controls jika belum ada ---
+                if (!sheet.querySelector('.zoom-controls')) {
+                    const zoomCtrl = document.createElement('div');
+                    // ADDED: Class proteksi global agar tidak ter-save
+                    zoomCtrl.className = 'zoom-controls no-print-in-pdf no-doc-ui no-save no-export no-edit sheet-ui';
+                    zoomCtrl.innerHTML = `
+                        <button class="zoom-btn zoom-out-btn" onclick="handleZoomClick(this, 'out')" title="Zoom Out">➖</button>
+                        <button class="zoom-btn zoom-value" onclick="handleZoomClick(this, 'reset')" title="Reset 100%">100%</button>
+                        <button class="zoom-btn zoom-in-btn" onclick="handleZoomClick(this, 'in')" title="Zoom In">➕</button>
+                    `;
+                    sheet.appendChild(zoomCtrl);
+                }
+
+                // --- SINKRONISASI UI ZOOM CONTROLS ---
+                const activeMovable = sheet.querySelector('.layout-movable');
+                if (activeMovable) {
+                    const ls = parseFloat(activeMovable.getAttribute('data-scale')) || 1;
+                    const percent = Math.round(ls * 100);
+                    const zoomValueBtn = sheet.querySelector('.zoom-value');
+                    const outBtn = sheet.querySelector('.zoom-out-btn');
+                    const inBtn = sheet.querySelector('.zoom-in-btn');
+
+                    if (zoomValueBtn) {
+                        zoomValueBtn.innerText = percent + '%';
+                        zoomValueBtn.title = `Reset (Aktual: ${percent}%)`;
+                    }
+                    if (outBtn) outBtn.disabled = ls <= 0.5;
+                    if (inBtn) inBtn.disabled = ls >= 2.0;
+                }
+
+                // --- ADDITIVE: Injeksi Indikator Zoom ---
                 if (!sheet.querySelector('.zoom-indicator')) {
                     const zoomInd = document.createElement('div');
-                    zoomInd.className = 'zoom-indicator';
+                    // ADDED: Class proteksi global
+                    zoomInd.className = 'zoom-indicator no-doc-ui no-save no-export no-edit sheet-ui';
                     sheet.appendChild(zoomInd);
+                }
+
+                // --- ADDITIVE: Injeksi Duplicate Controls ---
+                if (!sheet.querySelector('.duplicate-controls')) {
+                    const dupCtrl = document.createElement('div');
+                    // ADDED: Class proteksi global
+                    dupCtrl.className = 'duplicate-controls no-print-in-pdf no-doc-ui no-save no-export no-edit sheet-ui';
+                    
+                    dupCtrl.innerHTML = `
+                        <button class="duplicate-btn-sheet" onclick="handleDuplicateSingle(${pageIndex})" title="Duplicate Halaman Ini (Ctrl+D)">
+                            <i class="ph ph-copy"></i> Duplicate
+                        </button>
+                    `;
+                    sheet.appendChild(dupCtrl);
+                } else {
+                    // Pastikan index update jika ada halaman yang dihapus/ditambah
+                    const dupCtrlBtn = sheet.querySelector('.duplicate-btn-sheet');
+                    if (dupCtrlBtn) {
+                        dupCtrlBtn.setAttribute('onclick', `handleDuplicateSingle(${pageIndex})`);
+                    }
                 }
 
                 container.appendChild(sheet);
             });
 
             updatePageNumbers();
-            
-            // Sinkronisasi Global UI Controls ke halaman yang sedang aktif dirender
-            if (typeof updateActiveSheet === 'function') {
-                updateActiveSheet();
-            }
 
             // AKTIVASI DRAG GAMBAR SAAT RENDER SELESAI
             if (typeof ImageManager !== 'undefined') {
@@ -3183,7 +3230,8 @@
         function activateEditMode(sheet) {
             sheet.classList.add('editing');
             const badge = document.createElement('div');
-            badge.className = 'edit-badge';
+            // ADDED: Class proteksi global agar tulisan 'EDITING MODE' tidak permanen
+            badge.className = 'edit-badge no-doc-ui no-save no-export no-edit sheet-ui';
             badge.innerText = '✏️ EDITING MODE';
             sheet.appendChild(badge);
 
@@ -4592,10 +4640,34 @@
                 // Sisipkan tag .landscape-marker agar renderPages() mendeteksinya setelah direload
                 if (!sheet.querySelector('.landscape-marker')) {
                     const marker = document.createElement('div');
-                    marker.className = 'landscape-marker';
+                    // ADDED: Proteksi Global
+                    marker.className = 'landscape-marker no-doc-ui no-save no-export no-edit sheet-ui';
                     marker.style.display = 'none';
                     sheet.insertBefore(marker, sheet.firstChild);
                 }
+            } else if (mode === 'portrait') {
+                sheet.classList.remove('landscape');
+                sheet.classList.add('portrait');
+
+                // Hilangkan marker jika ada
+                const markers = sheet.querySelectorAll('.landscape-marker');
+                markers.forEach(m => m.remove());
+            }
+
+            // Integrasi ke RawHTML khusus halaman embed agar marker tidak hilang
+            if (sheet.dataset.pageType === 'embed') {
+                const storage = sheet.querySelector('.raw-storage');
+                if (storage) {
+                    if (mode === 'landscape' && !storage.value.includes('landscape-marker')) {
+                         storage.value = '<div class="landscape-marker no-doc-ui no-save no-export no-edit sheet-ui" style="display:none;"></div>\n' + storage.value;
+                    } else if (mode === 'portrait') {
+                         storage.value = storage.value.replace(/<div class="landscape-marker.*?" style="display:none;"><\/div>\n?/g, '');
+                    }
+                    if (pagesDB[pageIndex]) pagesDB[pageIndex].rawHTML = storage.value;
+                }
+            } else {
+                 if (pagesDB[pageIndex]) pagesDB[pageIndex].html = cleanSheetForSave(sheet);
+            }
             } else if (mode === 'portrait') {
                 sheet.classList.remove('landscape');
                 sheet.classList.add('portrait');
@@ -5793,7 +5865,8 @@
             removeExistingToolbar();
 
             const toolbar = document.createElement('div');
-            toolbar.className = 'table-toolbar no-print-in-pdf';
+            // ADDED: Class proteksi global agar tabel tidak menyimpan tag toolbar secara permanen
+            toolbar.className = 'table-toolbar no-print-in-pdf no-doc-ui no-save no-export no-edit';
 
             toolbar.innerHTML = `
                 <button type="button" onclick="addTableRow()">
