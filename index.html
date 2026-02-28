@@ -945,6 +945,7 @@
 
         /* --- ADDITIVE ZOOM UI STYLES --- */
         .zoom-controls {
+            display: none !important; /* SEPENUHNYA DIHILANGKAN, DIGANTI GLOBAL UI CONTROLS */
             position: absolute;
             top: 15px;
             right: 15px;
@@ -1015,6 +1016,7 @@
 
         /* --- ADDITIVE: DUPLICATE UI STYLES --- */
         .duplicate-controls {
+            display: none !important; /* SEPENUHNYA DIHILANGKAN, DIGANTI GLOBAL UI CONTROLS */
             position: absolute;
             top: 15px;
             left: 15px;
@@ -2763,71 +2765,26 @@
                     oldPageNum.remove();
                 }
 
-                // --- PERBAIKAN: Bersihkan zoom controls lama jika tidak memiliki class zoom-value ---
-                const existingZoomCtrl = sheet.querySelector('.zoom-controls');
-                if (existingZoomCtrl && !existingZoomCtrl.querySelector('.zoom-value')) {
-                    existingZoomCtrl.remove();
-                }
+                // --- PERBAIKAN TOTAL: PEMBERSIHAN KONTROL LAMA BERSARANG ---
+                // Menghapus zoom & duplicate bawaan yang ada di dalam kertas agar tidak double dengan UI Global
+                sheet.querySelectorAll('.zoom-controls, .duplicate-controls').forEach(el => el.remove());
 
-                // --- ADDITIVE: Injeksi UI Zoom Controls jika belum ada ---
-                if (!sheet.querySelector('.zoom-controls')) {
-                    const zoomCtrl = document.createElement('div');
-                    zoomCtrl.className = 'zoom-controls no-print-in-pdf';
-                    zoomCtrl.innerHTML = `
-                        <button class="zoom-btn zoom-out-btn" onclick="handleZoomClick(this, 'out')" title="Zoom Out">➖</button>
-                        <button class="zoom-btn zoom-value" onclick="handleZoomClick(this, 'reset')" title="Reset 100%">100%</button>
-                        <button class="zoom-btn zoom-in-btn" onclick="handleZoomClick(this, 'in')" title="Zoom In">➕</button>
-                    `;
-                    sheet.appendChild(zoomCtrl);
-                }
-
-                // --- SINKRONISASI UI ZOOM CONTROLS ---
-                const activeMovable = sheet.querySelector('.layout-movable');
-                if (activeMovable) {
-                    const ls = parseFloat(activeMovable.getAttribute('data-scale')) || 1;
-                    const percent = Math.round(ls * 100);
-                    const zoomValueBtn = sheet.querySelector('.zoom-value');
-                    const outBtn = sheet.querySelector('.zoom-out-btn');
-                    const inBtn = sheet.querySelector('.zoom-in-btn');
-
-                    if (zoomValueBtn) {
-                        zoomValueBtn.innerText = percent + '%';
-                        zoomValueBtn.title = `Reset (Aktual: ${percent}%)`;
-                    }
-                    if (outBtn) outBtn.disabled = ls <= 0.5;
-                    if (inBtn) inBtn.disabled = ls >= 2.0;
-                }
-
-                // --- ADDITIVE: Injeksi Indikator Zoom ---
+                // --- SINKRONISASI INDIKATOR ZOOM VISUAL (Dipertahankan untuk feedback layar) ---
                 if (!sheet.querySelector('.zoom-indicator')) {
                     const zoomInd = document.createElement('div');
                     zoomInd.className = 'zoom-indicator';
                     sheet.appendChild(zoomInd);
                 }
 
-                // --- ADDITIVE: Injeksi Duplicate Controls ---
-                if (!sheet.querySelector('.duplicate-controls')) {
-                    const dupCtrl = document.createElement('div');
-                    dupCtrl.className = 'duplicate-controls no-print-in-pdf';
-                    
-                    dupCtrl.innerHTML = `
-                        <button class="duplicate-btn-sheet" onclick="handleDuplicateSingle(${pageIndex})" title="Duplicate Halaman Ini (Ctrl+D)">
-                            <i class="ph ph-copy"></i> Duplicate
-                        </button>
-                    `;
-                    sheet.appendChild(dupCtrl);
-                } else {
-                    // Pastikan index update jika ada halaman yang dihapus/ditambah
-                    const dupCtrlBtn = sheet.querySelector('.duplicate-btn-sheet');
-                    if (dupCtrlBtn) {
-                        dupCtrlBtn.setAttribute('onclick', `handleDuplicateSingle(${pageIndex})`);
-                    }
-                }
-
                 container.appendChild(sheet);
             });
 
             updatePageNumbers();
+            
+            // Sinkronisasi Global UI Controls ke halaman yang sedang aktif dirender
+            if (typeof updateActiveSheet === 'function') {
+                updateActiveSheet();
+            }
 
             // AKTIVASI DRAG GAMBAR SAAT RENDER SELESAI
             if (typeof ImageManager !== 'undefined') {
