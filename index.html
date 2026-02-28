@@ -15,6 +15,10 @@
     <!-- NEW: LIBRARY FOR WORD (DOCX) EXPORT -->
     <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
 
+    <!-- NEW: LIBRARIES FOR IMAGE CROPPER PRO -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
     <!-- PHOSPHOR ICONS (Premium Icons) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -1204,6 +1208,105 @@
     </style>
 
     <!-- =========================================
+         NEW: IMAGE PRO STYLES (ADDITIVE & UPGRADED)
+         ========================================= -->
+    <style id="image-pro-styles">
+        /* CSS Ditingkatkan untuk Cross-Page Dragging */
+        .image-wrapper-pro {
+            position: absolute !important;
+            display: inline-block;
+            cursor: move;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            z-index: 10;
+            transition: opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .image-wrapper-pro img {
+            width: 100%;
+            display: block;
+        }
+
+        .image-wrapper-pro.dragging {
+            opacity: 0.85;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            z-index: 9999 !important; /* Memastikan di atas semua elemen saat ditarik */
+        }
+
+        .image-pro-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            min-width: 50px;
+            min-height: 50px;
+            resize: both;
+            overflow: hidden;
+            border: 2px dashed #3b82f6;
+            padding: 4px;
+            background: #f8fafc;
+            line-height: 0;
+            box-sizing: border-box;
+        }
+
+        .image-pro-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            pointer-events: none; /* Cegah drag browser bawaan */
+        }
+
+        /* === LOCKED MODE === */
+        .image-wrapper-pro[data-locked="true"] {
+            cursor: default;
+        }
+        .image-wrapper-pro[data-locked="true"] .image-pro-container {
+            pointer-events: none;
+            resize: none !important;
+            border: none !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+
+        /* Context Menu Styles */
+        .img-context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 999999;
+            display: none;
+            flex-direction: column;
+            padding: 5px 0;
+            min-width: 200px;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn 0.15s ease;
+        }
+        .img-context-menu button {
+            background: transparent;
+            border: none;
+            padding: 10px 15px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        .img-context-menu button:hover { background: #f1f5f9; color: #0f172a; }
+        .img-context-menu button.danger { color: #ef4444; }
+        .img-context-menu button.danger:hover { background: #fee2e2; }
+
+        @media print {
+            .image-pro-container { border: none !important; resize: none !important; background: transparent !important; padding: 0 !important; }
+        }
+    </style>
+
+    <!-- =========================================
          NEW: TABLE PRO STYLES (ADDITIVE)
          ========================================= -->
     <style id="table-pro-styles">
@@ -1444,6 +1547,11 @@
                 <i class="ph ph-text-t"></i> 🅰️ Gaya Teks (Per Kata)
             </button>
 
+            <!-- NEW: BUTTON IMAGE PRO (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fdf2f8; color:#be185d; border-color:#fbcfe8;" onclick="openImageProModal()">
+                <i class="ph ph-image-square"></i> 🖼️ Image Insert Pro
+            </button>
+
             <!-- NEW: BUTTON TABLE BUILDER (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#f0fdfa; color:#047857; border-color:#a7f3d0;" onclick="openTableBuilder()">
                 <i class="ph ph-grid-nine"></i> 📊 Buat Tabel Otomatis
@@ -1525,7 +1633,7 @@
             <button class="btn btn-reset" onclick="handleResetAllPages()"><i class="ph ph-arrows-counter-clockwise"></i> Reset Semua Halaman</button>
             
             <p style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:20px;">
-                v10.0 Auto Flow | Multi-Duplicate | F4 Engine
+                v10.1 Auto Flow | F4 Engine | Image Pro
             </p>
         </aside>
 
@@ -1720,15 +1828,17 @@
     <!-- MODAL EMBED HTML SYSTEM (EXISTING - PRESERVED) -->
     <div id="embedModal" class="modal">
        <div class="modal-box" style="width: 600px; max-width: 90vw;">
-            <h3>Embed HTML Code</h3>
+            <h3><i class="ph ph-code" style="color:#3b82f6"></i> Embed HTML Code</h3>
             <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">
-                Tempel kode HTML Anda di bawah. Script tag akan dihapus otomatis demi keamanan.
+                Tempel kode HTML Anda di bawah. Akan dimasukkan ke posisi kursor Anda, atau ke halaman baru jika tidak ada area yang di-blok.
             </p>
 
             <textarea id="embedInput" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; font-size:12px; resize:vertical; outline:none;" placeholder="<!-- Paste your HTML here... -->&#10;<div>&#10;  <h1>Judul Dokumen</h1>&#10;  <p>Isi dokumen...</p>&#10;</div>"></textarea>
 
             <div class="modal-actions" style="margin-top: 20px;">
-                <button onclick="handleConfirmEmbed()" style="background: #10b981; color: white;">✅ Tambahkan Halaman</button>
+                <button onclick="insertEmbeddedHTML()" style="background: #3b82f6; color: white; display:flex; align-items:center; gap:6px;">
+                    <i class="ph ph-check-circle"></i> Tambahkan
+                </button>
                 <button onclick="closeEmbedModal()">Batal</button>
             </div>
        </div>
@@ -1783,6 +1893,33 @@
           <button onclick="closeDeleteTableModal()">Batal</button>
         </div>
       </div>
+    </div>
+
+    <!-- NEW MODAL: IMAGE INSERT PRO (DIRECT INSERT V3) -->
+    <div id="imageProModal" class="modal no-print-in-pdf">
+      <div class="modal-box" style="width: 450px; max-width: 90vw;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
+            <h3 style="margin:0;"><i class="ph ph-image-square" style="color:#be185d"></i> Image Direct Insert</h3>
+            <span style="font-size:0.8rem; background:#fce7f3; color:#9d174d; padding:4px 8px; border-radius:4px;"><i class="ph ph-lightning"></i> Fast Embed</span>
+        </div>
+        
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">URL Gambar Aman (HTTPS & Host Whitelisted)</label>
+        <input type="text" id="imgProUrl" placeholder="https://i.imghippo.com/..." style="width:100%; padding:10px; border-radius:6px; border:1px solid #cbd5e1; outline:none; margin-bottom:20px;">
+        
+        <div class="modal-actions">
+            <button onclick="ImageManager.previewAndInsert()" style="background:#3b82f6; color:white; display:flex; align-items:center; gap:6px;">
+                <i class="ph ph-plus-circle"></i> Insert Gambar
+            </button>
+            <button onclick="ImageManager.closeModal()">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTEXT MENU UNTUK GAMBAR -->
+    <div id="imageContextMenu" class="img-context-menu no-print-in-pdf">
+        <button id="ctxLockToggleBtn" onclick="ImageManager.toggleLock()"><i class="ph ph-lock-key"></i> Lock Gambar</button>
+        <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
+        <button onclick="ImageManager.delete()" class="danger"><i class="ph ph-trash"></i> Hapus Gambar</button>
     </div>
 
     <!-- NEW MODAL: TABLE BUILDER PRO (UPGRADED V2) -->
@@ -2507,6 +2644,15 @@
             });
 
             updatePageNumbers();
+
+            // AKTIVASI DRAG GAMBAR SAAT RENDER SELESAI
+            if (typeof ImageManager !== 'undefined') {
+                ImageManager.restore();
+            } else {
+                document.querySelectorAll('.image-wrapper-pro[data-locked="false"]').forEach(wrapper => {
+                    if(typeof enableImageDrag === 'function') enableImageDrag(wrapper);
+                });
+            }
         }
 
         // ================= AUTO SAVE ENGINE (DEBOUNCE) =================
@@ -2534,79 +2680,121 @@
             }
         });
 
-        // ================= NEW EMBED ARCHITECTURE (NO IFRAME) =================
+        // ================= EMBED HTML PRO ENGINE =================
 
-        // 1. SANITIZER: Membersihkan Script Berbahaya
-        function cleanHTML(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-
-            // Hapus tag berbahaya yang tidak boleh ada di dokumen cetak
-            const bannedTags = ['script', 'iframe', 'object', 'embed', 'form']; 
-            bannedTags.forEach(tag => {
-                doc.querySelectorAll(tag).forEach(el => el.remove());
-            });
-
-            // Hapus event handler inline (onclick, onmouseover, dll)
-            const allElements = doc.body.querySelectorAll('*');
-            allElements.forEach(el => {
-                Array.from(el.attributes).forEach(attr => {
-                    if (attr.name.startsWith('on')) {
-                        el.removeAttribute(attr.name);
-                    }
-                });
-            });
-
-            return doc.body.innerHTML;
-        }
-
-        // 2. CORE: ADD EMBED PAGE
-        function addEmbedPage(userHTML) {
-            if (!userHTML || userHTML.trim() === '') {
-                alert("Kode HTML tidak boleh kosong.");
-                return;
-            }
-
-            try {
-                // Step A: Sanitize
-                const safeContent = cleanHTML(userHTML);
-
-                // Step B: Create Page Object
-                const newPage = {
-                    id: Date.now() + "_" + Math.random().toString(36).substr(2, 5),
-                    type: 'embed',
-                    rawHTML: safeContent // Simpan Source Asli
-                };
-
-                // Step C: Update DB & Save
-                pagesDB.push(newPage);
+        const EmbedManager = {
+            sanitize: function(htmlString) {
+                if (!htmlString || typeof htmlString !== 'string') return "";
                 
-                // Force Update Storage (Single Source of Truth Logic)
-                // Kita update DB dulu, baru save, baru render.
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
 
-                // Step D: Render UI
-                renderPages();
-
-                // Step E: UX
-                setTimeout(() => {
-                    const newSheet = document.getElementById('document-area').lastElementChild;
-                    if(newSheet) {
-                        newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                }, 100);
-
-                if (window.innerWidth <= 1024) {
-                    sidebar.classList.remove('active');
+                if (doc.querySelector("parsererror")) {
+                    throw new Error("Struktur HTML tidak valid");
                 }
 
-            } catch (err) {
-                console.error(err);
-                alert("Gagal membuat halaman embed. Periksa kode HTML Anda.");
+                // Hapus tag berbahaya yang tidak boleh dieksekusi browser
+                const bannedTags = ['script', 'iframe', 'object', 'embed', 'form', 'style', 'meta', 'link']; 
+                bannedTags.forEach(tag => {
+                    doc.querySelectorAll(tag).forEach(el => el.remove());
+                });
+
+                // Hapus event handler inline (onclick, onmouseover, dll) & javascript: URL
+                doc.body.querySelectorAll('*').forEach(el => {
+                    Array.from(el.attributes).forEach(attr => {
+                        const name = attr.name.toLowerCase();
+                        const val = attr.value.toLowerCase();
+                        if (name.startsWith('on') || name.startsWith('mso-') || val.includes('javascript:')) {
+                            el.removeAttribute(attr.name);
+                        }
+                    });
+                });
+
+                return doc.body.innerHTML;
+            },
+
+            inject: function(safeHtml) {
+                // Bungkus menggunakan div dengan class embed-wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'embed-wrapper';
+                wrapper.innerHTML = safeHtml;
+
+                // Gunakan sistem Smart Insert dari Table Builder agar penempatan presisi
+                if (typeof insertElementSmartly === 'function') {
+                    insertElementSmartly(wrapper);
+                } else {
+                    // Fallback jika tidak ada fungsi smart insert
+                    const newSheet = createNewCustomSheet();
+                    newSheet.querySelector('.page-content').appendChild(wrapper);
+                    document.getElementById('document-area').appendChild(newSheet);
+                    
+                    pagesDB.push({
+                        id: newSheet.dataset.id,
+                        type: 'standard',
+                        html: newSheet.innerHTML,
+                        layoutX: 0, layoutY: 0, layoutScale: 1
+                    });
+                    
+                    setTimeout(() => {
+                        newSheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            },
+
+            insert: function() {
+                const textarea = document.getElementById('embedInput');
+                if (!textarea) return;
+
+                const code = textarea.value;
+
+                // 1. Validasi Kosong
+                if (!code || code.trim() === '') {
+                    if (typeof uxToast === 'function') uxToast("Kode HTML tidak boleh kosong", "warning");
+                    return;
+                }
+
+                try {
+                    // 2. Sanitasi HTML
+                    const safeContent = this.sanitize(code);
+                    
+                    if (!safeContent || safeContent.trim() === '') {
+                        if (typeof uxToast === 'function') uxToast("HTML tidak valid atau berisi script terlarang", "error");
+                        return;
+                    }
+
+                    // 3. Inject ke Dokumen
+                    this.inject(safeContent);
+
+                    // 4. Post-process (Save, Flow, Clear, Close, Toast)
+                    closeEmbedModal();
+                    textarea.value = ''; // Bersihkan input setelah berhasil
+                    
+                    if (typeof saveToStorage === 'function') saveToStorage();
+                    if (typeof pushHistoryState === 'function') pushHistoryState();
+
+                    if (typeof debouncedAutoFlow === 'function') {
+                        if (typeof uxShowLoader === 'function') uxShowLoader("Menyesuaikan tata letak...");
+                        setTimeout(() => {
+                            debouncedAutoFlow();
+                            if (typeof uxHideLoader === 'function') uxHideLoader();
+                        }, 500);
+                    }
+
+                    if (typeof uxToast === 'function') uxToast("HTML berhasil ditambahkan!", "success");
+
+                } catch (error) {
+                    console.error("Embed Execution Error:", error);
+                    if (typeof uxToast === 'function') uxToast("Terjadi kesalahan: " + error.message, "error");
+                }
             }
+        };
+
+        // Fungsi Utama Pemicu Tombol Insert
+        function insertEmbeddedHTML() {
+            EmbedManager.insert();
         }
 
-        // Embed Modal Handlers
+        // Embed Modal Handlers (Preserved UI Logic)
         function openEmbedModal() {
             document.getElementById('embedInput').value = ''; 
             document.getElementById('embedModal').style.display = 'flex';
@@ -2615,18 +2803,6 @@
 
         function closeEmbedModal() {
             document.getElementById('embedModal').style.display = 'none';
-        }
-
-        function confirmEmbed() {
-            const code = document.getElementById('embedInput').value;
-            
-            if(!code || code.trim().length < 5) {
-                alert("Kode HTML terlalu pendek.");
-                return;
-            }
-            
-            addEmbedPage(code);
-            closeEmbedModal();
         }
 
         // ================= MODIFIED SYSTEM CORE =================
@@ -3142,12 +3318,6 @@
             } catch(e) {
                 uxToast("Gagal menghapus", "error");
             }
-        }
-
-        // Wrapper for Embed Confirmation
-        function handleConfirmEmbed() {
-            confirmEmbed();
-            // Toasts handled inside validation logic or we can add here if successful
         }
 
         // Wrapper for Edit Mode
@@ -4873,10 +5043,13 @@
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
                 
+                // --- PENGECUALIAN UNTUK GAMBAR 'FLOAT' ENTERPRISE (TIDAK IKUT AUTOFLOW) ---
+                if (child.classList.contains('image-wrapper-pro') && child.getAttribute('data-overflow') === 'float') {
+                    continue; 
+                }
+
                 // Deteksi Manual Page Break
                 if (child.classList.contains('page-break') || window.getComputedStyle(child).pageBreakBefore === 'always') {
-                    // Jika elemen page break ini adalah elemen pertama di halaman, JANGAN dipotong, biarkan saja
-                    // (Menghindari Infinite Loop halaman kosong)
                     if (i > 0) {
                         breachIndex = i;
                         breachNode = child;
@@ -4887,13 +5060,19 @@
 
                 // Deteksi Overflow Bawah
                 const childRect = child.getBoundingClientRect();
-                // Relative Bottom = Jarak dari atas konten (sudah dinormalkan dari scale app zoom)
                 const relativeBottom = (childRect.bottom - sourceTop) / scaleApp;
 
                 if (relativeBottom > limitHeightPx) {
-                    // Jika node yang meluber ini adalah node PERTAMA di halaman,
-                    // dan tidak bisa dipecah (misal gambar / no-break), kita paksakan stay agar tidak infinite loop
                     if (i === 0 && (child.tagName === 'IMG' || child.classList.contains('no-break'))) {
+                        // Jika elemen pertama meluber, periksa apakah ini image-pro yang punya instruksi 'scale'
+                        if (child.classList.contains('image-wrapper-pro')) {
+                            const overflowMode = child.getAttribute('data-overflow-mode');
+                            if (overflowMode === 'scale') {
+                                breachIndex = i;
+                                breachNode = child;
+                                break;
+                            }
+                        }
                         continue; 
                     }
 
@@ -4905,6 +5084,34 @@
 
             // Jika tidak ada pelanggaran, halaman ini aman.
             if (breachIndex === -1) return false;
+
+            // --- AUTO FLOW UNTUK GAMBAR ABSOLUTE 'FLOW' ---
+            if (breachNode && breachNode.classList.contains('image-wrapper-pro')) {
+                // Karena position: absolute, saat pindah container Y-koordinatnya harus dikompensasi
+                let currentTop = parseFloat(breachNode.style.top) || 0;
+                if (currentTop > limitHeightPx) {
+                     breachNode.style.top = Math.max(0, currentTop - limitHeightPx) + "px";
+                }
+            }
+
+            // --- EKSEKUSI AUTO SCALE UNTUK GAMBAR LAMA (Mencegah pemindahan) ---
+            if (breachNode && breachNode.classList.contains('image-wrapper-pro') && breachNode.getAttribute('data-overflow-mode') === 'scale') {
+                const imgContainer = breachNode.querySelector('.image-pro-container');
+                if (imgContainer) {
+                    const childRect = breachNode.getBoundingClientRect();
+                    const relativeBottom = (childRect.bottom - sourceTop) / scaleApp;
+                    const overflowAmount = relativeBottom - limitHeightPx;
+                    
+                    const currentHeight = imgContainer.getBoundingClientRect().height / scaleApp;
+                    const newHeight = currentHeight - overflowAmount - 10; // 10px extra buffer
+                    
+                    if (newHeight > 30) { // Limit terkecil agar gambar tidak hilang
+                        imgContainer.style.height = newHeight + "px";
+                        imgContainer.style.width = "auto"; // Biarkan rasio menyesuaikan
+                        return true; // Flow teratasi dengan di-scale
+                    }
+                }
+            }
 
             // 2. KITA MENEMUKAN PELANGGARAN. SIAPKAN HALAMAN TARGET (HALAMAN BERIKUTNYA)
             let nextSheet = sheet.nextElementSibling;
@@ -7417,6 +7624,296 @@
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
         }
+    </script>
+
+    <!-- =========================================
+         32. NEW: IMAGE INSERT PRO ENGINE (CROSS-PAGE V3)
+         ========================================= -->
+    <script id="image-insert-pro-engine">
+        const ImageManager = {
+            activeImage: null,
+            whitelist: [
+                'imgur.com', 'i.imgur.com', 'imghippo.com', 'i.imghippo.com',
+                'ibb.co', 'i.ibb.co', 'googleusercontent.com', 'drive.google.com',
+                'cdn.discordapp.com', window.location.hostname
+            ],
+
+            isWhitelisted(urlString) {
+                try {
+                    const url = new URL(urlString);
+                    const hn = url.hostname.replace(/^www\./, '');
+                    return this.whitelist.some(d => hn === d || hn.endsWith('.' + d));
+                } catch(e) { return false; }
+            },
+
+            openModal() {
+                document.getElementById("imgProUrl").value = "";
+                document.getElementById("imageProModal").style.display = "flex";
+                setTimeout(() => document.getElementById("imgProUrl").focus(), 100);
+            },
+
+            closeModal() {
+                document.getElementById("imageProModal").style.display = "none";
+            },
+
+            previewAndInsert() {
+                const url = document.getElementById("imgProUrl").value.trim();
+                if (!url) { uxToast("URL tidak boleh kosong", "warning"); return; }
+                
+                if (url.startsWith('data:image')) {
+                    uxToast("Penggunaan Base64 langsung ditolak demi stabilitas. Gunakan URL hosting.", "error");
+                    return;
+                }
+                if (!url.startsWith('https://')) {
+                    uxToast("URL harus menggunakan protokol aman HTTPS", "error");
+                    return;
+                }
+                if (!this.isWhitelisted(url)) {
+                    uxToast("Domain Host ditolak! Gunakan Imgur, ImgHippo, atau host terpercaya.", "error");
+                    return;
+                }
+
+                this.insert(url);
+                this.closeModal();
+            },
+
+            insert(url) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "image-wrapper-pro";
+                wrapper.setAttribute("data-locked", "false");
+                wrapper.setAttribute("data-overflow", "float"); // Permanent float mode 
+                
+                // Dimensi dan Posisi Default
+                wrapper.style.width = "250px";
+                wrapper.style.left = "50px";
+                wrapper.style.top = "50px";
+
+                const container = document.createElement("div");
+                container.className = "image-pro-container";
+                container.setAttribute("contenteditable", "false"); 
+
+                const img = document.createElement("img");
+                img.src = url;
+                img.crossOrigin = "anonymous";
+                
+                container.appendChild(img);
+                wrapper.appendChild(container);
+
+                // Smartly insert into the current focused .page-content or the last page
+                if (typeof insertElementSmartly === 'function') {
+                    insertElementSmartly(wrapper);
+                    const parentContent = wrapper.closest(".page-content");
+                    if (parentContent && window.getComputedStyle(parentContent).position === "static") {
+                        parentContent.style.position = "relative";
+                    }
+                }
+
+                this.enableDrag(wrapper);
+                saveToStorage();
+                uxToast("Gambar di-insert. Anda bisa menariknya lintas halaman.", "success");
+            },
+
+            enableDrag(wrapper) {
+                if(wrapper.dataset.bound === "true") return;
+                wrapper.dataset.bound = "true";
+
+                let isDragging = false;
+                let startX, startY;
+                let origLeft, origTop;
+
+                wrapper.addEventListener("mousedown", (e) => {
+                    if (wrapper.getAttribute('data-locked') === "true") return;
+                    
+                    // Cegah drag jika target klik adalah pojok resizer container
+                    const container = wrapper.querySelector('.image-pro-container');
+                    if (container) {
+                        const rect = container.getBoundingClientRect();
+                        if (e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20) return;
+                    }
+
+                    isDragging = true;
+                    wrapper.classList.add("dragging");
+
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    origLeft = parseFloat(wrapper.style.left) || wrapper.offsetLeft;
+                    origTop = parseFloat(wrapper.style.top) || wrapper.offsetTop;
+
+                    document.addEventListener("mousemove", onMove);
+                    document.addEventListener("mouseup", stopDrag);
+                });
+
+                const onMove = (e) => {
+                    if(!isDragging) return;
+
+                    let scaleApp = 1;
+                    const sheet = wrapper.closest('.sheet');
+                    if(sheet) {
+                        const matrix = new DOMMatrixReadOnly(window.getComputedStyle(sheet).transform);
+                        if (matrix.a !== 1) scaleApp = matrix.a;
+                    }
+
+                    const dx = (e.clientX - startX) / scaleApp;
+                    const dy = (e.clientY - startY) / scaleApp;
+
+                    // Bebas melewati margin karena tidak ada boundary logic
+                    wrapper.style.left = (origLeft + dx) + "px";
+                    wrapper.style.top = (origTop + dy) + "px";
+                };
+
+                const stopDrag = (e) => {
+                    if(!isDragging) return;
+                    isDragging = false;
+                    wrapper.classList.remove("dragging");
+
+                    document.removeEventListener("mousemove", onMove);
+                    document.removeEventListener("mouseup", stopDrag);
+                    
+                    // Picu logika pemindahan antar halaman
+                    ImageManager.moveBetweenSheets(wrapper, e.clientX, e.clientY);
+                };
+            },
+
+            moveBetweenSheets(wrapper, mouseX, mouseY) {
+                const targetSheet = this.detectTargetSheet(mouseX, mouseY, wrapper);
+                const currentSheet = wrapper.closest('.sheet');
+
+                if (targetSheet && targetSheet !== currentSheet) {
+                    this.recalculatePosition(wrapper, targetSheet);
+                    uxToast("Gambar dipindah ke halaman lain", "info");
+                }
+
+                saveToStorage();
+                
+                // Mencegah AutoFlow bergerak karena mode gambar = "float"
+                if (wrapper.getAttribute('data-overflow') !== 'float' && typeof debouncedAutoFlow === 'function') {
+                    debouncedAutoFlow();
+                }
+            },
+
+            detectTargetSheet(x, y, wrapper) {
+                // Sembunyikan gambar sementara agar elementFromPoint dapat mengenai elemen di bawahnya (.sheet)
+                const originalDisplay = wrapper.style.display;
+                wrapper.style.display = 'none';
+
+                const elem = document.elementFromPoint(x, y);
+
+                // Tampilkan kembali gambar
+                wrapper.style.display = originalDisplay;
+
+                if (elem) {
+                    return elem.closest('.sheet');
+                }
+                return null;
+            },
+
+            recalculatePosition(wrapper, targetSheet) {
+                // Ambil ukuran & posisi asli wrapper di layar sebelum dipindah
+                const wrapperRect = wrapper.getBoundingClientRect();
+                
+                let targetContent = targetSheet.querySelector('.layout-movable .page-content') || targetSheet.querySelector('.page-content');
+                if (!targetContent) return;
+
+                if (window.getComputedStyle(targetContent).position === "static") {
+                    targetContent.style.position = "relative";
+                }
+
+                // Ambil posisi kontainer target di layar
+                const targetRect = targetContent.getBoundingClientRect();
+
+                // Dapatkan rasio zoom target (skala aplikasi)
+                let scaleApp = 1;
+                const matrix = new DOMMatrixReadOnly(window.getComputedStyle(targetSheet).transform);
+                if (matrix.a !== 1) scaleApp = matrix.a;
+
+                // Hitung koordinat X dan Y baru relatif terhadap konten halaman baru
+                let newLeft = (wrapperRect.left - targetRect.left) / scaleApp;
+                let newTop = (wrapperRect.top - targetRect.top) / scaleApp;
+
+                // Reparent node ke halaman baru
+                targetContent.appendChild(wrapper);
+
+                // Set posisi baru agar gambar diam di tempat secara visual
+                wrapper.style.left = newLeft + "px";
+                wrapper.style.top = newTop + "px";
+            },
+
+            toggleLock() {
+                if (!this.activeImage) return;
+                const isLocked = this.activeImage.getAttribute('data-locked') === "true";
+                
+                if (isLocked) {
+                    this.activeImage.setAttribute('data-locked', "false");
+                    this.activeImage.classList.remove("image-locked");
+                    uxToast("Gambar di-unlock. Bisa di-drag & resize.", "success");
+                } else {
+                    this.activeImage.setAttribute('data-locked', "true");
+                    this.activeImage.classList.add("image-locked");
+                    uxToast("Posisi & Ukuran gambar dikunci.", "success");
+                }
+                
+                saveToStorage();
+            },
+
+            delete() {
+                if (!this.activeImage) return;
+                this.activeImage.style.opacity = "0";
+                setTimeout(() => {
+                    this.activeImage.remove();
+                    this.activeImage = null;
+                    saveToStorage();
+                    uxToast("Gambar dihapus.", "info");
+                }, 200);
+            },
+
+            restore() {
+                // Dipanggil saat selesai renderPages untuk menempelkan kembali drag event
+                document.querySelectorAll('.image-wrapper-pro').forEach(w => {
+                    w.dataset.bound = "false";
+                    this.enableDrag(w);
+                });
+            }
+        };
+
+        // UI Proxy (Mempertahankan fungsionalitas tombol sidebar tanpa memecah tag)
+        function openImageProModal() { ImageManager.openModal(); }
+
+        // Global Context Menu Binding
+        document.addEventListener("contextmenu", function(e) {
+            const wrapper = e.target.closest('.image-wrapper-pro');
+            const menu = document.getElementById("imageContextMenu");
+            
+            if (wrapper) {
+                e.preventDefault(); 
+                ImageManager.activeImage = wrapper;
+                
+                // Ganti UI Tombol Context Menu dinamis bergantung status Lock
+                const isLocked = wrapper.getAttribute('data-locked') === "true";
+                document.getElementById('ctxLockToggleBtn').innerHTML = isLocked 
+                    ? '<i class="ph ph-lock-open"></i> Unlock & Resize' 
+                    : '<i class="ph ph-lock-key"></i> Lock Gambar';
+
+                menu.style.display = "flex";
+                
+                let x = e.clientX;
+                let y = e.clientY;
+                if (x + 200 > window.innerWidth) x -= 200;
+                if (y + 150 > window.innerHeight) y -= 150;
+                
+                menu.style.left = x + "px";
+                menu.style.top = y + "px";
+            } else {
+                if (menu) menu.style.display = "none";
+                ImageManager.activeImage = null;
+            }
+        });
+
+        document.addEventListener("click", function(e) {
+            const menu = document.getElementById("imageContextMenu");
+            if (menu && menu.style.display === "flex") {
+                menu.style.display = "none";
+            }
+        });
     </script>
 </body>
 </html>
