@@ -1369,6 +1369,135 @@
     </style>
 
     <!-- =========================================
+         NEW: HEADER & FOOTER STYLES (UPGRADED)
+         ========================================= -->
+    <style id="header-footer-styles">
+        /* * STRUKTUR PRESISI & OVERFLOW PROTECTION:
+         * Header & Footer dikunci mutlak di dalam area Margin.
+         * Tidak akan pernah menabrak .page-content.
+         */
+        .page-header, .page-footer {
+            position: absolute;
+            left: var(--m-left, 20mm);
+            right: var(--m-right, 20mm);
+            z-index: 40;
+            cursor: pointer;
+            border: 1px dashed transparent;
+            transition: all 0.2s ease;
+            font-family: "Times New Roman", Times, serif;
+            color: #000;
+            overflow: hidden; /* PROTEKSI: Mencegah tabrakan dengan teks utama */
+            display: flex;
+            flex-direction: column;
+            word-wrap: break-word;
+        }
+
+        .page-header {
+            top: 0;
+            height: var(--m-top, 20mm);
+            padding-top: 8mm; /* Jarak dari ujung atas kertas */
+            justify-content: flex-start;
+        }
+
+        .page-footer {
+            bottom: 0;
+            height: var(--m-bottom, 20mm);
+            padding-bottom: 8mm; /* Jarak dari ujung bawah kertas */
+            justify-content: flex-end;
+        }
+
+        /* Mode Inaktif: transparansi standar saat diedit */
+        body.hf-editing .sheet:not(.hf-active) {
+            opacity: 0.5;
+        }
+
+        body.hf-editing .sheet.hf-active .layout-stage {
+            opacity: 0.3;
+            pointer-events: none; /* Kunci konten utama saat edit HF */
+        }
+
+        /* HIGHLIGHT VISUAL SAAT EDIT */
+        body.hf-editing .page-header, 
+        body.hf-editing .page-footer {
+            border: 1px dashed #94a3b8;
+            background: rgba(241, 245, 249, 0.4);
+            z-index: 100;
+        }
+
+        body.hf-editing .page-header.active, 
+        body.hf-editing .page-footer.active {
+            border: 2px dashed #3b82f6;
+            background: rgba(239, 246, 255, 0.9);
+            cursor: text;
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
+            overflow: visible; /* Izinkan scroll/lihat penuh saat sedang diedit jika kepanjangan */
+        }
+
+        /* PERINGATAN OVERFLOW TINGGI */
+        .hf-overflow-warning {
+            border-bottom: 2px dashed #ef4444 !important;
+            background: rgba(254, 226, 226, 0.5) !important;
+        }
+
+        /* Field Dinamis */
+        .hf-field {
+            background: #e2e8f0;
+            padding: 0 4px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+            user-select: none;
+            color: #0f172a;
+            display: inline-block;
+        }
+        
+        @media print {
+            .page-header, .page-footer { border: none !important; background: transparent !important; overflow: hidden !important; }
+            .hf-field { background: transparent !important; padding: 0 !important; font-family: inherit !important; font-size: inherit !important; color: inherit !important; display: inline !important; }
+            .hf-overflow-warning { border-bottom: none !important; background: transparent !important; }
+        }
+
+        /* Floating Toolbar untuk Header Footer */
+        .hf-toolbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: none;
+            gap: 10px;
+            z-index: 100000;
+            align-items: center;
+            border: 1px solid #cbd5e1;
+            animation: slideDown 0.3s ease;
+        }
+        .hf-toolbar.active { display: flex; }
+        
+        .hf-toolbar button {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .hf-toolbar button:hover { background: #e2e8f0; }
+        .hf-toolbar button.primary { background: #3b82f6; color: white; border-color: #2563eb; }
+        .hf-toolbar button.primary:hover { background: #2563eb; }
+        .hf-toolbar button.success { background: #10b981; color: white; border-color: #059669; }
+        .hf-toolbar button.success:hover { background: #059669; }
+    </style>
+
+    <!-- =========================================
          NEW: FIND & REPLACE STYLES (ADDITIVE)
          ========================================= -->
     <style id="find-replace-styles">
@@ -1540,6 +1669,11 @@
             <!-- NEW: BUTTON PAGE STYLE INSPECTOR (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#f0fdf4; color:#15803d; border-color:#bbf7d0;" onclick="openPageStyleModal()">
                 <i class="ph ph-paint-brush"></i> 🎨 Gaya & Tipografi Halaman
+            </button>
+
+            <!-- NEW: BUTTON HEADER & FOOTER (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#f1f5f9; color:#0f172a; border-color:#cbd5e1;" onclick="uxToast('Klik ganda (Double-Click) di area paling atas atau paling bawah dokumen untuk mengedit Header & Footer.', 'info')">
+                <i class="ph ph-text-align-top"></i> 📄 Edit Header & Footer
             </button>
 
             <!-- NEW: BUTTON TEXT STYLE INSPECTOR (ADDITIVE) -->
@@ -1891,6 +2025,29 @@
         <div class="modal-actions">
           <button onclick="confirmDeleteTable()" style="background:#ef4444; color:white;">🗑️ Ekstrak Tabel</button>
           <button onclick="closeDeleteTableModal()">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW MODAL: HEADER FOOTER SETTINGS -->
+    <div id="hfSettingsModal" class="modal no-print-in-pdf">
+      <div class="modal-box">
+        <h3><i class="ph ph-gear" style="color:#475569"></i> Opsi Header & Footer</h3>
+        <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Atur preferensi spesifik untuk dokumen ini.</p>
+        
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer;">
+            <input type="checkbox" id="hfSettingFirstPage"> 
+            <span style="font-size: 0.9rem;">Beda di Halaman Pertama (Different First Page)</span>
+        </label>
+        
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer;">
+            <input type="checkbox" id="hfSettingOddEven"> 
+            <span style="font-size: 0.9rem;">Beda di Halaman Ganjil & Genap (Different Odd/Even)</span>
+        </label>
+
+        <div class="modal-actions">
+          <button onclick="HeaderFooterManager.handleOptions()" style="background:#3b82f6; color:white;">💾 Simpan Opsi</button>
+          <button onclick="document.getElementById('hfSettingsModal').style.display='none'">Batal</button>
         </div>
       </div>
     </div>
@@ -2336,6 +2493,12 @@
                     color: sheet.getAttribute('data-style-color') || ''
                 };
 
+                // NEW: Ekstrak Header & Footer
+                const headerNode = sheet.querySelector('.page-header');
+                const footerNode = sheet.querySelector('.page-footer');
+                const hHtml = headerNode ? headerNode.innerHTML : '';
+                const fHtml = footerNode ? footerNode.innerHTML : '';
+
                 if (isEmbed) {
                     // UNTUK EMBED: JANGAN ambil innerHTML (karena itu hasil render)
                     // Ambil dari hidden textarea yang kita tanam saat renderPages()
@@ -2350,7 +2513,9 @@
                         orientation: orientationStr,
                         paperSize: paperSize, // Additive injection
                         margin: marginObj, // Additive injection
-                        pageStyle: pageStyleObj // Additive injection
+                        pageStyle: pageStyleObj, // Additive injection
+                        headerHtml: hHtml,
+                        footerHtml: fHtml
                     };
                 } else {
                     // UNTUK STANDARD: Ambil innerHTML karena user mengedit langsung di DOM
@@ -2364,7 +2529,9 @@
                         orientation: orientationStr,
                         paperSize: paperSize, // Additive injection
                         margin: marginObj, // Additive injection
-                        pageStyle: pageStyleObj // Additive injection
+                        pageStyle: pageStyleObj, // Additive injection
+                        headerHtml: hHtml,
+                        footerHtml: fHtml
                     };
                 }
             });
@@ -2540,7 +2707,7 @@
                         movable.className = 'layout-movable';
                         
                         // Kita memindahkan anak DOM lama yang bukan elemen sistem operasi aplikasi (page number, marker)
-                        const systemClasses = ['page-number', 'edit-badge', 'raw-storage', 'landscape-marker', 'zoom-controls', 'zoom-indicator', 'duplicate-controls'];
+                        const systemClasses = ['page-header', 'page-footer', 'page-number', 'edit-badge', 'raw-storage', 'landscape-marker', 'zoom-controls', 'zoom-indicator', 'duplicate-controls'];
                         const childrenToMove = [];
                         Array.from(sheet.children).forEach(child => {
                             if (child.tagName !== 'TEXTAREA' || !child.classList.contains('raw-storage')) {
@@ -2572,11 +2739,28 @@
                 }
 
                 // B. SYSTEM COMPONENTS (Jika belum ada)
-                // Cek apakah page number sudah ada
-                if (!sheet.querySelector('.page-number')) {
-                    const pageNum = document.createElement('div');
-                    pageNum.className = 'page-number';
-                    sheet.appendChild(pageNum);
+                // --- NEW: HEADER & FOOTER SYSTEM ---
+                let header = sheet.querySelector('.page-header');
+                if (!header) {
+                    header = document.createElement('div');
+                    header.className = 'page-header';
+                    header.innerHTML = page.headerHtml || '';
+                    sheet.appendChild(header);
+                }
+
+                let footer = sheet.querySelector('.page-footer');
+                if (!footer) {
+                    footer = document.createElement('div');
+                    footer.className = 'page-footer';
+                    // Jika tidak ada data tersimpan, beri default page number tag
+                    footer.innerHTML = page.footerHtml !== undefined ? page.footerHtml : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>';
+                    sheet.appendChild(footer);
+                }
+
+                // Cek apakah page number lawas sudah ada, HAPUS KARENA SUDAH DIGANTI FOOTER
+                const oldPageNum = sheet.querySelector('.page-number');
+                if (oldPageNum) {
+                    oldPageNum.remove();
                 }
 
                 // --- PERBAIKAN: Bersihkan zoom controls lama jika tidak memiliki class zoom-value ---
@@ -2999,10 +3183,14 @@
         }
 
         function updatePageNumbers() {
-            const pages = document.querySelectorAll('.page-number');
-            pages.forEach((el, index) => {
-                el.innerText = `- ${index + 1} -`;
-            });
+            if (typeof HeaderFooterManager !== 'undefined' && typeof HeaderFooterManager.updateDynamicFields === 'function') {
+                HeaderFooterManager.updateDynamicFields();
+            } else {
+                const pages = document.querySelectorAll('.page-number');
+                pages.forEach((el, index) => {
+                    el.innerText = `- ${index + 1} -`;
+                });
+            }
         }
 
         function triggerUpload(el) { el.querySelector('input').click(); }
@@ -3909,13 +4097,22 @@
                     div.style.transform = 'none';
                 });
 
-                // --- TAMBAHKAN NOMOR HALAMAN MANUALLY ---
-                const pageNumDiv = document.createElement('div');
-                pageNumDiv.style.textAlign = 'center';
-                pageNumDiv.style.fontSize = '9pt';
-                pageNumDiv.style.marginTop = '20px';
-                pageNumDiv.innerText = `- ${index + 1} -`;
-                clone.appendChild(pageNumDiv);
+                // --- WORD EXPORT FIX UNTUK HEADER & FOOTER ---
+                // Pindahkan header ke paling atas struktur, hilangkan absolute position
+                const header = clone.querySelector('.page-header');
+                const footer = clone.querySelector('.page-footer');
+                const stage = clone.querySelector('.layout-stage');
+                
+                if (header) {
+                    header.style.position = 'static';
+                    header.style.marginBottom = '20px';
+                    if(stage) clone.insertBefore(header, stage);
+                }
+                if (footer) {
+                    footer.style.position = 'static';
+                    footer.style.marginTop = '20px';
+                    if(stage) clone.appendChild(footer);
+                }
 
                 // ADDITIVE: Dinamiskan @page style untuk Word berdasarkan Paper Size halaman ini
                 const pageData = pagesDB[index] || {};
@@ -4751,7 +4948,9 @@
                 orientation: original.orientation,
                 paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
                 margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 }, // Additive property clone
-                pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined // Additive property clone
+                pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined, // Additive property clone
+                headerHtml: original.headerHtml || '',
+                footerHtml: original.footerHtml || ''
             };
 
             // Insert tepat setelah halaman yang di-duplicate
@@ -4885,7 +5084,9 @@
                             orientation: original.orientation,
                             paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
                             margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 }, // Additive property clone
-                            pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined // Additive property clone
+                            pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined, // Additive property clone
+                            headerHtml: original.headerHtml || '',
+                            footerHtml: original.footerHtml || ''
                         });
                     }
                 });
@@ -5141,7 +5342,9 @@
                     type: 'standard',
                     html: nextSheet.innerHTML,
                     layoutX: 0, layoutY: 0, layoutScale: 1,
-                    orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait'
+                    orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait',
+                    headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
+                    footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                 };
                 pagesDB.splice(currentIndex + 1, 0, newPageObj);
             }
@@ -5678,11 +5881,18 @@
             
             movable.appendChild(content);
             stage.appendChild(movable);
-            sheet.appendChild(stage);
+
+            // Injeksi Elemen Header & Footer secara default
+            const header = document.createElement('div');
+            header.className = 'page-header';
             
-            const pageNum = document.createElement('div');
-            pageNum.className = 'page-number';
-            sheet.appendChild(pageNum);
+            const footer = document.createElement('div');
+            footer.className = 'page-footer';
+            footer.innerHTML = '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>';
+            
+            sheet.appendChild(header);
+            sheet.appendChild(stage);
+            sheet.appendChild(footer);
 
             return sheet;
         }
@@ -5737,7 +5947,9 @@
                             right: parseFloat(sheet.getAttribute('data-margin-right')) || 20,
                             bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
                             left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
-                        }
+                        },
+                        headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
+                        footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                     }
                 );
             }
@@ -6948,7 +7160,9 @@
                             right: parseFloat(sheet.getAttribute('data-margin-right')) || 20,
                             bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
                             left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
-                        }
+                        },
+                        headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
+                        footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                     }
                 );
             }
@@ -7146,7 +7360,9 @@
                                 right: parseFloat(sheet.getAttribute('data-margin-right')) || 20,
                                 bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
                                 left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
-                            }
+                            },
+                            headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
+                            footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                         }
                     );
                 }
@@ -7913,6 +8129,264 @@
             if (menu && menu.style.display === "flex") {
                 menu.style.display = "none";
             }
+        });
+    </script>
+
+    <!-- =========================================
+         33. HEADER & FOOTER ENGINE (UPGRADED MODULAR V4)
+         ========================================= -->
+    <script id="header-footer-engine">
+        const HeaderFooterManager = {
+            activeElement: null,
+            settings: {
+                differentFirstPage: false,
+                differentOddEven: false
+            },
+
+            init() {
+                // 1. Muat pengaturan persisten jika ada
+                const savedSettings = localStorage.getItem('school_hf_settings');
+                if (savedSettings) {
+                    try { this.settings = JSON.parse(savedSettings); } catch(e) {}
+                }
+
+                // 2. Event Listener: Double Click untuk Edit
+                document.addEventListener('dblclick', (e) => {
+                    if (document.body.classList.contains('layout-drag-mode')) return;
+                    const hf = e.target.closest('.page-header, .page-footer');
+                    if (hf) {
+                        e.preventDefault();
+                        this.toggleEditMode(hf, true);
+                    }
+                });
+
+                // 3. Event Listener: Auto Lock saat klik di luar
+                document.addEventListener('click', (e) => {
+                    if (document.body.classList.contains('hf-editing')) {
+                        if (!e.target.closest('.page-header, .page-footer') && 
+                            !e.target.closest('.hf-toolbar') && 
+                            !e.target.closest('#hfSettingsModal')) {
+                            this.toggleEditMode(null, false);
+                        }
+                    }
+                });
+
+                // 4. Injeksi Toolbar UI secara dinamis
+                const toolbar = document.createElement('div');
+                toolbar.className = 'hf-toolbar no-print-in-pdf';
+                toolbar.id = 'hfToolbar';
+                toolbar.innerHTML = `
+                    <span style="font-weight:bold; color:#0f172a; margin-right:10px;"><i class="ph ph-text-align-top"></i> HF Editor</span>
+                    <button onclick="HeaderFooterManager.insertField('pageNumber')">{ Hal }</button>
+                    <button onclick="HeaderFooterManager.insertField('totalPages')">{ Total }</button>
+                    <button onclick="HeaderFooterManager.insertField('date')">{ Tgl }</button>
+                    <button onclick="HeaderFooterManager.insertField('time')">{ Waktu }</button>
+                    <div style="width:1px; height:20px; background:#cbd5e1; margin:0 5px;"></div>
+                    <button class="primary" onclick="HeaderFooterManager.applyToAll()"><i class="ph ph-copy"></i> Terapkan ke Semua</button>
+                    <button onclick="HeaderFooterManager.openSettings()"><i class="ph ph-gear"></i> Opsi</button>
+                    <button class="success" onclick="HeaderFooterManager.toggleEditMode(null, false)"><i class="ph ph-lock-key"></i> Selesai</button>
+                `;
+                document.body.appendChild(toolbar);
+
+                // 5. Eksekusi Restore & Sinkronisasi
+                this.restore();
+            },
+
+            toggleEditMode(element, isActivating) {
+                // Proses Deaktivasi
+                if (!isActivating || !element) {
+                    if (this.activeElement) {
+                        this.activeElement.classList.remove('active');
+                        this.activeElement.removeAttribute('contenteditable');
+                        const oldSheet = this.activeElement.closest('.sheet');
+                        if (oldSheet) oldSheet.classList.remove('hf-active');
+                    }
+                    
+                    document.body.classList.remove('hf-editing');
+                    this.activeElement = null;
+                    document.getElementById('hfToolbar').classList.remove('active');
+                    
+                    this.updateDynamicFields(); 
+                    if (typeof saveToStorage === "function") saveToStorage();
+                    return;
+                }
+
+                // Proses Aktivasi
+                this.toggleEditMode(null, false); // Bersihkan sisa state lama
+                
+                document.body.classList.add('hf-editing');
+                const sheet = element.closest('.sheet');
+                sheet.classList.add('hf-active');
+                
+                element.classList.add('active');
+                element.setAttribute('contenteditable', 'true');
+                element.focus();
+
+                this.activeElement = element;
+                document.getElementById('hfToolbar').classList.add('active');
+                
+                this.checkOverflowHeight(element);
+                if(typeof uxToast === "function") uxToast("Mode Edit Header & Footer", "info");
+            },
+
+            checkOverflowHeight(element) {
+                // Proteksi overflow visual agar user sadar teks terpotong
+                const isHeader = element.classList.contains('page-header');
+                const marginVal = isHeader 
+                    ? parseFloat(element.closest('.sheet').style.getPropertyValue('--m-top')) || 20 
+                    : parseFloat(element.closest('.sheet').style.getPropertyValue('--m-bottom')) || 20;
+                
+                // Tinggi aktual konten vs Tinggi maksimal area margin
+                if (element.scrollHeight > (marginVal * 3.78) + 5) { // mm to px rough calc
+                    element.classList.add('hf-overflow-warning');
+                    if(typeof uxToast === "function") uxToast("Peringatan: Teks Header/Footer terlalu tinggi dan mungkin terpotong.", "warning");
+                } else {
+                    element.classList.remove('hf-overflow-warning');
+                }
+            },
+
+            insertField(fieldType) {
+                if (!this.activeElement) return;
+                
+                // Render field dinamis dengan keamanan `contenteditable=false`
+                const span = document.createElement('span');
+                span.className = 'hf-field no-break';
+                span.setAttribute('data-field', fieldType);
+                span.setAttribute('contenteditable', 'false');
+                span.innerText = `{${fieldType}}`;
+
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    // Pastikan di dalam elemen yang aktif agar tidak bocor ke konten utama
+                    if (this.activeElement.contains(range.commonAncestorContainer)) {
+                        range.deleteContents();
+                        range.insertNode(span);
+                        range.setStartAfter(span);
+                        range.setEndAfter(span);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    } else {
+                        this.activeElement.appendChild(span);
+                    }
+                } else {
+                    this.activeElement.appendChild(span);
+                }
+
+                this.updateDynamicFields(); // Terjemahkan seketika
+                this.checkOverflowHeight(this.activeElement);
+            },
+
+            applyToAll() {
+                if (!this.activeElement) return;
+                
+                const isHeader = this.activeElement.classList.contains('page-header');
+                const htmlToCopy = this.activeElement.innerHTML;
+                const sourceSheet = this.activeElement.closest('.sheet');
+                const sheets = document.querySelectorAll('.sheet');
+                const sourceIndex = Array.from(sheets).indexOf(sourceSheet);
+                
+                let appliedCount = 0;
+
+                sheets.forEach((sheet, index) => {
+                    if (sheet === sourceSheet) return; // Lewati sumber asal
+
+                    // OPSI 1: Different First Page Logic
+                    if (this.settings.differentFirstPage) {
+                        if (index === 0) return; // Jangan pernah terapkan ke Hal 1 jika diset berbeda
+                        if (sourceIndex === 0) return; // Jika sumber dari Hal 1, jangan sebar ke yang lain
+                    }
+                    
+                    // OPSI 2: Different Odd/Even Logic
+                    if (this.settings.differentOddEven) {
+                        const isEven = (index + 1) % 2 === 0;
+                        const sourceIsEven = (sourceIndex + 1) % 2 === 0;
+                        if (isEven !== sourceIsEven) return; // Harus sama ganjil/genap
+                    }
+
+                    this.applyToPage(index, htmlToCopy, isHeader);
+                    appliedCount++;
+                });
+
+                this.updateDynamicFields();
+                if (typeof saveToStorage === "function") saveToStorage();
+                
+                // Feedback informatif
+                if (appliedCount === 0 && this.settings.differentFirstPage && sourceIndex === 0) {
+                    if(typeof uxToast === "function") uxToast("Halaman 1 berbeda. Pengaturan ini tidak disebar ke halaman lain.", "info");
+                } else {
+                    if(typeof uxToast === "function") uxToast(`Berhasil disinkronisasi ke ${appliedCount} halaman`, "success");
+                }
+            },
+
+            applyToPage(index, html, isHeader) {
+                const sheet = document.querySelectorAll('.sheet')[index];
+                if (!sheet) return;
+                
+                const target = isHeader ? sheet.querySelector('.page-header') : sheet.querySelector('.page-footer');
+                if (target) {
+                    target.innerHTML = html;
+                }
+            },
+
+            updateDynamicFields() {
+                const sheets = document.querySelectorAll('.sheet');
+                const total = sheets.length;
+                
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const docTitle = document.title.split('-')[0].trim() || 'Dokumen';
+
+                sheets.forEach((sheet, index) => {
+                    const fields = sheet.querySelectorAll('.hf-field');
+                    fields.forEach(field => {
+                        const type = field.getAttribute('data-field');
+                        // Kunci keras atribut agar tidak terganggu saat pengguna mengetik sekitar field
+                        field.setAttribute('contenteditable', 'false'); 
+                        
+                        switch (type) {
+                            case 'pageNumber': field.innerText = index + 1; break;
+                            case 'totalPages': field.innerText = total; break;
+                            case 'date': field.innerText = dateStr; break;
+                            case 'time': field.innerText = timeStr; break;
+                            case 'documentTitle': field.innerText = docTitle; break;
+                        }
+                    });
+                });
+            },
+
+            syncWithMargins() {
+                // Sinkronisasi tinggi dan posisi otomatis tertangani melalui warisan variabel 
+                // lokal CSS (--m-top, --m-bottom) yang dikelola oleh Margin Logic utama.
+                // Fungsi ini dipanggil untuk antisipasi hook di masa mendatang.
+            },
+
+            handleOptions() {
+                this.settings.differentFirstPage = document.getElementById('hfSettingFirstPage').checked;
+                this.settings.differentOddEven = document.getElementById('hfSettingOddEven').checked;
+                
+                localStorage.setItem('school_hf_settings', JSON.stringify(this.settings));
+                document.getElementById('hfSettingsModal').style.display = 'none';
+                
+                if(typeof uxToast === "function") uxToast("Aturan Header & Footer berhasil diperbarui", "success");
+            },
+
+            openSettings() {
+                document.getElementById('hfSettingFirstPage').checked = this.settings.differentFirstPage;
+                document.getElementById('hfSettingOddEven').checked = this.settings.differentOddEven;
+                document.getElementById('hfSettingsModal').style.display = 'flex';
+            },
+
+            restore() {
+                this.updateDynamicFields();
+                this.syncWithMargins();
+            }
+        };
+
+        // Initialize Engine
+        document.addEventListener('DOMContentLoaded', () => {
+            HeaderFooterManager.init();
         });
     </script>
 </body>
