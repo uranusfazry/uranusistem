@@ -331,6 +331,10 @@
         [contenteditable="true"]:hover { background-color: rgba(255, 230, 0, 0.1); outline: 1px dashed #e2e8f0; cursor: text; }
         [contenteditable="true"]:focus { background-color: rgba(255, 245, 157, 0.3); outline: none; border-bottom: 2px solid var(--accent-blue); }
         
+        .page-content {
+            overflow: visible !important; /* WAJIB: Memastikan scrollHeight akurat dan tidak terpotong */
+        }
+
         textarea.print-safe {
             width: 100%;
             border: 1px dashed #cbd5e1;
@@ -1200,6 +1204,68 @@
     </style>
 
     <!-- =========================================
+         NEW: TABLE PRO STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="table-pro-styles">
+        /* CSS global untuk tabel pro */
+        .table-pro {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            page-break-inside: auto;
+        }
+
+        .table-pro tr { page-break-inside: avoid; }
+
+        .table-pro th,
+        .table-pro td {
+            word-wrap: break-word;
+        }
+
+        .table-pro thead tr:first-child th {
+            font-weight: bold;
+        }
+
+        /* Variasi Style Tabel (Ditingkatkan) */
+        
+        /* 1. School: Formal Serif, Full Border, Header Abu-abu */
+        .table-pro.style-school { border: 1px solid #000; font-family: "Times New Roman", Times, serif; }
+        .table-pro.style-school th, .table-pro.style-school td { border: 1px solid #000; }
+        .table-pro.style-school thead { background: #e2e8f0; }
+        
+        /* 2. Basic: Full Border, Tanpa Background */
+        .table-pro.style-basic { border: 1px solid #000; }
+        .table-pro.style-basic th, .table-pro.style-basic td { border: 1px solid #000; }
+        .table-pro.style-basic thead { background: transparent; }
+        
+        /* 3. Clean: Border Abu Tipis, Header Soft */
+        .table-pro.style-clean { border: 1px solid #cbd5e1; }
+        .table-pro.style-clean th, .table-pro.style-clean td { border: 1px solid #cbd5e1; }
+        .table-pro.style-clean thead { background: #f8fafc; }
+        
+        /* 4. Minimal: Hanya Garis Horizontal, Tanpa Border Vertikal */
+        .table-pro.style-minimal { border: none; }
+        .table-pro.style-minimal th { border-bottom: 2px solid #000; border-top: 2px solid #000; }
+        .table-pro.style-minimal td { border-bottom: 1px solid #e2e8f0; border-left: none; border-right: none; }
+    </style>
+
+    <!-- =========================================
+         NEW: CONTINUOUS TABLE STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="continuous-table-styles">
+        table {
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        table[data-continuation="true"] {
+            margin-top: -1px;
+        }
+        table[data-continuation="true"] thead {
+            background: inherit;
+        }
+    </style>
+
+    <!-- =========================================
          NEW: FIND & REPLACE STYLES (ADDITIVE)
          ========================================= -->
     <style id="find-replace-styles">
@@ -1378,9 +1444,19 @@
                 <i class="ph ph-text-t"></i> 🅰️ Gaya Teks (Per Kata)
             </button>
 
+            <!-- NEW: BUTTON TABLE BUILDER (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#f0fdfa; color:#047857; border-color:#a7f3d0;" onclick="openTableBuilder()">
+                <i class="ph ph-grid-nine"></i> 📊 Buat Tabel Otomatis
+            </button>
+
             <!-- NEW: BUTTON TABLE MODE (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#fdf4ff; color:#a21caf; border-color:#f5d0fe;" onclick="toggleTableMode(this)">
                 <i class="ph ph-table"></i> 🧾 Mode Tabel
+            </button>
+
+            <!-- NEW: BUTTON EKSTRAK TABEL (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5;" onclick="openDeleteTableModal()">
+                <i class="ph ph-trash"></i> 🗑️ Ekstrak/Hapus Tabel
             </button>
 
             <!-- NEW: BUTTON DUPLICATE MULTI (ADDITIVE) -->
@@ -1680,6 +1756,144 @@
 
             <div id="findCounter">0 hasil ditemukan</div>
         </div>
+    </div>
+
+    <!-- NEW MODAL: DELETE TABLE (ADDITIVE) -->
+    <div id="deleteTableModal" class="modal no-print-in-pdf">
+      <div class="modal-box">
+        <h3><i class="ph ph-trash" style="color:#ef4444"></i> Ekstrak/Hapus Tabel</h3>
+        <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Hapus struktur tabel namun pertahankan isi teksnya.</p>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman</label>
+        <select id="deleteTablePageSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;"></select>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Tabel</label>
+        <select id="deleteTableSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;"></select>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Format Hasil Ekstrak</label>
+        <select id="tableExtractFormat" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 25px; outline:none;">
+            <option value="p">Paragraf Terpisah (Default)</option>
+            <option value="pipe">Satu Baris (Dipisah | )</option>
+            <option value="comma">Satu Baris (Dipisah Koma)</option>
+            <option value="list">Bullet List / Daftar</option>
+        </select>
+
+        <div class="modal-actions">
+          <button onclick="confirmDeleteTable()" style="background:#ef4444; color:white;">🗑️ Ekstrak Tabel</button>
+          <button onclick="closeDeleteTableModal()">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW MODAL: TABLE BUILDER PRO (UPGRADED V2) -->
+    <div id="tableBuilderModal" class="modal no-print-in-pdf">
+      <div class="modal-box modal-large" style="max-width: 900px; height: 90vh;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
+            <h3 style="margin:0;"><i class="ph ph-grid-nine" style="color:#059669"></i> Table Builder Pro</h3>
+            <span style="font-size:0.8rem; background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px;">Enterprise Edition</span>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex: 1; overflow: hidden;">
+            
+            <!-- LEFT COLUMN: INPUTS -->
+            <div style="flex: 1; overflow-y: auto; padding-right: 15px;">
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Template Preset</label>
+                <select id="tbProPreset" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;" onchange="applyTablePreset()">
+                    <option value="custom">Custom (Atur Sendiri)</option>
+                    <option value="absensi">Absensi Sekolah</option>
+                    <option value="jadwal">Jadwal Pelajaran</option>
+                    <option value="rekap">Rekap Nilai</option>
+                    <option value="rpp">Format RPP</option>
+                </select>
+
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Judul Tabel (Opsional)</label>
+                <input type="text" id="tbProTitle" placeholder="Contoh: DAFTAR HADIR KELAS" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;">
+
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Nama Kolom (Pisahkan Koma)</label>
+                <input type="text" id="tbProCols" value="NO, NAMA LENGKAP, L/P, KETERANGAN" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;">
+
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Lebar Kolom Opsional (Misal: 10%, 40%, 25%, 25%)</label>
+                <input type="text" id="tbProColWidths" placeholder="Kosongkan untuk auto/rata" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;">
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div>
+                        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Jumlah Baris Kosong</label>
+                        <input type="number" id="tbProRows" value="5" min="1" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Gaya Desain</label>
+                        <select id="tbProStyle" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                            <option value="school">School (Format Formal)</option>
+                            <option value="basic">Basic (Border Klasik)</option>
+                            <option value="clean">Clean (Modern Abu)</option>
+                            <option value="minimal">Minimal (Garis Bawah)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div>
+                        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Align Teks</label>
+                        <select id="tbProAlign" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                            <option value="left">Kiri</option>
+                            <option value="center" selected>Tengah</option>
+                            <option value="right">Kanan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Padding Sel</label>
+                        <select id="tbProPadding" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                            <option value="4px">4px (Padat)</option>
+                            <option value="6px" selected>6px (Standar)</option>
+                            <option value="8px">8px (Rongga)</option>
+                            <option value="10px">10px (Lebar)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Ukuran Font</label>
+                        <select id="tbProFontSize" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; outline:none;">
+                            <option value="12px">12px (Kecil)</option>
+                            <option value="14px" selected>14px (Standar)</option>
+                            <option value="16px">16px (Besar)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:15px; display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="tbProAutoNum" checked> Auto Number (Kolom 1)
+                    </label>
+                    <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="tbProBorder" checked> Terapkan Border
+                    </label>
+                    <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="tbProRepeatHeader" checked> Ulangi Header Saat Tabel Terpotong (Split)
+                    </label>
+                    <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="tbProLockWidth" checked> Kunci Lebar Kolom (Fixed Layout)
+                    </label>
+                </div>
+
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Isi Data Langsung (Opsional, Format: CSV / Dipisah Koma)</label>
+                <textarea id="tbProData" placeholder="Andi, Laki-laki, Hadir&#10;Budi, Laki-laki, Izin" style="width:100%; height:80px; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-family:monospace; font-size:12px; resize:vertical; outline:none;"></textarea>
+            </div>
+            
+            <!-- RIGHT COLUMN: PREVIEW -->
+            <div style="flex: 1; display:flex; flex-direction:column; background:#f1f5f9; border-radius:8px; border:1px dashed #cbd5e1; padding:15px;">
+                <div style="font-size:0.8rem; color:#64748b; font-weight:bold; margin-bottom:10px; text-transform:uppercase;">Live Preview</div>
+                <div id="tbProPreviewContainer" style="flex:1; overflow:auto; background:white; padding:10px; border:1px solid #e2e8f0; box-shadow:inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#94a3b8; text-align:center; margin-top:50px; font-size:0.9rem;">Klik tombol Preview untuk melihat hasil tabel.</div>
+                </div>
+            </div>
+
+        </div> <!-- End Grid -->
+
+        <div class="modal-actions" style="margin-top: 20px; padding-top:15px; border-top:1px solid #e2e8f0;">
+          <button onclick="previewProfessionalTable()" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe;">👁️ Preview</button>
+          <button onclick="generateProfessionalTable()" style="background:#059669; color:white;">📊 Insert ke Halaman</button>
+          <button onclick="closeTableBuilder()">Batal</button>
+        </div>
+      </div>
     </div>
 
     <!-- NEW MODAL: PAGE STYLE INSPECTOR (ADDITIVE) -->
@@ -4775,18 +4989,12 @@
 
         // Helper: Algoritma Presisi Pemecah Tabel (Menyalin Header)
         function splitTableAndMove(sourceTable, targetContainer, sourceTop, scaleApp, limitHeightPx) {
-            const targetTable = sourceTable.cloneNode(false); // Clone bungkus <table> saja
-            
-            // Clone thead dan colgroup jika ada (Penting untuk layout tabel presisi)
-            const thead = sourceTable.querySelector('thead');
-            if (thead) targetTable.appendChild(thead.cloneNode(true));
-            const colgroup = sourceTable.querySelector('colgroup');
-            if (colgroup) targetTable.appendChild(colgroup.cloneNode(true));
+            const targetTable = cloneTableStructurePreserveLayout(sourceTable);
+            targetTable.setAttribute("data-continuation", "true");
 
             // Siapkan target tbody
             const sourceTbody = sourceTable.querySelector('tbody') || sourceTable;
-            const targetTbody = document.createElement('tbody');
-            targetTable.appendChild(targetTbody);
+            const targetTbody = targetTable.querySelector('tbody');
             
             const rows = Array.from(sourceTbody.querySelectorAll('tr'));
             let breachRowIndex = -1;
@@ -5679,6 +5887,19 @@
             // Masukkan HTML yang sudah steril tepat di mana kursor berada
             insertCleanHTMLAtCursor(cleanedHTML);
 
+            // Jalankan setelah browser selesai render
+            requestAnimationFrame(() => {
+                const activeContent = document.activeElement.closest(".page-content");
+                if(!activeContent) return;
+
+                const activeSheet = activeContent.closest(".sheet");
+                if(!activeSheet) return;
+
+                if(typeof handlePasteOverflow === "function") {
+                    handlePasteOverflow(activeSheet);
+                }
+            });
+
             // Trigger sistem penyimpanan & rapikan halaman (Auto Flow)
             if (typeof saveToStorage === "function") {
                 saveToStorage();
@@ -5811,6 +6032,74 @@
             range.collapse(false);
             selection.removeAllRanges();
             selection.addRange(range);
+        }
+    </script>
+
+    <!-- =========================================
+         24B. NEW: PASTE OVERFLOW ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="paste-overflow-engine">
+        function handlePasteOverflow(currentSheet){
+            // Gunakan variabel iteratif agar bisa memproses cascade halaman jika paste sangat panjang
+            let sheet = currentSheet;
+
+            while (sheet) {
+                const content = sheet.querySelector(".page-content");
+                if(!content) break;
+
+                let paperHeightMM = parseFloat(sheet.getAttribute("data-paper-height")) || 330;
+                if (sheet.classList.contains("landscape")) {
+                    paperHeightMM = parseFloat(sheet.getAttribute("data-paper-width")) || 215;
+                }
+
+                const marginTopMM = parseFloat(sheet.getAttribute("data-margin-top")) || 20;
+                const marginBottomMM = parseFloat(sheet.getAttribute("data-margin-bottom")) || 20;
+
+                const mmToPxLocal = (mm) => mm * (96 / 25.4);
+                const maxHeightPx = mmToPxLocal(paperHeightMM) - mmToPxLocal(marginTopMM) - mmToPxLocal(marginBottomMM) - 5; // -5px safe zone
+
+                let movedAny = false;
+
+                // Ulangi sampai halaman saat ini aman dari luapan teks
+                while(content.scrollHeight > maxHeightPx){
+                    let nextSheet = sheet.nextElementSibling;
+
+                    if(!nextSheet || nextSheet.dataset.pageType === "embed"){
+                        nextSheet = createNewCustomSheet();
+                        
+                        // Mewariskan atribut layout agar serasi dengan halaman sebelumnya
+                        if (sheet.classList.contains('landscape')) nextSheet.classList.add('landscape');
+                        if (sheet.classList.contains('portrait')) nextSheet.classList.add('portrait');
+                        nextSheet.setAttribute('data-paper-preset', sheet.getAttribute('data-paper-preset') || 'F4');
+                        nextSheet.setAttribute('data-paper-width', sheet.getAttribute('data-paper-width') || 215);
+                        nextSheet.setAttribute('data-paper-height', sheet.getAttribute('data-paper-height') || 330);
+                        nextSheet.setAttribute('data-margin-top', sheet.getAttribute('data-margin-top') || 20);
+                        nextSheet.setAttribute('data-margin-right', sheet.getAttribute('data-margin-right') || 20);
+                        nextSheet.setAttribute('data-margin-bottom', sheet.getAttribute('data-margin-bottom') || 20);
+                        nextSheet.setAttribute('data-margin-left', sheet.getAttribute('data-margin-left') || 20);
+
+                        sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
+                    }
+
+                    const nextContent = nextSheet.querySelector(".page-content");
+
+                    const lastNode = content.lastElementChild;
+                    if(!lastNode) break; // Keluar jika kosong tapi masih terdeteksi overflow (biasanya padding CSS)
+
+                    // Pindahkan ke halaman baru
+                    nextContent.insertBefore(lastNode, nextContent.firstChild);
+                    movedAny = true;
+                }
+
+                // Jika ada yang dipindahkan, pindah fokus pengecekan ke halaman selanjutnya
+                if (movedAny) {
+                    sheet = sheet.nextElementSibling;
+                } else {
+                    break; // Aman, hentikan loop
+                }
+            }
+
+            saveToStorage();
         }
     </script>
 
@@ -6353,6 +6642,7 @@
          ========================================= -->
     <script id="smart-realtime-auto-page">
         let smartAutoPageMode = true;
+        let disableAutoCaretRedirect = true; // NEW GLOBAL FLAG
 
         function toggleSmartAutoPage(btn){
             smartAutoPageMode = !smartAutoPageMode;
@@ -6458,26 +6748,674 @@
 
             const nextContent = nextSheet.querySelector(".page-content");
 
-            // ===== PINDAHKAN ELEMEN TERAKHIR (YANG MEMICU MELUBER) =====
+            // ===== HANDLE OVERFLOW TABEL KHUSUS (AKURAT V2) =====
+            if(splitTableIfOverflow(sheet)){
+                return;
+            }
+
+            // ===== PINDAHKAN ELEMEN TERAKHIR JIKA BUKAN TABEL =====
             const lastNode = content.lastElementChild;
             if(!lastNode) return;
 
             nextContent.insertBefore(lastNode, nextContent.firstChild);
 
             // ===== PINDAHKAN CURSOR KE HALAMAN BARU SECARA MULUS =====
-            setTimeout(()=>{
-                nextContent.focus();
+            // 🔥 PERBAIKAN: JANGAN PINDAHKAN CARET JIKA FLAG AKTIF
+            if(!disableAutoCaretRedirect){
+                setTimeout(()=>{
+                    nextContent.focus();
 
-                const range = document.createRange();
-                range.selectNodeContents(nextContent);
-                range.collapse(false);
+                    const range = document.createRange();
+                    range.selectNodeContents(nextContent);
+                    range.collapse(false);
 
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }, 10);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }, 10);
+            }
 
             saveToStorage();
+        }
+
+        // ======================================
+        // FUNGSI SPLIT MANUAL / CARET BASED
+        // ======================================
+        function splitAtCaretAndCreatePage(content, range){
+            const sheet = content.closest(".sheet");
+
+            const newSheet = createNewCustomSheet();
+            sheet.parentNode.insertBefore(newSheet, sheet.nextSibling);
+
+            const newContent = newSheet.querySelector(".page-content");
+            range.collapse(true);
+
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    </script>
+
+    <!-- =========================================
+         28B. NEW: CONTINUOUS TABLE ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="continuous-table-engine">
+        function cloneTableStructurePreserveLayout(originalTable){
+            const newTable = document.createElement("table");
+
+            // Copy class & style
+            newTable.className = originalTable.className;
+            newTable.style.cssText = originalTable.style.cssText;
+
+            // Force stable layout
+            newTable.style.tableLayout = "fixed";
+            newTable.style.width = originalTable.offsetWidth + "px";
+
+            // BONUS: Tambahkan tulisan indikator tabel lanjutan
+            const caption = document.createElement("caption");
+            caption.innerText = "(Tabel Lanjutan...)";
+            caption.style.textAlign = "right";
+            caption.style.fontStyle = "italic";
+            caption.style.fontSize = "9pt";
+            caption.style.color = "#64748b";
+            caption.style.marginBottom = "4px";
+            caption.style.captionSide = "top";
+            newTable.appendChild(caption);
+
+            // =============================
+            // COPY COLGROUP ATAU BUAT BARU
+            // =============================
+            let colgroup = originalTable.querySelector("colgroup");
+
+            if(colgroup){
+                newTable.appendChild(colgroup.cloneNode(true));
+            } else {
+                const firstRow = originalTable.querySelector("tr");
+                if(firstRow){
+                    const cols = firstRow.children.length;
+                    const newColGroup = document.createElement("colgroup");
+
+                    for(let i=0; i<cols; i++){
+                        const col = document.createElement("col");
+                        // Menggunakan computed width untuk locking paling presisi
+                        col.style.width = window.getComputedStyle(firstRow.children[i]).width || (firstRow.children[i].offsetWidth + "px");
+                        newColGroup.appendChild(col);
+                    }
+
+                    newTable.appendChild(newColGroup);
+                }
+            }
+
+            // =============================
+            // COPY THEAD (MENURUTI REPEAT HEADER FLAG)
+            // =============================
+            const thead = originalTable.querySelector("thead");
+            // Clone Header JIKA data-repeat-header true ATAU attribute tidak ada (legacy behavior)
+            if(thead && originalTable.getAttribute("data-repeat-header") !== "false"){
+                newTable.appendChild(thead.cloneNode(true));
+            }
+
+            // Create new tbody
+            const newTbody = document.createElement("tbody");
+            newTable.appendChild(newTbody);
+
+            return newTable;
+        }
+    </script>
+
+    <!-- =========================================
+         29. NEW: TABLE SPLIT ENGINE V2 (AKURAT)
+         ========================================= -->
+    <script id="table-split-engine-v2">
+        function splitTableIfOverflow(sheet){
+            const content = sheet.querySelector(".page-content");
+            if(!content) return false;
+
+            const tables = content.querySelectorAll("table");
+            if(!tables.length) return false;
+
+            let paperHeightMM = parseFloat(sheet.getAttribute("data-paper-height")) || 330;
+            if (sheet.classList.contains("landscape")) {
+                paperHeightMM = parseFloat(sheet.getAttribute("data-paper-width")) || 215;
+            }
+
+            const marginTopMM = parseFloat(sheet.getAttribute("data-margin-top")) || 20;
+            const marginBottomMM = parseFloat(sheet.getAttribute("data-margin-bottom")) || 20;
+
+            const mmToPx = mm => mm * (96 / 25.4);
+            const maxHeightPx = mmToPx(paperHeightMM) - mmToPx(marginTopMM) - mmToPx(marginBottomMM) - 5; // -5px zona aman
+
+            // =============================
+            // LOOP SEMUA TABLE DI HALAMAN
+            // =============================
+            for(const table of tables){
+                if(content.scrollHeight <= maxHeightPx){
+                    return false;
+                }
+
+                const tbody = table.querySelector("tbody") || table;
+                if(!tbody) continue;
+
+                // Ambil row dengan mengabaikan header (th) yang mungkin ada di baris pertama
+                const rows = Array.from(tbody.querySelectorAll("tr"));
+                if(rows.length <= 1) continue;
+
+                // =============================
+                // BUAT HALAMAN BARU (ATAU REUSE)
+                // =============================
+                let newSheet = sheet.nextElementSibling;
+                if(!newSheet || newSheet.dataset.pageType === "embed"){
+                    newSheet = createNewCustomSheet();
+                    
+                    // Mewariskan atribut halaman sebelumnya
+                    if (sheet.classList.contains('landscape')) newSheet.classList.add('landscape');
+                    if (sheet.classList.contains('portrait')) newSheet.classList.add('portrait');
+                    newSheet.setAttribute('data-paper-preset', sheet.getAttribute('data-paper-preset') || 'F4');
+                    newSheet.setAttribute('data-paper-width', sheet.getAttribute('data-paper-width') || 215);
+                    newSheet.setAttribute('data-paper-height', sheet.getAttribute('data-paper-height') || 330);
+                    newSheet.setAttribute('data-margin-top', sheet.getAttribute('data-margin-top') || 20);
+                    newSheet.setAttribute('data-margin-right', sheet.getAttribute('data-margin-right') || 20);
+                    newSheet.setAttribute('data-margin-bottom', sheet.getAttribute('data-margin-bottom') || 20);
+                    newSheet.setAttribute('data-margin-left', sheet.getAttribute('data-margin-left') || 20);
+
+                    sheet.parentNode.insertBefore(newSheet, sheet.nextSibling);
+
+                    pagesDB.splice(
+                        Array.from(document.querySelectorAll('.sheet')).indexOf(sheet) + 1,
+                        0,
+                        {
+                            id: newSheet.dataset.id,
+                            type: 'standard',
+                            html: newSheet.innerHTML,
+                            layoutX: 0, layoutY: 0, layoutScale: 1,
+                            orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait',
+                            paperSize: {
+                                preset: sheet.getAttribute('data-paper-preset') || 'F4',
+                                width: parseFloat(sheet.getAttribute('data-paper-width')) || 215,
+                                height: parseFloat(sheet.getAttribute('data-paper-height')) || 330
+                            },
+                            margin: {
+                                top: parseFloat(sheet.getAttribute('data-margin-top')) || 20,
+                                right: parseFloat(sheet.getAttribute('data-margin-right')) || 20,
+                                bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
+                                left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
+                            }
+                        }
+                    );
+                }
+
+                const newContent = newSheet.querySelector(".page-content");
+                
+                const newTable = cloneTableStructurePreserveLayout(table);
+                newTable.setAttribute("data-continuation", "true");
+                const newTbody = newTable.querySelector("tbody");
+
+                let moved = false;
+
+                // =============================
+                // PINDAHKAN ROW DARI BAWAH
+                // =============================
+                // Hentikan jika scrollHeight sudah aman, ATAU kalau row tinggal 1 (jangan sampai habis semua)
+                while(content.scrollHeight > maxHeightPx && rows.length > 1){
+                    const lastRow = rows.pop();
+                    newTbody.insertBefore(lastRow, newTbody.firstChild);
+                    moved = true;
+                }
+
+                if(moved){
+                    if(newContent.firstChild) {
+                        newContent.insertBefore(newTable, newContent.firstChild);
+                    } else {
+                        newContent.appendChild(newTable);
+                    }
+                    saveToStorage();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    </script>
+
+    <!-- =========================================
+         30. NEW: DELETE TABLE ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="delete-table-engine">
+        function openDeleteTableModal(){
+            const pageSelect = document.getElementById("deleteTablePageSelect");
+            pageSelect.innerHTML = "";
+
+            const sheets = document.querySelectorAll(".sheet");
+
+            sheets.forEach((sheet, index) => {
+                const opt = document.createElement("option");
+                opt.value = index;
+                opt.textContent = "Halaman " + (index + 1);
+                pageSelect.appendChild(opt);
+            });
+
+            pageSelect.onchange = loadTablesForSelectedPage;
+            loadTablesForSelectedPage();
+
+            document.getElementById("deleteTableModal").style.display = "flex";
+        }
+
+        function closeDeleteTableModal(){
+            document.getElementById("deleteTableModal").style.display = "none";
+        }
+
+        function loadTablesForSelectedPage(){
+            const pageSelect = document.getElementById("deleteTablePageSelect");
+            const tableSelect = document.getElementById("deleteTableSelect");
+            tableSelect.innerHTML = "";
+
+            if(pageSelect.options.length === 0) return;
+            
+            const pageIndex = pageSelect.value;
+            const sheet = document.querySelectorAll(".sheet")[pageIndex];
+            if(!sheet) return;
+
+            const tables = sheet.querySelectorAll(".page-content table");
+
+            if(tables.length === 0){
+                const opt = document.createElement("option");
+                opt.textContent = "Tidak ada tabel di halaman ini";
+                opt.value = "";
+                tableSelect.appendChild(opt);
+                return;
+            }
+
+            tables.forEach((table, index) => {
+                const opt = document.createElement("option");
+                opt.value = index;
+                
+                // Ambil cuplikan teks dari sel pertama agar user tahu ini tabel apa
+                let snippet = "";
+                const firstCell = table.querySelector("td, th");
+                if (firstCell && firstCell.innerText.trim() !== "") {
+                    snippet = " - " + firstCell.innerText.trim().substring(0, 15) + "...";
+                }
+                
+                opt.textContent = "Tabel " + (index + 1) + snippet;
+                tableSelect.appendChild(opt);
+            });
+        }
+
+        function confirmDeleteTable(){
+            const pageIndex = document.getElementById("deleteTablePageSelect").value;
+            const tableIndex = document.getElementById("deleteTableSelect").value;
+            const format = document.getElementById("tableExtractFormat").value;
+
+            if(tableIndex === "") {
+                if (typeof uxToast === "function") uxToast("Tidak ada tabel yang dipilih!", "warning");
+                return;
+            }
+
+            const sheet = document.querySelectorAll(".sheet")[pageIndex];
+            const tables = sheet.querySelectorAll(".page-content table");
+
+            const table = tables[tableIndex];
+            if(!table) return;
+
+            unwrapTableKeepContent(table, format);
+
+            saveToStorage();
+            if (typeof debouncedAutoFlow === 'function') debouncedAutoFlow();
+
+            closeDeleteTableModal();
+            if (typeof uxToast === "function") uxToast("Tabel berhasil diekstrak menjadi teks", "success");
+        }
+
+        function unwrapTableKeepContent(table, format){
+            const fragment = document.createDocumentFragment();
+            const rows = table.querySelectorAll("tr");
+
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll("th, td"));
+                
+                if (format === "p") {
+                    // Masing-masing cell jadi paragraf baru
+                    cells.forEach(cell => {
+                        if(cell.innerText.trim() === "") return;
+                        const p = document.createElement("p");
+                        p.innerHTML = cell.innerHTML; // Pertahankan bold/italic bawaan cell
+                        fragment.appendChild(p);
+                    });
+                } else if (format === "pipe" || format === "comma") {
+                    // Gabungkan cell dalam 1 row menjadi 1 kalimat dengan separator
+                    const separator = format === "pipe" ? " | " : ", ";
+                    const p = document.createElement("p");
+                    
+                    const rowTexts = cells.map(cell => cell.innerText.trim()).filter(t => t !== "");
+                    if (rowTexts.length > 0) {
+                        p.innerText = rowTexts.join(separator);
+                        fragment.appendChild(p);
+                    }
+                } else if (format === "list") {
+                    // Jadikan Bullet List (ul > li)
+                    const ul = document.createElement("ul");
+                    ul.style.margin = "0 0 10px 20px";
+                    cells.forEach(cell => {
+                        if(cell.innerText.trim() === "") return;
+                        const li = document.createElement("li");
+                        li.innerHTML = cell.innerHTML;
+                        ul.appendChild(li);
+                    });
+                    if (ul.children.length > 0) {
+                        fragment.appendChild(ul);
+                    }
+                }
+            });
+
+            // Sisipkan pecahan teks tepat di posisi tabel lama
+            table.parentNode.insertBefore(fragment, table);
+            // Buang struktur tabel lama
+            table.remove();
+        }
+    </script>
+
+    <!-- =========================================
+         31. NEW: TABLE BUILDER PRO ENGINE (UPGRADED V2)
+         ========================================= -->
+    <script id="professional-table-builder-engine">
+        function openTableBuilder(){
+            document.getElementById("tableBuilderModal").style.display = "flex";
+            document.getElementById("tbProPreviewContainer").innerHTML = '<div style="color:#94a3b8; text-align:center; margin-top:50px; font-size:0.9rem;">Klik tombol Preview untuk melihat hasil tabel.</div>';
+            document.getElementById("tbProTitle").focus();
+        }
+
+        function closeTableBuilder(){
+            document.getElementById("tableBuilderModal").style.display = "none";
+        }
+
+        // Fungsi Load Template Preset
+        function applyTablePreset() {
+            const preset = document.getElementById("tbProPreset").value;
+            
+            if (preset === "absensi") {
+                document.getElementById("tbProTitle").value = "DAFTAR HADIR SISWA";
+                document.getElementById("tbProCols").value = "NO, NAMA SISWA, L/P, HADIR, SAKIT, IZIN, ALFA";
+                document.getElementById("tbProColWidths").value = "5%, 35%, 10%, 12.5%, 12.5%, 12.5%, 12.5%";
+                document.getElementById("tbProStyle").value = "school";
+                document.getElementById("tbProAutoNum").checked = true;
+            } else if (preset === "jadwal") {
+                document.getElementById("tbProTitle").value = "JADWAL PELAJARAN";
+                document.getElementById("tbProCols").value = "WAKTU, SENIN, SELASA, RABU, KAMIS, JUMAT";
+                document.getElementById("tbProColWidths").value = "15%, 17%, 17%, 17%, 17%, 17%";
+                document.getElementById("tbProStyle").value = "clean";
+                document.getElementById("tbProAutoNum").checked = false;
+            } else if (preset === "rekap") {
+                document.getElementById("tbProTitle").value = "REKAPITULASI NILAI AKHIR";
+                document.getElementById("tbProCols").value = "NO, NAMA LENGKAP, TUGAS 1, TUGAS 2, UTS, UAS, NILAI AKHIR";
+                document.getElementById("tbProColWidths").value = "5%, 35%, 12%, 12%, 12%, 12%, 12%";
+                document.getElementById("tbProStyle").value = "school";
+                document.getElementById("tbProAutoNum").checked = true;
+            } else if (preset === "rpp") {
+                document.getElementById("tbProTitle").value = "KEGIATAN PEMBELAJARAN";
+                document.getElementById("tbProCols").value = "KEGIATAN, DESKRIPSI KEGIATAN, ALOKASI WAKTU";
+                document.getElementById("tbProColWidths").value = "20%, 65%, 15%";
+                document.getElementById("tbProStyle").value = "school";
+                document.getElementById("tbProAutoNum").checked = false;
+            } else {
+                // Custom reset
+                document.getElementById("tbProTitle").value = "";
+                document.getElementById("tbProCols").value = "NO, KOLOM 1, KOLOM 2";
+                document.getElementById("tbProColWidths").value = "";
+                document.getElementById("tbProStyle").value = "basic";
+            }
+        }
+
+        // Engine Builder Element
+        function buildTableElement() {
+            const title = document.getElementById("tbProTitle").value.trim();
+            const rawCols = document.getElementById("tbProCols").value;
+            const rawWidths = document.getElementById("tbProColWidths").value;
+            let rowsCount = parseInt(document.getElementById("tbProRows").value);
+            const styleOpt = document.getElementById("tbProStyle").value;
+            const alignOpt = document.getElementById("tbProAlign").value;
+            const paddingOpt = document.getElementById("tbProPadding").value;
+            const fontSizeOpt = document.getElementById("tbProFontSize").value;
+            const autoNum = document.getElementById("tbProAutoNum").checked;
+            const hasBorder = document.getElementById("tbProBorder").checked;
+            const repeatHeader = document.getElementById("tbProRepeatHeader").checked;
+            const lockWidth = document.getElementById("tbProLockWidth").checked;
+            const rawData = document.getElementById("tbProData").value.trim();
+
+            // 1. Normalisasi Kolom
+            const colNames = rawCols.split(',').map(s => s.trim()).filter(s => s !== "");
+
+            // 2. Validasi Ekstrem
+            if(colNames.length === 0){
+                uxToast("Gagal: Harus ada minimal 1 nama kolom valid!", "error");
+                return null;
+            }
+            if(isNaN(rowsCount) || rowsCount < 0){
+                rowsCount = 1;
+            }
+
+            // Validasi Lebar Kolom
+            let widthArray = [];
+            if(rawWidths.trim() !== "") {
+                widthArray = rawWidths.split(',').map(s => s.trim()).filter(s => s !== "");
+                if(widthArray.length !== colNames.length) {
+                    uxToast(`Peringatan: Jumlah input lebar (${widthArray.length}) tidak sama dengan jumlah kolom (${colNames.length}). Lebar akan diabaikan.`, "warning");
+                    widthArray = [];
+                }
+            }
+
+            // 3. Buat Elemen Tabel Super Stabil
+            const table = document.createElement("table");
+            table.className = `table-pro style-${styleOpt}`;
+            table.style.textAlign = alignOpt;
+            
+            if(!hasBorder) {
+                table.style.border = "none";
+                table.classList.remove(`style-${styleOpt}`); 
+            }
+
+            if(lockWidth) {
+                table.style.tableLayout = "fixed";
+                table.style.width = "100%";
+            }
+
+            // Penanda untuk split engine
+            table.setAttribute("data-repeat-header", repeatHeader ? "true" : "false");
+
+            // 4. Buat Colgroup Presisi
+            const colgroup = document.createElement("colgroup");
+            for(let i = 0; i < colNames.length; i++){
+                const col = document.createElement("col");
+                if (widthArray.length > 0) {
+                    col.style.width = widthArray[i];
+                } else {
+                    // Auto width terbagi rata jika tidak diisi
+                    col.style.width = (100 / colNames.length) + "%";
+                }
+                colgroup.appendChild(col);
+            }
+            table.appendChild(colgroup);
+
+            // 5. Buat Header (THEAD)
+            const thead = document.createElement("thead");
+            
+            if(title !== ""){
+                const trTitle = document.createElement("tr");
+                const thTitle = document.createElement("th");
+                thTitle.colSpan = colNames.length;
+                thTitle.innerHTML = title;
+                thTitle.style.textAlign = "center";
+                thTitle.style.padding = paddingOpt;
+                thTitle.style.fontSize = fontSizeOpt;
+                
+                if (styleOpt === 'clean' || styleOpt === 'minimal') {
+                    thTitle.style.background = "transparent";
+                    thTitle.style.borderTop = "none";
+                    thTitle.style.borderLeft = "none";
+                    thTitle.style.borderRight = "none";
+                }
+                
+                trTitle.appendChild(thTitle);
+                thead.appendChild(trTitle);
+            }
+
+            const trHeader = document.createElement("tr");
+            colNames.forEach(name => {
+                const th = document.createElement("th");
+                th.innerHTML = name;
+                th.style.padding = paddingOpt;
+                th.style.fontSize = fontSizeOpt;
+                if(alignOpt === 'center') th.style.textAlign = "center";
+                trHeader.appendChild(th);
+            });
+            thead.appendChild(trHeader);
+            table.appendChild(thead);
+
+            // 6. Parsing Data Textarea & Buat Isi (TBODY)
+            const tbody = document.createElement("tbody");
+            
+            let dataLines = [];
+            if (rawData !== "") {
+                dataLines = rawData.split('\n').filter(line => line.trim() !== '');
+            }
+            
+            // Hitung total baris yang perlu dibuat (terbesar antara input row count vs isi data)
+            const totalRowsToGenerate = Math.max(rowsCount, dataLines.length);
+
+            for(let r = 0; r < totalRowsToGenerate; r++){
+                const tr = document.createElement("tr");
+                
+                let lineData = [];
+                if (dataLines[r]) {
+                    lineData = dataLines[r].split(',').map(s => s.trim());
+                }
+
+                for(let c = 0; c < colNames.length; c++){
+                    const td = document.createElement("td");
+                    td.style.padding = paddingOpt;
+                    td.style.fontSize = fontSizeOpt;
+                    
+                    if (autoNum && c === 0) {
+                        td.innerHTML = (r + 1).toString();
+                        td.style.textAlign = "center";
+                    } else {
+                        // Offset index data jika autonum aktif (karena data di text area mungkin tidak nyebut nomor)
+                        let dataIndex = autoNum ? c - 1 : c;
+                        
+                        if (dataLines[r] && lineData[dataIndex] !== undefined) {
+                            td.innerHTML = lineData[dataIndex] || "&nbsp;";
+                        } else {
+                            td.innerHTML = "&nbsp;";
+                        }
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+
+            return table;
+        }
+
+        // Handler tombol Preview
+        function previewProfessionalTable() {
+            const table = buildTableElement();
+            if (!table) return;
+
+            const container = document.getElementById("tbProPreviewContainer");
+            container.innerHTML = "";
+            container.appendChild(table);
+        }
+
+        // Handler Insert/Generate Utama
+        function generateProfessionalTable() {
+            const table = buildTableElement();
+            if (!table) return;
+
+            insertElementSmartly(table);
+
+            closeTableBuilder();
+            saveToStorage();
+            if (typeof debouncedAutoFlow === 'function') {
+                setTimeout(() => debouncedAutoFlow(), 50);
+            }
+            uxToast("Tabel Profesional berhasil dibuat!", "success");
+        }
+
+        // =========================================
+        // ENGINE INJEKSI PINTAR (Prioritas Penempatan)
+        // =========================================
+        function insertElementSmartly(element) {
+            const sel = window.getSelection();
+            let targetContent = null;
+            let rangeToUse = null;
+
+            // PRIORITAS 1: Inject di kursor jika ada dan berada di dalam dokumen
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                let node = range.commonAncestorContainer;
+                if (node.nodeType === 3) node = node.parentNode;
+                
+                const contentArea = node.closest('.page-content');
+                if (contentArea && contentArea.isContentEditable) {
+                    targetContent = contentArea;
+                    rangeToUse = range;
+                }
+            }
+
+            // PRIORITAS 2: Jika tidak ada kursor aktif, inject di halaman terakhir
+            if (!targetContent) {
+                const sheets = Array.from(document.querySelectorAll('.sheet[data-page-type="standard"]'));
+                if (sheets.length > 0) {
+                    targetContent = sheets[sheets.length - 1].querySelector('.page-content');
+                }
+            }
+
+            // PRIORITAS 3: Buat Halaman Baru jika dokumen kosong
+            if (!targetContent) {
+                const newSheet = createNewCustomSheet();
+                document.getElementById('document-area').appendChild(newSheet);
+                
+                pagesDB.push({
+                    id: newSheet.dataset.id,
+                    type: 'standard',
+                    html: newSheet.innerHTML,
+                    layoutX: 0, layoutY: 0, layoutScale: 1
+                });
+                
+                targetContent = newSheet.querySelector('.page-content');
+            }
+
+            // -- EKSEKUSI --
+            if (rangeToUse) {
+                rangeToUse.deleteContents();
+                rangeToUse.insertNode(element);
+                
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                element.parentNode.insertBefore(p, element.nextSibling);
+
+                rangeToUse.setStartAfter(p);
+                rangeToUse.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(rangeToUse);
+            } else {
+                targetContent.appendChild(element);
+                
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                targetContent.appendChild(p);
+
+                targetContent.focus();
+                const newRange = document.createRange();
+                newRange.selectNodeContents(targetContent);
+                newRange.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+            }
+            
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
     </script>
 </body>
