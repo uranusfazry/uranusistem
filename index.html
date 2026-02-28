@@ -324,6 +324,7 @@
             transition: transform 0.3s ease;
             pointer-events: auto;
             break-inside: avoid;
+            box-sizing: border-box; /* ADDITIVE: Proteksi Box Model agar padding masuk dalam kalkulasi kertas */
         }
 
         /* Fitur Editable */
@@ -1408,6 +1409,11 @@
             </button>
 
             <div class="section-divider">Smart Layout Engine</div>
+
+            <!-- NEW: SMART AUTO PAGE TOGGLE (ADDITIVE) -->
+            <button class="btn btn-edit" id="btnSmartAutoPage" style="background:#16a34a; color:white; border-color:#15803d;" onclick="toggleSmartAutoPage(this)">
+                📄 Smart Auto Page: ON
+            </button>
             
             <!-- NEW: AUTO FLOW TRIGGER -->
             <button class="btn btn-edit" style="background:#e0e7ff; color:#3730a3; border-color:#a5b4fc;" onclick="triggerAutoFlowEngine()">
@@ -4596,6 +4602,8 @@
 
         // --- CORE ALGORITHM: NODE-LEVEL DOM MANIPULATION ---
         function executeNodeFlow(sheet, currentIndex) {
+            if (!sheet.isConnected) return false; // SUPER STABLE VERSION: Hindari proses node yatim/tercabut
+
             const movable = sheet.querySelector('.layout-movable');
             if (!movable) return false;
 
@@ -4604,22 +4612,33 @@
             if (!contentArea || contentArea.children.length === 0) return false;
 
             // ==========================================
-            // MARGIN-AWARE LIMIT CALCULATION (UPGRADE)
+            // FIXED PAPER HEIGHT BASED LIMIT CALCULATION
             // ==========================================
             
-            // Tinggi fisik kertas
-            const sheetHeight = sheet.clientHeight;
-            
-            // Ambil margin dari attribute (mm)
+            // 1️⃣ Ambil tinggi kertas fisik dari attribute (mm)
+            let paperHeightMM = parseFloat(sheet.getAttribute("data-paper-height")) || 330;
+
+            // Jika landscape, tinggi = lebar kertas
+            if (sheet.classList.contains("landscape")) {
+                paperHeightMM = parseFloat(sheet.getAttribute("data-paper-width")) || 215;
+            }
+
+            // 2️⃣ Konversi mm → px
+            const paperHeightPx = mmToPx(paperHeightMM);
+
+            // 3️⃣ Ambil margin (mm)
             const marginTopMM = parseFloat(sheet.getAttribute("data-margin-top")) || 20;
             const marginBottomMM = parseFloat(sheet.getAttribute("data-margin-bottom")) || 20;
-            
-            // Konversi ke pixel
+
+            // 4️⃣ Konversi margin ke px
             const marginTopPx = mmToPx(marginTopMM);
             const marginBottomPx = mmToPx(marginBottomMM);
-            
-            // Hitung batas maksimal area konten
-            const limitHeightPx = sheetHeight - marginTopPx - marginBottomPx - 5;
+
+            // 5️⃣ Hitung batas maksimal area konten
+            const limitHeightPx = paperHeightPx - marginTopPx - marginBottomPx - 5;
+
+            // 6️⃣ Proteksi keamanan (jika margin terlalu besar)
+            if (limitHeightPx <= 0) return false;
             
             // App Scale memengaruhi dimensi koordinat rect, kita harus menormalisasinya
             let scaleApp = 1;
@@ -5184,13 +5203,24 @@
             const sheet = table.closest('.sheet');
             if (!sheet) return;
 
+            // ==========================================
+            // FIXED PAPER HEIGHT BASED LIMIT CALCULATION
+            // ==========================================
+            let paperHeightMM = parseFloat(sheet.getAttribute("data-paper-height")) || 330;
+            if (sheet.classList.contains("landscape")) {
+                paperHeightMM = parseFloat(sheet.getAttribute("data-paper-width")) || 215;
+            }
+
+            const marginTopMM = parseFloat(sheet.getAttribute("data-margin-top")) || 20;
+            const marginBottomMM = parseFloat(sheet.getAttribute("data-margin-bottom")) || 20;
+
+            // Helper konversi lokal (mm -> px)
+            const mmToPxLocal = (mm) => mm * (96 / 25.4);
+            const limitHeightPx = mmToPxLocal(paperHeightMM) - mmToPxLocal(marginTopMM) - mmToPxLocal(marginBottomMM) - 5;
+
+            if (limitHeightPx <= 0) return;
+
             const computedStyle = window.getComputedStyle(sheet);
-            const paddingTop = parseFloat(computedStyle.paddingTop);
-            const paddingBottom = parseFloat(computedStyle.paddingBottom);
-
-            // Hitung limit margin fisik kertas
-            const limitHeightPx = sheet.clientHeight - paddingTop - paddingBottom - 5;
-
             let scaleApp = 1;
             const matrix = new DOMMatrixReadOnly(computedStyle.transform);
             if (matrix.a !== 1) scaleApp = matrix.a;
@@ -6316,6 +6346,139 @@
 
             refreshPageFontDropdown();
         });
+    </script>
+
+    <!-- =========================================
+         28. NEW: SMART REALTIME AUTO PAGE (ADDITIVE)
+         ========================================= -->
+    <script id="smart-realtime-auto-page">
+        let smartAutoPageMode = true;
+
+        function toggleSmartAutoPage(btn){
+            smartAutoPageMode = !smartAutoPageMode;
+
+            if(smartAutoPageMode){
+                btn.innerHTML = "📄 Smart Auto Page: ON";
+                btn.style.background = "#16a34a";
+                btn.style.color = "white";
+                btn.style.borderColor = "#15803d";
+                if(typeof uxToast === "function") uxToast("Smart Auto Page Diaktifkan", "success");
+            }else{
+                btn.innerHTML = "📄 Smart Auto Page: OFF";
+                btn.style.background = "#f1f5f9";
+                btn.style.color = "#475569";
+                btn.style.borderColor = "#cbd5e1";
+                if(typeof uxToast === "function") uxToast("Smart Auto Page Dimatikan", "info");
+            }
+        }
+
+        // Real-Time Listener
+        document.addEventListener("input", function(e){
+            if(!smartAutoPageMode) return;
+
+            const content = e.target.closest(".page-content");
+            if(!content) return;
+
+            const sheet = content.closest(".sheet");
+            if(!sheet) return;
+
+            checkRealtimeOverflow(sheet);
+        });
+
+        // Cek Overflow Realtime
+        function checkRealtimeOverflow(sheet){
+            const content = sheet.querySelector(".page-content");
+            if(!content) return;
+
+            // ===== HITUNG BATAS FISIK =====
+            let paperHeightMM = parseFloat(sheet.getAttribute("data-paper-height")) || 330;
+
+            if(sheet.classList.contains("landscape")){
+                paperHeightMM = parseFloat(sheet.getAttribute("data-paper-width")) || 215;
+            }
+
+            const marginTopMM = parseFloat(sheet.getAttribute("data-margin-top")) || 20;
+            const marginBottomMM = parseFloat(sheet.getAttribute("data-margin-bottom")) || 20;
+
+            const mmToPx = mm => mm * (96 / 25.4);
+
+            const maxHeight =
+                mmToPx(paperHeightMM)
+                - mmToPx(marginTopMM)
+                - mmToPx(marginBottomMM)
+                - 5; // Extra padding logic to match main engine limits
+
+            // ===== CEK OVERFLOW =====
+            if(content.scrollHeight <= maxHeight) return;
+
+            // ===== BUAT HALAMAN BARU =====
+            let nextSheet = sheet.nextElementSibling;
+
+            if(!nextSheet || nextSheet.dataset.pageType === "embed"){
+                nextSheet = createNewCustomSheet();
+
+                // Mewariskan orientasi & spesifikasi kertas dari halaman sebelumnya agar serasi
+                if (sheet.classList.contains('landscape')) nextSheet.classList.add('landscape');
+                if (sheet.classList.contains('portrait')) nextSheet.classList.add('portrait');
+                nextSheet.setAttribute('data-paper-preset', sheet.getAttribute('data-paper-preset') || 'F4');
+                nextSheet.setAttribute('data-paper-width', sheet.getAttribute('data-paper-width') || 215);
+                nextSheet.setAttribute('data-paper-height', sheet.getAttribute('data-paper-height') || 330);
+                nextSheet.setAttribute('data-margin-top', sheet.getAttribute('data-margin-top') || 20);
+                nextSheet.setAttribute('data-margin-right', sheet.getAttribute('data-margin-right') || 20);
+                nextSheet.setAttribute('data-margin-bottom', sheet.getAttribute('data-margin-bottom') || 20);
+                nextSheet.setAttribute('data-margin-left', sheet.getAttribute('data-margin-left') || 20);
+
+                sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
+
+                pagesDB.splice(
+                    Array.from(document.querySelectorAll('.sheet')).indexOf(sheet) + 1,
+                    0,
+                    {
+                        id: nextSheet.dataset.id,
+                        type: 'standard',
+                        html: nextSheet.innerHTML,
+                        layoutX: 0,
+                        layoutY: 0,
+                        layoutScale: 1,
+                        orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait',
+                        paperSize: {
+                            preset: sheet.getAttribute('data-paper-preset') || 'F4',
+                            width: parseFloat(sheet.getAttribute('data-paper-width')) || 215,
+                            height: parseFloat(sheet.getAttribute('data-paper-height')) || 330
+                        },
+                        margin: {
+                            top: parseFloat(sheet.getAttribute('data-margin-top')) || 20,
+                            right: parseFloat(sheet.getAttribute('data-margin-right')) || 20,
+                            bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
+                            left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
+                        }
+                    }
+                );
+            }
+
+            const nextContent = nextSheet.querySelector(".page-content");
+
+            // ===== PINDAHKAN ELEMEN TERAKHIR (YANG MEMICU MELUBER) =====
+            const lastNode = content.lastElementChild;
+            if(!lastNode) return;
+
+            nextContent.insertBefore(lastNode, nextContent.firstChild);
+
+            // ===== PINDAHKAN CURSOR KE HALAMAN BARU SECARA MULUS =====
+            setTimeout(()=>{
+                nextContent.focus();
+
+                const range = document.createRange();
+                range.selectNodeContents(nextContent);
+                range.collapse(false);
+
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }, 10);
+
+            saveToStorage();
+        }
     </script>
 </body>
 </html>
