@@ -1734,6 +1734,39 @@
             margin-top: 5px;
         }
     </style>
+
+    <!-- =========================================
+         NEW: FULL TEXT PREVIEW STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="full-text-preview-styles">
+        #fullTextLivePreviewWrapper {
+            background: #e5e7eb;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        #fullTextLivePreviewWrapper .sheet {
+            background: white !important;
+            /* Dimensi standard desktop untuk memancing render optimal sebelum discale */
+            width: 794px !important;
+            min-height: 1123px !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+            transform: none !important;
+            margin: 0 !important;
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+        }
+
+        #fullTextLivePreviewWrapper .sheet.landscape {
+            width: 1123px !important;
+            min-height: 794px !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -1775,6 +1808,11 @@
             <!-- BUTTON DELETE DI SIDEBAR -->
             <button class="btn btn-danger" onclick="openDeleteModal()">
                 <i class="ph ph-trash"></i> Hapus Halaman
+            </button>
+
+            <!-- NEW: BUTTON EDIT FULL TEXT (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#eef2ff; color:#4f46e5; border-color:#c7d2fe;" onclick="openFullPageTextEditor()">
+                <i class="ph ph-article"></i> 📝 Edit Full Text Halaman
             </button>
 
             <!-- BUTTON EDIT MODE -->
@@ -1992,7 +2030,7 @@
            </select>
 
            <div class="modal-actions">
-               <button onclick="confirmOrientationChange()" style="background:#eab308; color:white;">💾 Simpan</button>
+               <button onclick="applyPageOrientation()" style="background:#eab308; color:white;">💾 Simpan</button>
                <button onclick="closeOrientationModal()">Batal</button>
            </div>
        </div>
@@ -2178,6 +2216,86 @@
              <i class="ph ph-browser"></i> Export Full HTML (Interactive)
           </button>
           <button onclick="closeHdImageExportModal()" style="flex: 1 1 100%; justify-content: center;">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW MODAL: FULL PAGE TEXT EDITOR (ADDITIVE) -->
+    <div id="fullTextEditorModal" class="modal no-print-in-pdf">
+      <div class="modal-box modal-large" style="max-width: 1400px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+            <h3 style="margin:0;"><i class="ph ph-article" style="color:#4f46e5"></i> Edit Full Text Halaman <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">(Real-Time Engine)</span></h3>
+            <span style="font-size:0.8rem; background:#eef2ff; color:#4f46e5; padding:4px 8px; border-radius:4px;"><i class="ph ph-shield-check"></i> Struktur Terlindungi</span>
+        </div>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman Target:</label>
+        <select id="fullTextPageSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;"></select>
+
+        <div style="display:flex; flex:1; gap:20px; overflow:hidden;">
+            <!-- PANEL KIRI: EDITOR TEKS RICH HTML -->
+            <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+                <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Rich Text Editor</label>
+                
+                <!-- TOOLBAR ALA MS WORD -->
+                <div class="editor-toolbar" style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; padding:8px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; align-items:center;">
+                    <!-- Prevent default on mousedown keeps the focus on the editor when clicking tools -->
+                    <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; font-weight:bold; width:auto;" onclick="FullTextEngine.formatText('bold')">B</button>
+                    <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; font-style:italic; font-family:serif; width:auto;" onclick="FullTextEngine.formatText('italic')">I</button>
+                    <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; text-decoration:underline; width:auto;" onclick="FullTextEngine.formatText('underline')">U</button>
+                    
+                    <div style="width:1px; height:20px; background:#cbd5e1; margin:0 5px;"></div>
+                    
+                    <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; width:auto;" onclick="FullTextEngine.changeFontSize(1)" title="Perbesar Teks">A+</button>
+                    <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; width:auto;" onclick="FullTextEngine.changeFontSize(-1)" title="Perkecil Teks">A-</button>
+                    
+                    <div style="width:1px; height:20px; background:#cbd5e1; margin:0 5px;"></div>
+                    
+                    <!-- WRAPPER COLOR PICKER BARU DENGAN TOMBOL SIMPAN & BATAL -->
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="color" id="fullTextColorPicker" onmousedown="FullTextEngine.openColorPicker()" oninput="FullTextEngine.previewTempColor(this.value)" style="height:32px; width:32px; padding:0; border:none; cursor:pointer; background:transparent;" title="Pilih Warna Teks">
+                        
+                        <div id="colorActionButtons" style="display:none; position: absolute; top: 100%; left: 0; margin-top: 5px; background: white; border: 1px solid #cbd5e1; padding: 6px; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 100; gap: 5px;">
+                            <button onmousedown="event.preventDefault()" onclick="FullTextEngine.saveColor()" style="background: #10b981; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="ph ph-check"></i> Simpan</button>
+                            <button onmousedown="event.preventDefault()" onclick="FullTextEngine.cancelColor()" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="ph ph-x"></i> Batal</button>
+                        </div>
+                    </div>
+                    
+                    <select id="fullTextFontSelect" onchange="FullTextEngine.changePageFont(this.value)" style="padding:6px; border:1px solid #cbd5e1; border-radius:4px; outline:none; max-width:200px; font-family:inherit; font-weight: 600; color: #3b82f6;">
+                        <option value="__default__">➜ Default (Mengikuti Halaman)</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                    </select>
+
+                    <div style="width:1px; height:20px; background:#cbd5e1; margin:0 5px;"></div>
+
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; font-size:0.8rem; color:#4f46e5; font-weight:bold; background:#e0e7ff; padding:6px 10px; border-radius:4px; border:1px solid #c7d2fe;">
+                        <i class="ph ph-upload-simple"></i> Custom Font
+                        <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="FullTextEngine.loadCustomFont(this)" style="display:none;">
+                    </label>
+                </div>
+
+                <div id="fullTextEditor" contenteditable="true" style="flex:1; width:100%; padding:30px; border:1px solid #cbd5e1; border-radius:8px; font-family:'Times New Roman', serif; font-size:12pt; line-height:1.5; outline:none; overflow:auto; background:white; color:#000; box-shadow:inset 0 2px 5px rgba(0,0,0,0.05);"></div>
+            </div>
+            
+            <!-- PANEL KANAN: LIVE PREVIEW -->
+            <div style="flex:1; display:flex; flex-direction:column; background:#f1f5f9; border-radius:8px; border:1px dashed #cbd5e1; padding:15px; overflow:hidden; position: relative;">
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+                    <label style="font-size:0.8rem; color:#3b82f6; display:block; font-weight:bold; text-transform:uppercase;"><i class="ph ph-eye"></i> Live Preview</label>
+                    <span style="font-size:0.7rem; color:#64748b;">DOM Terisolasi</span>
+                </div>
+                <!-- PREVIEW WRAPPER -->
+                <div id="fullTextLivePreviewWrapper" class="live-preview-container" style="flex:1; border:1px solid #e2e8f0; border-radius: 6px;">
+                    <!-- Clone dokumen akan ditaruh di sini -->
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+          <button onclick="saveFullTextChanges()" style="background:#4f46e5; color:white;"><i class="ph ph-floppy-disk"></i> Simpan Perubahan</button>
+          <button onclick="closeFullTextEditor()">Batal</button>
         </div>
       </div>
     </div>
@@ -5062,65 +5180,47 @@
             document.getElementById('orientationModal').style.display = 'none';
         }
 
-        // Fungsi konfirmasi trigger perubahan orientasi
-        function confirmOrientationChange() {
-            const index = document.getElementById('orientationPageSelect').value;
-            const mode = document.getElementById('orientationModeSelect').value;
-            handleChangeOrientation(parseInt(index), mode);
-            closeOrientationModal();
-        }
-
         // CORE LOGIC: Fungsi utama mengubah orientasi halaman terpilih
-        function handleChangeOrientation(pageIndex, mode) {
+        window.applyPageOrientation = function() {
+            const index = parseInt(document.getElementById('orientationPageSelect').value);
+            const mode = document.getElementById('orientationModeSelect').value;
+            
             const sheets = document.querySelectorAll('.sheet');
-            const sheet = sheets[pageIndex];
+            const sheet = sheets[index];
             if (!sheet) return;
 
+            // 1. Tambahkan / hapus class .landscape pada .sheet yang dipilih
             if (mode === 'landscape') {
-                sheet.classList.remove('portrait');
                 sheet.classList.add('landscape');
-
-                // Sisipkan tag .landscape-marker agar renderPages() mendeteksinya setelah direload
-                if (!sheet.querySelector('.landscape-marker')) {
-                    const marker = document.createElement('div');
-                    // ADDED: Proteksi Global
-                    marker.className = 'landscape-marker no-doc-ui no-save no-export no-edit sheet-ui';
-                    marker.style.display = 'none';
-                    sheet.insertBefore(marker, sheet.firstChild);
-                }
-            } else if (mode === 'portrait') {
+                sheet.classList.remove('portrait');
+            } else {
                 sheet.classList.remove('landscape');
                 sheet.classList.add('portrait');
-
-                // Hilangkan marker jika ada
-                const markers = sheet.querySelectorAll('.landscape-marker');
-                markers.forEach(m => m.remove());
             }
 
-            // Integrasi ke RawHTML khusus halaman embed agar marker tidak hilang
-            if (sheet.dataset.pageType === 'embed') {
-                const storage = sheet.querySelector('.raw-storage');
-                if (storage) {
-                    if (mode === 'landscape' && !storage.value.includes('landscape-marker')) {
-                         storage.value = '<div class="landscape-marker no-doc-ui no-save no-export no-edit sheet-ui" style="display:none;"></div>\n' + storage.value;
-                    } else if (mode === 'portrait') {
-                         storage.value = storage.value.replace(/<div class="landscape-marker.*?" style="display:none;"><\/div>\n?/g, '');
-                    }
-                    if (pagesDB[pageIndex]) pagesDB[pageIndex].rawHTML = storage.value;
-                }
-            } else {
-                 if (pagesDB[pageIndex]) pagesDB[pageIndex].html = cleanSheetForSave(sheet);
+            // 2. Update orientasi di pagesDB
+            if (typeof pagesDB !== 'undefined' && pagesDB[index]) {
+                pagesDB[index].orientation = mode;
             }
 
-            // Simpan status ke penyimpanan database agar tidak hilang saat direfresh
-            saveToStorage();
-            uxToast("Orientasi berhasil diubah ke " + (mode === 'landscape' ? 'Landscape' : 'Portrait'), "success");
+            // 3. Panggil penyimpanan dan render ulang agar dimensi kertas (Width/Height) menyesuaikan
+            if (typeof saveToStorage === 'function') saveToStorage();
+            if (typeof renderPages === 'function') renderPages();
 
-            // Gulung/Scroll layar agar pengguna melihat perubahannya langsung
+            closeOrientationModal();
+
+            if (typeof uxToast === 'function') {
+                uxToast("Orientasi berhasil diubah ke " + mode, "success");
+            }
+
+            // Auto-scroll ke halaman yang baru saja diubah
             setTimeout(() => {
-                sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const updatedSheets = document.querySelectorAll('.sheet');
+                if (updatedSheets[index]) {
+                    updatedSheets[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }, 300);
-        }
+        };
         
         console.log("Orientation Logic Engine loaded successfully.");
     </script>
@@ -9521,6 +9621,384 @@
                 }
             }
         };
+    </script>
+
+    <!-- =========================================
+         36. NEW: FULL TEXT EDITOR ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="full-text-editor-engine">
+        const FullTextEngine = {
+            currentIndex: -1,
+            cloneContentNode: null,
+            previewClone: null,
+            currentPageDefaultFont: '',
+            selectedPageFont: '__default__',
+            
+            // State untuk color picker real-time preview & cancel
+            isPreviewingColor: false,
+            previousColor: null,
+            tempColor: null,
+            savedRange: null,
+
+            open() {
+                const sheets = document.querySelectorAll('.sheet');
+                if (sheets.length === 0) {
+                    if(typeof uxToast === "function") uxToast("Tidak ada halaman.", "error");
+                    return;
+                }
+
+                const select = document.getElementById('fullTextPageSelect');
+                select.innerHTML = '';
+                
+                sheets.forEach((sheet, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    let title = "Halaman " + (i+1);
+                    if(sheet.dataset.pageType === 'embed') title += " [EMBED]";
+                    opt.textContent = title;
+                    select.appendChild(opt);
+                });
+
+                // Trigger reload preview saat dropdown halaman diganti
+                select.onchange = () => this.loadPage(parseInt(select.value));
+                
+                document.getElementById('fullTextEditorModal').style.display = 'flex';
+                this.loadPage(0);
+            },
+
+            close() {
+                document.getElementById('fullTextEditorModal').style.display = 'none';
+                this.currentIndex = -1;
+                this.cloneContentNode = null;
+                this.previewClone = null;
+                window.previewClone = null; // Clean up global reference
+                const wrapper = document.getElementById('fullTextLivePreviewWrapper');
+                if (wrapper) wrapper.innerHTML = ''; // Bersihkan memory preview
+                document.getElementById('fullTextEditor').innerHTML = ''; // Bersihkan editor
+            },
+
+            loadPage(index) {
+                this.currentIndex = index;
+                
+                const sheets = document.querySelectorAll('.sheet');
+                const original = sheets[index];
+                if (!original) return;
+
+                // --- 1. SETUP LIVE PREVIEW (ISOLATED FULL CLONE SYSTEM) ---
+                const previewWrapper = document.getElementById('fullTextLivePreviewWrapper');
+                previewWrapper.innerHTML = ''; // Bersihkan preview lama
+                
+                // Clone Penuh Halaman
+                this.previewClone = original.cloneNode(true);
+                
+                // Bersihkan elemen sistem UI pada preview agar bersih
+                this.previewClone.querySelectorAll(
+                    '.no-print-in-pdf, .edit-badge, .zoom-controls, .duplicate-controls, .landscape-marker, .zoom-indicator, .paper-size-badge, .sheet-controls'
+                ).forEach(el => el.remove());
+
+                // Reset transform/scale/box-shadow agar tidak invisible atau melebar
+                this.previewClone.style.transform = 'none';
+                this.previewClone.style.margin = '0';
+                this.previewClone.style.boxShadow = 'none';
+                this.previewClone.style.pointerEvents = 'none'; // Lock interaksi user langsung di preview
+                
+                // WAJIB: Reset posisi layout drag agar konten tidak terlempar keluar dari koordinat
+                const movableClone = this.previewClone.querySelector('.layout-movable');
+                if (movableClone) {
+                    movableClone.style.transform = 'none';
+                    movableClone.style.outline = 'none';
+                    movableClone.style.left = '0';
+                    movableClone.style.top = '0';
+                    movableClone.style.position = 'relative'; // Stabilkan layout jika sebelumnya absolute
+                }
+
+                // ORIENTATION SUPPORT (Portrait & Landscape) class injection untuk CSS
+                if (original.classList.contains('landscape')) {
+                    this.previewClone.classList.add('landscape');
+                    this.previewClone.classList.remove('portrait');
+                } else {
+                    this.previewClone.classList.add('portrait');
+                    this.previewClone.classList.remove('landscape');
+                }
+
+                // Inject ke container preview
+                previewWrapper.appendChild(this.previewClone);
+
+                // Simpan reference global sesuai standard
+                window.previewClone = this.previewClone;
+
+                // --- 2. PAGE-SCOPED FONT ENGINE ---
+                const originalContent = original.querySelector('.page-content') || original.querySelector('.layout-movable') || original;
+                this.cloneContentNode = this.previewClone.querySelector('.page-content') || this.previewClone.querySelector('.layout-movable') || this.previewClone;
+                
+                // Ambil font asli/computed dari halaman target
+                this.currentPageDefaultFont = window.getComputedStyle(originalContent).fontFamily;
+                
+                // Cek data style persisten di memory untuk halaman ini
+                const pageData = pagesDB[index] || {};
+                let activeFont = '__default__';
+                if (pageData.pageStyle && pageData.pageStyle.font) {
+                    activeFont = pageData.pageStyle.font;
+                }
+
+                // Siapkan Dropdown Selector
+                const fontSelect = document.getElementById('fullTextFontSelect');
+                let fontExists = Array.from(fontSelect.options).some(opt => opt.value.replace(/['"]/g, '') === activeFont.replace(/['"]/g, ''));
+                if (!fontExists && activeFont !== '__default__') {
+                     const opt = document.createElement("option");
+                     opt.value = activeFont;
+                     opt.textContent = activeFont + " (Custom)";
+                     fontSelect.appendChild(opt);
+                }
+                fontSelect.value = activeFont;
+                this.selectedPageFont = activeFont;
+
+                // --- 3. SINKRONKAN EDITOR DENGAN ISI HALAMAN 1:1 MIRROR ---
+                const editor = document.getElementById('fullTextEditor');
+                
+                if (original.dataset.pageType === 'embed') {
+                    editor.innerHTML = "<div style='color:red; text-align:center; padding:50px;'>Halaman Embed HTML tidak bisa diedit via panel teks ini. Silakan gunakan tombol <strong>Edit HTML Halaman</strong> di sidebar.</div>";
+                    editor.contentEditable = "false";
+                    editor.style.background = "#f8fafc";
+                } else {
+                    // Sync penuh HTML awal untuk editor
+                    editor.innerHTML = originalContent.innerHTML;
+                    editor.contentEditable = "true";
+                    editor.style.background = "white";
+                }
+
+                // Terapkan font yang sedang aktif ke layer editor & preview
+                this.applyFontToViews();
+
+                // --- 4. BINDING REAL-TIME LISTENER ---
+                editor.removeEventListener('input', this.handleInputBinding); 
+                this.handleInputBinding = () => this.handleLivePreview();
+                editor.addEventListener('input', this.handleInputBinding);
+            },
+
+            // --- FONT APPLIER (ISOLATED PAGE) ---
+            changePageFont(val) {
+                this.selectedPageFont = val;
+                this.applyFontToViews();
+            },
+
+            applyFontToViews() {
+                const editor = document.getElementById('fullTextEditor');
+                const targetFont = this.selectedPageFont === '__default__' ? this.currentPageDefaultFont : this.selectedPageFont;
+                
+                editor.style.fontFamily = targetFont;
+                if (this.cloneContentNode) {
+                    this.cloneContentNode.style.fontFamily = targetFont;
+                }
+            },
+
+            // --- 5. REAL-TIME PREVIEW ENGINE (100% NO MISMATCH) ---
+            handleLivePreview() {
+                // BLOKIR SINKRONISASI JIKA SEDANG PREVIEW WARNA (Belum disimpan)
+                if (this.isPreviewingColor) return;
+
+                const editor = document.getElementById('fullTextEditor');
+                
+                // Pastikan global previewClone tersedia
+                if (!window.previewClone) return;
+                
+                // Target mirror HTML aman (jangan sentuh struktur luarnya)
+                const previewContent = window.previewClone.querySelector('.page-content') || window.previewClone.querySelector('.layout-movable') || window.previewClone;
+                
+                if (previewContent && editor.contentEditable === "true") {
+                    previewContent.innerHTML = editor.innerHTML;
+                }
+            },
+
+            // --- 6. FORMATTING TOOLS (WORD STYLE) ---
+            formatText(cmd) {
+                document.execCommand(cmd, false, null);
+                this.handleLivePreview(); // Sinkronkan segera
+            },
+
+            // LOGIKA COLOR PICKER BARU (WITH SAVE & CANCEL)
+            openColorPicker() {
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    this.savedRange = sel.getRangeAt(0).cloneRange();
+                }
+                
+                // Simpan warna teks asli sebelum diubah
+                this.previousColor = document.queryCommandValue("foreColor");
+                
+                // Tampilkan popup opsi Simpan & Batal
+                document.getElementById('colorActionButtons').style.display = 'flex';
+                
+                // Aktifkan mode preview agar tidak bocor ke Live Preview panel
+                this.isPreviewingColor = true;
+            },
+
+            previewTempColor(selectedColor) {
+                this.tempColor = selectedColor;
+                
+                if (this.savedRange) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(this.savedRange);
+                }
+                
+                // Terapkan warna hanya ke Editor sementara (agar user bisa lihat efeknya)
+                // Karena flag isPreviewingColor aktif, ini tidak akan mengubah Live Preview.
+                document.execCommand("foreColor", false, this.tempColor);
+            },
+
+            saveColor() {
+                this.isPreviewingColor = false; // Matikan blokir sync
+                
+                if (!this.tempColor) {
+                    document.getElementById('colorActionButtons').style.display = 'none';
+                    return;
+                }
+                
+                if (this.savedRange) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(this.savedRange);
+                }
+                
+                const editor = document.getElementById('fullTextEditor');
+                
+                // Terapkan final ke editor
+                document.execCommand("foreColor", false, this.tempColor);
+                
+                // Trigger event manual agar sinkron secara permanen ke Live Preview
+                editor.dispatchEvent(new Event("input")); 
+                
+                document.getElementById('colorActionButtons').style.display = 'none';
+                this.savedRange = null;
+            },
+
+            cancelColor() {
+                this.isPreviewingColor = false; // Matikan blokir sync
+                
+                const editor = document.getElementById('fullTextEditor');
+                
+                if (this.savedRange) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(this.savedRange);
+                }
+                
+                // Kembalikan ke warna asli di editor
+                if (this.previousColor) {
+                    document.execCommand("foreColor", false, this.previousColor);
+                } else {
+                    document.execCommand("removeFormat", false, "foreColor");
+                }
+                
+                // Trigger event manual agar hasil pembatalan sinkron kembali
+                editor.dispatchEvent(new Event("input"));
+                
+                document.getElementById('colorActionButtons').style.display = 'none';
+                this.savedRange = null;
+                this.tempColor = null;
+            },
+
+            changeFontSize(step) {
+                const sizeMap = step > 0 ? 4 : 2; // 3 adalah default, 4 lebih besar, 2 lebih kecil
+                document.execCommand("fontSize", false, sizeMap);
+                this.handleLivePreview();
+            },
+
+            loadCustomFont(input) {
+                const file = input.files[0];
+                if(!file) return;
+
+                if (typeof uxShowLoader === "function") uxShowLoader("Memuat Font...");
+
+                const reader = new FileReader();
+                const fontName = file.name.replace(/\.[^/.]+$/, ""); // Buang ekstensi
+                
+                reader.onload = (e) => {
+                    const font = new FontFace(fontName, `url(${e.target.result})`);
+                    font.load().then((loadedFont) => {
+                        document.fonts.add(loadedFont);
+                        
+                        // Tambahkan ke opsi dropdown
+                        const select = document.getElementById('fullTextFontSelect');
+                        const opt = document.createElement("option");
+                        opt.value = fontName;
+                        opt.textContent = fontName + " (Custom)";
+                        select.appendChild(opt);
+                        select.value = fontName;
+
+                        // Terapkan ke halaman ini
+                        FullTextEngine.changePageFont(fontName);
+
+                        if (typeof uxToast === "function") uxToast("Font " + fontName + " berhasil dipasang", "success");
+                    }).catch(err => {
+                        console.error(err);
+                        if (typeof uxToast === "function") uxToast("Gagal memuat font. File mungkin tidak didukung.", "error");
+                    }).finally(() => {
+                        if (typeof uxHideLoader === "function") uxHideLoader();
+                    });
+                };
+                reader.readAsDataURL(file);
+            },
+
+            // --- 7. SAVE TO DOM ASLI ---
+            save() {
+                if (this.currentIndex === -1) return;
+                
+                const editor = document.getElementById('fullTextEditor');
+                if (editor.contentEditable === "false") {
+                    this.close();
+                    return;
+                }
+
+                const sheet = document.querySelectorAll('.sheet')[this.currentIndex];
+                if (!sheet) return;
+
+                // Ambil kontainer sebenarnya di DOM asli
+                const originalContent = sheet.querySelector('.page-content') || sheet.querySelector('.layout-movable') || sheet;
+                
+                // Murni timpa 100% tanpa merusak halaman lain
+                originalContent.innerHTML = editor.innerHTML;
+
+                // TERAPKAN FONT SPESIFIK HALAMAN
+                if (this.selectedPageFont !== '__default__') {
+                    originalContent.style.fontFamily = this.selectedPageFont;
+                    sheet.setAttribute('data-style-font', this.selectedPageFont); // Penanda DOM untuk renderer
+                    
+                    if (!pagesDB[this.currentIndex]) pagesDB[this.currentIndex] = {};
+                    if (!pagesDB[this.currentIndex].pageStyle) pagesDB[this.currentIndex].pageStyle = {};
+                    pagesDB[this.currentIndex].pageStyle.font = this.selectedPageFont; // Update Memory
+                } else {
+                    // Reset ke default engine jika __default__ dipilih
+                    originalContent.style.fontFamily = '';
+                    sheet.setAttribute('data-style-font', '');
+                    
+                    if (pagesDB[this.currentIndex] && pagesDB[this.currentIndex].pageStyle) {
+                        pagesDB[this.currentIndex].pageStyle.font = '';
+                    }
+                }
+
+                // Trigger Persistensi Storage
+                if (typeof saveToStorage === 'function') saveToStorage();
+                
+                // Sesuaikan Layout jika teks menabrak batas bawah halaman (AutoFlow)
+                if (typeof debouncedAutoFlow === 'function') debouncedAutoFlow();
+
+                if(typeof uxToast === "function") uxToast("Perubahan teks berhasil disimpan dengan aman!", "success");
+                
+                this.close();
+
+                // Gulir kembali ke halaman yang baru saja diedit
+                setTimeout(() => {
+                    sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        };
+
+        // Window Bindings
+        window.openFullPageTextEditor = function() { FullTextEngine.open(); }
+        window.closeFullTextEditor = function() { FullTextEngine.close(); }
+        window.saveFullTextChanges = function() { FullTextEngine.save(); }
     </script>
 </body>
 </html>
