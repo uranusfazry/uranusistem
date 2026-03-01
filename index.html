@@ -1326,55 +1326,93 @@
             border-collapse: collapse;
             margin: 10px 0;
             page-break-inside: auto;
+            position: relative;
         }
 
         .table-pro tr { page-break-inside: avoid; }
-
-        .table-pro th,
-        .table-pro td {
-            word-wrap: break-word;
-        }
-
-        .table-pro thead tr:first-child th {
-            font-weight: bold;
-        }
+        .table-pro th, .table-pro td { word-wrap: break-word; position: relative; }
+        .table-pro thead tr:first-child th { font-weight: bold; }
 
         /* Variasi Style Tabel (Ditingkatkan) */
-        
-        /* 1. School: Formal Serif, Full Border, Header Abu-abu */
         .table-pro.style-school { border: 1px solid #000; font-family: "Times New Roman", Times, serif; }
         .table-pro.style-school th, .table-pro.style-school td { border: 1px solid #000; }
         .table-pro.style-school thead { background: #e2e8f0; }
         
-        /* 2. Basic: Full Border, Tanpa Background */
         .table-pro.style-basic { border: 1px solid #000; }
         .table-pro.style-basic th, .table-pro.style-basic td { border: 1px solid #000; }
         .table-pro.style-basic thead { background: transparent; }
         
-        /* 3. Clean: Border Abu Tipis, Header Soft */
         .table-pro.style-clean { border: 1px solid #cbd5e1; }
         .table-pro.style-clean th, .table-pro.style-clean td { border: 1px solid #cbd5e1; }
         .table-pro.style-clean thead { background: #f8fafc; }
         
-        /* 4. Minimal: Hanya Garis Horizontal, Tanpa Border Vertikal */
         .table-pro.style-minimal { border: none; }
         .table-pro.style-minimal th { border-bottom: 2px solid #000; border-top: 2px solid #000; }
         .table-pro.style-minimal td { border-bottom: 1px solid #e2e8f0; border-left: none; border-right: none; }
-    </style>
 
-    <!-- =========================================
-         NEW: CONTINUOUS TABLE STYLES (ADDITIVE)
-         ========================================= -->
-    <style id="continuous-table-styles">
-        table {
-            border-collapse: collapse;
-            table-layout: fixed;
+        /* =========================================
+           SPREADSHEET UI STYLES (EXCEL MODE)
+           ========================================= */
+        .cell-input {
+            width: 100%; height: 100%; border: none; background: transparent; 
+            font-family: inherit; font-size: inherit; text-align: inherit; 
+            outline: none; color: inherit; padding: 0; margin: 0;
         }
-        table[data-continuation="true"] {
-            margin-top: -1px;
+
+        /* Excel Active Cell Border */
+        .table-pro td.excel-active {
+            outline: 2px solid #10b981 !important; /* Hijau Excel */
+            outline-offset: -2px;
+            background: rgba(16, 185, 129, 0.05);
+            z-index: 10;
         }
-        table[data-continuation="true"] thead {
-            background: inherit;
+
+        /* Selection Range Highlight */
+        .table-pro td.excel-selected {
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        /* Reference Highlight (Mewarnai sel yang dirujuk rumus) */
+        .table-pro td.excel-ref-highlight {
+            outline: 2px dashed #3b82f6 !important;
+            outline-offset: -2px;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Drag Fill Handle */
+        .excel-drag-handle {
+            position: absolute;
+            bottom: -3px; right: -3px;
+            width: 8px; height: 8px;
+            background: #10b981;
+            border: 1px solid white;
+            cursor: crosshair;
+            display: none;
+            z-index: 15;
+        }
+        .table-pro td.excel-active .excel-drag-handle {
+            display: block;
+        }
+
+        /* Formula Indicator (fx icon) */
+        .fx-indicator {
+            position: absolute;
+            top: 2px; right: 2px;
+            font-size: 8px;
+            color: #10b981;
+            font-style: italic;
+            font-weight: 900;
+            font-family: serif;
+            pointer-events: none;
+            user-select: none;
+            opacity: 0.7;
+        }
+
+        /* Error States */
+        .cell-error {
+            background: #fee2e2 !important;
+            color: #dc2626 !important;
+            font-weight: bold;
         }
     </style>
 
@@ -2531,37 +2569,76 @@
                     </div>
                 </div>
 
+                <!-- NEW: SMART SPREADSHEET ENGINE TOGGLES -->
+                <div style="background:#fefce8; padding:10px; border-radius:6px; border:1px solid #fef08a; margin-bottom:15px; display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.85rem; color:#854d0e; cursor:pointer; display:flex; align-items:center; gap:8px; font-weight:bold;">
+                        <input type="checkbox" id="tbProExcelMode" onchange="previewProfessionalTable()"> 
+                        <i class="ph ph-function"></i> Aktifkan Mode Formula (Excel Mode)
+                    </label>
+                    <label style="font-size:0.85rem; color:#854d0e; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="tbProAutoTotal" onchange="previewProfessionalTable()"> Tambah Baris Total Otomatis
+                    </label>
+                </div>
+
                 <div style="background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:15px; display:flex; flex-direction:column; gap:8px;">
                     <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="tbProAutoNum" checked> Auto Number (Kolom 1)
+                        <input type="checkbox" id="tbProAutoNum" checked onchange="previewProfessionalTable()"> Auto Number (Kolom 1)
                     </label>
                     <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="tbProBorder" checked> Terapkan Border
+                        <input type="checkbox" id="tbProBorder" checked onchange="previewProfessionalTable()"> Terapkan Border
                     </label>
                     <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="tbProRepeatHeader" checked> Ulangi Header Saat Tabel Terpotong (Split)
+                        <input type="checkbox" id="tbProRepeatHeader" checked onchange="previewProfessionalTable()"> Ulangi Header Saat Tabel Terpotong (Split)
                     </label>
                     <label style="font-size:0.85rem; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="tbProLockWidth" checked> Kunci Lebar Kolom (Fixed Layout)
+                        <input type="checkbox" id="tbProLockWidth" checked onchange="previewProfessionalTable()"> Kunci Lebar Kolom (Fixed Layout)
                     </label>
                 </div>
 
                 <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Isi Data Langsung (Opsional, Format: CSV / Dipisah Koma)</label>
-                <textarea id="tbProData" placeholder="Andi, Laki-laki, Hadir&#10;Budi, Laki-laki, Izin" style="width:100%; height:80px; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-family:monospace; font-size:12px; resize:vertical; outline:none;"></textarea>
+                <textarea id="tbProData" placeholder="Andi, Laki-laki, 90&#10;Budi, Laki-laki, =A1*2" style="width:100%; height:80px; padding:8px; border-radius:6px; border:1px solid #cbd5e1; font-family:monospace; font-size:12px; resize:vertical; outline:none;" oninput="previewProfessionalTable()"></textarea>
             </div>
             
             <!-- RIGHT COLUMN: PREVIEW -->
-            <div style="flex: 1; display:flex; flex-direction:column; background:#f1f5f9; border-radius:8px; border:1px dashed #cbd5e1; padding:15px;">
-                <div style="font-size:0.8rem; color:#64748b; font-weight:bold; margin-bottom:10px; text-transform:uppercase;">Live Preview</div>
+            <div style="flex: 1; display:flex; flex-direction:column; background:#f1f5f9; border-radius:8px; border:1px dashed #cbd5e1; padding:15px; position:relative;">
+                <div style="font-size:0.8rem; color:#64748b; font-weight:bold; margin-bottom:10px; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Live Preview</span>
+                    <span style="font-size:0.7rem; color:#3b82f6; font-weight:normal;" id="tbProModeBadge">Standard Mode</span>
+                </div>
+                
+                <!-- NEW: ADVANCED FORMULA BAR -->
+                <div id="tbProFormulaBarContainer" style="display:none; align-items:center; gap:8px; background:white; padding:6px 12px; border:1px solid #cbd5e1; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:8px;">
+                    <div id="tbProActiveCellRef" style="font-family:monospace; font-weight:bold; font-size:12px; color:#475569; border-right:1px solid #e2e8f0; padding-right:8px; min-width:30px; text-align:center;">-</div>
+                    <span style="font-weight:900; color:#10b981; font-family:serif; font-size:1.1rem; user-select:none; font-style:italic;">fx</span>
+                    <input type="text" id="tbProFormulaBarInput" placeholder="Pilih sel untuk edit rumus..." style="flex:1; border:none; border-bottom:1px dashed #cbd5e1; padding:4px 6px; font-family:monospace; outline:none; font-size:13px;" disabled>
+                    
+                    <!-- NEW: FORMATTING DROPDOWN -->
+                    <select id="tbProFormatDropdown" style="border:1px solid #cbd5e1; border-radius:4px; padding:4px; font-size:11px; outline:none; background:#f8fafc;" disabled>
+                        <option value="general">Format: Auto</option>
+                        <option value="number">Angka (1.000)</option>
+                        <option value="decimal">Desimal (1.000,00)</option>
+                        <option value="currency">Mata Uang (Rp)</option>
+                        <option value="percent">Persen (%)</option>
+                    </select>
+                </div>
+
                 <div id="tbProPreviewContainer" style="flex:1; overflow:auto; background:white; padding:10px; border:1px solid #e2e8f0; box-shadow:inset 0 2px 4px rgba(0,0,0,0.05);">
                     <div style="color:#94a3b8; text-align:center; margin-top:50px; font-size:0.9rem;">Klik tombol Preview untuk melihat hasil tabel.</div>
+                </div>
+
+                <!-- NEW: SPREADSHEET STATUS BAR -->
+                <div id="tbProStatusBar" style="display:none; justify-content:flex-end; align-items:center; gap:15px; padding:8px 12px; background:#f8fafc; border-top:1px solid #e2e8f0; font-size:11px; color:#475569; font-weight:600; font-family:monospace;">
+                    <span>COUNT: <span id="statCount">0</span></span>
+                    <span>SUM: <span id="statSum">0</span></span>
+                    <span>AVG: <span id="statAvg">0</span></span>
+                    <span>MAX: <span id="statMax">0</span></span>
                 </div>
             </div>
 
         </div> <!-- End Grid -->
 
         <div class="modal-actions" style="margin-top: 20px; padding-top:15px; border-top:1px solid #e2e8f0;">
-          <button onclick="previewProfessionalTable()" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe;">👁️ Preview</button>
+          <button onclick="previewProfessionalTable()" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe;">👁️ Refresh Preview</button>
           <button onclick="generateProfessionalTable()" style="background:#059669; color:white;">📊 Insert ke Halaman</button>
           <button onclick="closeTableBuilder()">Batal</button>
         </div>
@@ -8292,17 +8369,65 @@
          31. NEW: TABLE BUILDER PRO ENGINE (UPGRADED V2)
          ========================================= -->
     <script id="professional-table-builder-engine">
+        // ===============================
+        // Excel Column Utility (GLOBAL SCOPE)
+        // ===============================
+        function indexToExcelCol(index) {
+            let col = "";
+            let temp = index + 1;
+            while (temp > 0) {
+                let remainder = (temp - 1) % 26;
+                col = String.fromCharCode(65 + remainder) + col;
+                temp = Math.floor((temp - 1) / 26);
+            }
+            return col;
+        }
+
+        function excelColToIndex(col) {
+            let index = 0;
+            for (let i = 0; i < col.length; i++) {
+                index = index * 26 + (col.charCodeAt(i) - 64);
+            }
+            return index - 1;
+        }
+
+        // ===============================
+        // Safe Match Utility (GLOBAL SCOPE)
+        // ===============================
+        function safeMatch(value, regex) {
+            if (typeof value !== "string") return null;
+            return value.match(regex);
+        }
+
+        // SAFETY CHECK
+        if (typeof indexToExcelCol !== "function") {
+            console.error("indexToExcelCol is missing!");
+        }
+
+        // FORMULA MODE GUARD
+        function safeRecalculateTable() {
+            try {
+                if (typeof SpreadsheetEngine !== 'undefined') {
+                    SpreadsheetEngine.computeAll();
+                }
+            } catch (e) {
+                console.warn("Formula error handled safely", e);
+            }
+        }
+
         function openTableBuilder(){
             document.getElementById("tableBuilderModal").style.display = "flex";
-            document.getElementById("tbProPreviewContainer").innerHTML = '<div style="color:#94a3b8; text-align:center; margin-top:50px; font-size:0.9rem;">Klik tombol Preview untuk melihat hasil tabel.</div>';
+            document.getElementById("tbProPreviewContainer").innerHTML = '<div style="color:#94a3b8; text-align:center; margin-top:50px; font-size:0.9rem;">Klik tombol Refresh Preview untuk melihat hasil tabel.</div>';
             document.getElementById("tbProTitle").focus();
+            
+            setTimeout(() => previewProfessionalTable(), 200);
         }
 
         function closeTableBuilder(){
             document.getElementById("tableBuilderModal").style.display = "none";
+            SpreadsheetEngine.activeCell = null;
         }
 
-        // Fungsi Load Template Preset
         function applyTablePreset() {
             const preset = document.getElementById("tbProPreset").value;
             
@@ -8312,35 +8437,738 @@
                 document.getElementById("tbProColWidths").value = "5%, 35%, 10%, 12.5%, 12.5%, 12.5%, 12.5%";
                 document.getElementById("tbProStyle").value = "school";
                 document.getElementById("tbProAutoNum").checked = true;
+                document.getElementById("tbProExcelMode").checked = false;
+                document.getElementById("tbProAutoTotal").checked = false;
             } else if (preset === "jadwal") {
                 document.getElementById("tbProTitle").value = "JADWAL PELAJARAN";
                 document.getElementById("tbProCols").value = "WAKTU, SENIN, SELASA, RABU, KAMIS, JUMAT";
                 document.getElementById("tbProColWidths").value = "15%, 17%, 17%, 17%, 17%, 17%";
                 document.getElementById("tbProStyle").value = "clean";
                 document.getElementById("tbProAutoNum").checked = false;
+                document.getElementById("tbProExcelMode").checked = false;
+                document.getElementById("tbProAutoTotal").checked = false;
             } else if (preset === "rekap") {
                 document.getElementById("tbProTitle").value = "REKAPITULASI NILAI AKHIR";
-                document.getElementById("tbProCols").value = "NO, NAMA LENGKAP, TUGAS 1, TUGAS 2, UTS, UAS, NILAI AKHIR";
-                document.getElementById("tbProColWidths").value = "5%, 35%, 12%, 12%, 12%, 12%, 12%";
+                document.getElementById("tbProCols").value = "NO, NAMA LENGKAP, TUGAS 1, TUGAS 2, UTS, UAS, NILAI AKHIR, STATUS";
+                document.getElementById("tbProColWidths").value = "5%, 25%, 10%, 10%, 10%, 10%, 15%, 15%";
                 document.getElementById("tbProStyle").value = "school";
                 document.getElementById("tbProAutoNum").checked = true;
+                document.getElementById("tbProExcelMode").checked = true;
+                document.getElementById("tbProAutoTotal").checked = true;
+                document.getElementById("tbProData").value = "Andi, L, 80, 85, 90, 88, =AVG(C1:F1), =IF(G1>=80, \"LULUS\", \"REMEDIAL\")\nBudi, L, 75, 70, 80, 78, =AVG(C2:F2), =IF(G2>=80, \"LULUS\", \"REMEDIAL\")";
             } else if (preset === "rpp") {
                 document.getElementById("tbProTitle").value = "KEGIATAN PEMBELAJARAN";
                 document.getElementById("tbProCols").value = "KEGIATAN, DESKRIPSI KEGIATAN, ALOKASI WAKTU";
                 document.getElementById("tbProColWidths").value = "20%, 65%, 15%";
                 document.getElementById("tbProStyle").value = "school";
                 document.getElementById("tbProAutoNum").checked = false;
+                document.getElementById("tbProExcelMode").checked = false;
+                document.getElementById("tbProAutoTotal").checked = false;
             } else {
-                // Custom reset
                 document.getElementById("tbProTitle").value = "";
                 document.getElementById("tbProCols").value = "NO, KOLOM 1, KOLOM 2";
                 document.getElementById("tbProColWidths").value = "";
                 document.getElementById("tbProStyle").value = "basic";
+                document.getElementById("tbProExcelMode").checked = false;
+                document.getElementById("tbProAutoTotal").checked = false;
+                document.getElementById("tbProData").value = "";
+            }
+            previewProfessionalTable();
+        }
+
+        // =========================================
+        // AST FORMULA PARSER (100% SAFE - NO EVAL)
+        // =========================================
+        class FormulaEvaluator {
+            constructor(formula, getCellValObj) {
+                this.getCellVal = getCellValObj;
+                this.tokens = this.tokenize(formula);
+                this.pos = 0;
+            }
+
+            tokenize(str) {
+                if (typeof str !== "string") return [];
+                // Ekstraksi canggih: Sel (A1), Fungsi (SUM), Angka (10.5), String ("Teks"), Operator, dsb.
+                const regex = /([A-Z]+[0-9]+|[A-Z]+|>=|<=|<>|>|<|=|[-+*/^&(),]|"[^"]*"|[0-9]+(?:\.[0-9]+)?)/gi;
+                let match, tokens = [];
+                while ((match = regex.exec(str)) !== null) {
+                    if (match[1].trim()) tokens.push(match[1]); // Jaga case string
+                }
+                return tokens;
+            }
+
+            peek() { return this.tokens[this.pos]; }
+            consume() { return this.tokens[this.pos++]; }
+
+            parse() {
+                if (this.tokens.length === 0) return "";
+                const res = this.parseExpression();
+                if (this.pos < this.tokens.length) throw new Error("#ERROR"); // Syntax error sisa token
+                return res;
+            }
+
+            parseExpression() { return this.parseLogic(); }
+
+            parseLogic() {
+                let left = this.parseConcat();
+                while (['=', '<', '>', '<=', '>=', '<>'].includes(this.peek())) {
+                    let op = this.consume();
+                    let right = this.parseConcat();
+                    if (op === '=') left = left === right;
+                    else if (op === '<') left = left < right;
+                    else if (op === '>') left = left > right;
+                    else if (op === '<=') left = left <= right;
+                    else if (op === '>=') left = left >= right;
+                    else if (op === '<>') left = left !== right;
+                }
+                return left;
+            }
+
+            parseConcat() {
+                let left = this.parseAddSub();
+                while (this.peek() === '&') {
+                    this.consume();
+                    let right = this.parseAddSub();
+                    left = "" + left + right;
+                }
+                return left;
+            }
+
+            parseAddSub() {
+                let left = this.parseMulDiv();
+                while (['+', '-'].includes(this.peek())) {
+                    let op = this.consume();
+                    let right = this.parseMulDiv();
+                    
+                    if (typeof left !== "number" || typeof right !== "number") throw new Error("#VALUE!");
+                    left = op === '+' ? left + right : left - right;
+                }
+                return left;
+            }
+
+            parseMulDiv() {
+                let left = this.parseUnary();
+                while (['*', '/'].includes(this.peek())) {
+                    let op = this.consume();
+                    let right = this.parseUnary();
+                    
+                    if (typeof left !== "number" || typeof right !== "number") throw new Error("#VALUE!");
+                    if (op === '/') {
+                        if (right === 0) throw new Error("#DIV/0!");
+                        left = left / right;
+                    } else {
+                        left = left * right;
+                    }
+                }
+                return left;
+            }
+
+            parseUnary() {
+                if (this.peek() === '-') {
+                    this.consume();
+                    const val = this.parsePrimary();
+                    if (typeof val !== "number") throw new Error("#VALUE!");
+                    return -val;
+                }
+                if (this.peek() === '+') {
+                    this.consume();
+                    const val = this.parsePrimary();
+                    if (typeof val !== "number") throw new Error("#VALUE!");
+                    return val;
+                }
+                return this.parsePrimary();
+            }
+
+            parsePrimary() {
+                let token = this.consume();
+                if (token === undefined) throw new Error("#ERROR");
+
+                // Kurung ()
+                if (token === '(') {
+                    let expr = this.parseExpression();
+                    if (this.consume() !== ')') throw new Error("#ERROR");
+                    return expr;
+                }
+
+                // Angka
+                if (!isNaN(parseFloat(token)) && isFinite(token)) return parseFloat(token);
+                
+                // String "Teks"
+                if (token.startsWith('"')) return token.slice(1, -1);
+
+                let upperToken = token.toUpperCase();
+
+                // Referensi Sel Tunggal (A1, B2)
+                if (/^[A-Z]+[0-9]+$/.test(upperToken)) {
+                    let val = this.getCellVal(upperToken);
+                    if (val instanceof Error) throw val;
+                    if (typeof val === "string" && val.startsWith("#")) throw new Error(val);
+                    return val;
+                }
+
+                // Eksekusi Fungsi Built-in
+                if (/^[A-Z]+$/.test(upperToken)) {
+                    if (this.consume() !== '(') throw new Error("#ERROR");
+                    let args = [];
+                    if (this.peek() !== ')') {
+                        do {
+                            args.push(this.parseExpression());
+                        } while (this.peek() === ',' && this.consume());
+                    }
+                    if (this.consume() !== ')') throw new Error("#ERROR");
+                    
+                    return this.executeFunction(upperToken, args);
+                }
+
+                throw new Error("#NAME?");
+            }
+
+            executeFunction(name, args) {
+                if (name === 'IF') {
+                    if (args.length < 2 || args.length > 3) throw new Error("#ERROR");
+                    return args[0] ? args[1] : (args[2] !== undefined ? args[2] : false);
+                }
+                
+                let nums = args.map(a => parseFloat(a)).filter(a => !isNaN(a));
+                if (name === 'SUM') return nums.reduce((a,b)=>a+b, 0);
+                if (name === 'AVG') return nums.length ? nums.reduce((a,b)=>a+b, 0)/nums.length : 0;
+                if (name === 'MIN') return nums.length ? Math.min(...nums) : 0;
+                if (name === 'MAX') return nums.length ? Math.max(...nums) : 0;
+                if (name === 'COUNT') return nums.length;
+                
+                throw new Error("#NAME?");
             }
         }
 
-        // Engine Builder Element
-        function buildTableElement() {
+        // =========================================
+        // SPREADSHEET ENGINE (ENTERPRISE STATE SYSTEM)
+        // =========================================
+        const SpreadsheetEngine = {
+            cells: {}, // { id, rawInput, value, format, deps, refs, dom }
+            activeCell: null,
+            isDragging: false,
+            selection: { start: null, end: null },
+
+            init(tableContainer) {
+                this.cells = {};
+                const inputs = tableContainer.querySelectorAll("input.cell-input");
+                
+                inputs.forEach(inp => {
+                    const id = inp.getAttribute("data-cell");
+                    const rawInput = inp.value || inp.getAttribute("data-formula") || "";
+                    const format = inp.getAttribute("data-format") || "general";
+                    
+                    this.cells[id] = { id, rawInput, value: null, format, deps: [], refs: [], dom: inp };
+                });
+
+                this.bindEvents(tableContainer);
+                safeRecalculateTable(); // Gunakan Safe Guard
+            },
+
+            // Format Angka Tampilan Visual
+            formatValue(val, formatType) {
+                if (val === "" || val === null) return "";
+                if (typeof val === "string" && val.startsWith("#")) return val; // Biarkan kode error tampil
+                if (typeof val === "boolean") return val ? "TRUE" : "FALSE";
+                if (typeof val === "string" && isNaN(parseFloat(val))) return val; // Jika murni teks "LULUS"
+                
+                const num = parseFloat(val);
+                if (isNaN(num)) return val;
+                
+                // Menangani precision floating point javascript (e.g. 0.1+0.2)
+                const roundedNum = Math.round(num * 1000000) / 1000000;
+
+                switch(formatType) {
+                    case "number": 
+                        return roundedNum.toLocaleString('id-ID');
+                    case "decimal": 
+                        return roundedNum.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    case "currency": 
+                        return "Rp " + roundedNum.toLocaleString('id-ID', { minimumFractionDigits: 0 });
+                    case "percent": 
+                        return (roundedNum * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + "%";
+                    default: 
+                        return roundedNum.toString();
+                }
+            },
+
+            // Parser Raw Input (Ubah teks ketikan bebas jadi data mentah)
+            parseRawInput(val) {
+                if (val === "" || val === null || val === undefined) return "";
+                if (typeof val !== "string" && typeof val !== "number") return val;
+                
+                let str = val.toString().trim();
+                
+                // Jika itu teks biasa tanpa tanda kutip (bukan formula dan bukan angka)
+                if (/^[a-zA-Z]/.test(str) && !str.startsWith("Rp")) return str;
+                
+                // Bersihkan karakter angka
+                let clean = str.replace(/[^0-9.,-]/g, '');
+                clean = clean.replace(/,/g, '.');
+                const parts = clean.split('.');
+                if (parts.length > 2) clean = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+                
+                const num = parseFloat(clean);
+                return isNaN(num) ? str : num;
+            },
+
+            expandRange(rangeString) {
+                if (!rangeString || typeof rangeString !== "string") {
+                    console.warn("expandRange: invalid rangeString", rangeString);
+                    return [];
+                }
+
+                const match = safeMatch(rangeString, /^([A-Z]+\d+):([A-Z]+\d+)$/i);
+                if (!match) {
+                    console.warn("expandRange: invalid range format", rangeString);
+                    return [];
+                }
+
+                let c1 = match[1];
+                let c2 = match[2];
+
+                const match1 = safeMatch(c1, /([A-Z]+)(\d+)/);
+                const match2 = safeMatch(c2, /([A-Z]+)(\d+)/);
+                
+                if(!match1 || !match2) return [];
+
+                let col1 = excelColToIndex(match1[1]), row1 = parseInt(match1[2]);
+                let col2 = excelColToIndex(match2[1]), row2 = parseInt(match2[2]);
+
+                let startCol = Math.min(col1, col2), endCol = Math.max(col1, col2);
+                let startRow = Math.min(row1, row2), endRow = Math.max(row1, row2);
+
+                let cells = [];
+                for (let c = startCol; c <= endCol; c++) {
+                    for (let r = startRow; r <= endRow; r++) {
+                        cells.push(indexToExcelCol(c) + r);
+                    }
+                }
+                return cells;
+            },
+
+            // DFS EVALUATION (MENCEGAH CIRCULAR & MENJAMIN URUTAN YANG BENAR)
+            computeAll() {
+                // Reset state & dependency tree untuk kalkulasi segar
+                Object.values(this.cells).forEach(c => { 
+                    c.deps = []; 
+                    c.refs = []; 
+                    c.value = null; // Menandakan belum dihitung pass ini
+                });
+
+                Object.keys(this.cells).forEach(id => {
+                    try {
+                        this.evaluateCell(id, new Set());
+                    } catch(e) {
+                        this.cells[id].value = e.message.startsWith("#") ? e.message : "#ERROR";
+                    }
+                    this.renderCell(id);
+                });
+            },
+
+            evaluateCell(id, currentPath) {
+                const cell = this.cells[id];
+                if (!cell) return 0; // Sel mati / diluar tabel diabaikan sbg 0
+                
+                // Memoization: Jika sudah terhitung di pass ini, langsung kembalikan
+                if (cell.value !== null) return cell.value;
+
+                // PROTEKSI CYCLICAL REFERENCE PINTAR
+                if (currentPath.has(id)) throw new Error("#CIRC");
+
+                currentPath.add(id); // Masuk antrian jalan DFS
+
+                // 1. Jika Bukan Formula (Value Statis) ATAU bukan String
+                if (typeof cell.rawInput !== "string" || !cell.rawInput.startsWith("=")) {
+                    cell.value = this.parseRawInput(cell.rawInput);
+                    currentPath.delete(id); // Selesai dari path
+                    return cell.value;
+                }
+
+                // 2. Jika Formula
+                try {
+                    let formulaStr = cell.rawInput.substring(1);
+                    
+                    if (!formulaStr) {
+                         cell.value = "";
+                         currentPath.delete(id);
+                         return cell.value;
+                    }
+
+                    // Pra-proses Range (Mengubah SUM(A1:A3) jadi SUM(A1,A2,A3)) secara aman
+                    if (typeof formulaStr === "string") {
+                        formulaStr = formulaStr.replace(/([A-Z]+\d+):([A-Z]+\d+)/gi, (m, p1, p2) => this.expandRange(p1 + ':' + p2).join(','));
+                    }
+
+                    // Evaluasi AST Aman
+                    const parser = new FormulaEvaluator(formulaStr, (refId) => {
+                        // Daftarkan Dependency
+                        if (!cell.deps.includes(refId)) cell.deps.push(refId);
+                        if (this.cells[refId] && !this.cells[refId].refs.includes(id)) this.cells[refId].refs.push(id);
+
+                        // Resolusi rekatif mendalam
+                        return this.evaluateCell(refId, currentPath);
+                    });
+
+                    cell.value = parser.parse();
+
+                    // Tangkap NaN ilegal dari Javascript float
+                    if (typeof cell.value === "number" && isNaN(cell.value)) throw new Error("#VALUE!");
+                    if (cell.value === Infinity || cell.value === -Infinity) throw new Error("#DIV/0!");
+
+                } catch (e) {
+                    cell.value = e.message.startsWith("#") ? e.message : "#ERROR";
+                }
+
+                currentPath.delete(id); // Keluar dari antrian DFS
+                return cell.value;
+            },
+
+            renderCell(cellId) {
+                const cell = this.cells[cellId];
+                if (!cell) return;
+                
+                const dom = cell.dom;
+                
+                // Cegah error jika rawInput bukan string
+                let isFormula = false;
+                if (typeof cell.rawInput === "string") {
+                     isFormula = cell.rawInput.startsWith("=");
+                }
+                
+                // Render Status Error
+                if (typeof cell.value === "string" && cell.value.startsWith("#")) {
+                    dom.value = cell.value;
+                    dom.classList.add('cell-error');
+                    dom.title = `Error: ${cell.rawInput}`;
+                    
+                    const fxIcon = dom.parentElement.querySelector('.fx-indicator');
+                    if(fxIcon) fxIcon.remove();
+                    return;
+                }
+
+                dom.classList.remove('cell-error');
+
+                // Render Display
+                if (this.activeCell === dom) {
+                    dom.value = cell.rawInput; // Edit Mode menampilkan formula/raw mentah
+                } else {
+                    // Display Mode menerapkan engine format
+                    dom.value = this.formatValue(cell.value, cell.format);
+                }
+
+                // Render Visual Indicator (Fx & Highlight)
+                let fxIcon = dom.parentElement.querySelector('.fx-indicator');
+                if (isFormula) {
+                    dom.title = cell.rawInput;
+                    if (!fxIcon) {
+                        fxIcon = document.createElement('span');
+                        fxIcon.className = 'fx-indicator';
+                        fxIcon.innerText = 'fx';
+                        dom.parentElement.appendChild(fxIcon);
+                    }
+                } else {
+                    dom.title = "";
+                    if (fxIcon) fxIcon.remove();
+                }
+            },
+
+            // --- EVENT BINDINGS KONTROL SPREADSHEET ---
+            bindEvents(container) {
+                const formulaBar = document.getElementById("tbProFormulaBarInput");
+                const formatDropdown = document.getElementById("tbProFormatDropdown");
+                const cellRefUI = document.getElementById("tbProActiveCellRef");
+
+                // Drag Handle Reset
+                container.addEventListener("mousedown", (e) => {
+                    if (e.target.classList.contains("excel-drag-handle")) return; 
+                    const td = e.target.closest("td");
+                    if (td && td.querySelector("input.cell-input")) {
+                        try {
+                            this.clearSelection();
+                            this.isDragging = true;
+                            this.selection.start = td;
+                            this.selection.end = td;
+                            this.updateSelectionUI();
+                        } catch (err) {
+                            console.error("Selection mousedown error safely handled", err);
+                        }
+                    }
+                });
+
+                container.addEventListener("mouseover", (e) => {
+                    if (this.isDragging) {
+                        try {
+                            const td = e.target.closest("td");
+                            if (td && td.querySelector("input.cell-input")) {
+                                this.selection.end = td;
+                                this.updateSelectionUI();
+                            }
+                        } catch (err) {
+                            console.error("Selection mouseover error safely handled", err);
+                        }
+                    }
+                });
+
+                document.addEventListener("mouseup", () => {
+                    if (this.isDragging) {
+                        try {
+                            this.isDragging = false;
+                            this.updateStatusBar();
+                        } catch (err) {
+                            console.error("Selection mouseup error safely handled", err);
+                        }
+                    }
+                });
+
+                document.addEventListener("mouseup", () => {
+                    if (this.isDragging) {
+                        this.isDragging = false;
+                        this.updateStatusBar();
+                    }
+                });
+
+                // Per-Cell Logic
+                Object.values(this.cells).forEach(cell => {
+                    const dom = cell.dom;
+                    const td = dom.parentElement;
+
+                    // Buat Drag Handle untuk Fill
+                    const handle = document.createElement('div');
+                    handle.className = 'excel-drag-handle no-export no-print-in-pdf';
+                    td.appendChild(handle);
+
+                    handle.addEventListener('mousedown', (e) => {
+                        e.stopPropagation();
+                        this.startAutofill(cell.id, td);
+                    });
+
+                    dom.addEventListener('focus', () => {
+                        this.activeCell = dom;
+                        formulaBar.value = cell.rawInput;
+                        formulaBar.disabled = false;
+                        formatDropdown.value = cell.format;
+                        formatDropdown.disabled = false;
+                        cellRefUI.innerText = cell.id;
+
+                        this.clearSelection();
+                        td.classList.add('excel-active');
+                        this.renderCell(cell.id); 
+
+                        // Tampilkan Dependency Reference (Sel warna biru)
+                        if (cell.deps.length > 0) {
+                            cell.deps.forEach(depId => {
+                                if(this.cells[depId]) this.cells[depId].dom.parentElement.classList.add('excel-ref-highlight');
+                            });
+                        }
+                    });
+
+                    dom.addEventListener('blur', () => {
+                        td.classList.remove('excel-active');
+                        if (cell.deps.length > 0) {
+                            cell.deps.forEach(depId => {
+                                if(this.cells[depId]) this.cells[depId].dom.parentElement.classList.remove('excel-ref-highlight');
+                            });
+                        }
+
+                        // Jika input user berubah, update raw dan minta recalc!
+                        if (cell.rawInput !== dom.value) {
+                            cell.rawInput = dom.value;
+                            this.computeAll(); // Master Recalculation
+                        } else {
+                            // Cuma switch blur render display state
+                            this.activeCell = null;
+                            this.renderCell(cell.id);
+                        }
+                    });
+
+                    dom.addEventListener('input', () => {
+                        if (this.activeCell === dom) formulaBar.value = dom.value;
+                    });
+
+                    dom.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); dom.blur(); }
+                        if (e.key === 'Escape') { 
+                            e.preventDefault(); 
+                            dom.value = cell.rawInput; // Rollback
+                            dom.blur(); 
+                        }
+                    });
+                });
+
+                // Formula Bar Binding (Real Time Two Way)
+                formulaBar.addEventListener('input', () => {
+                    if (this.activeCell) {
+                        this.activeCell.value = formulaBar.value;
+                    }
+                });
+
+                formulaBar.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && this.activeCell) {
+                        e.preventDefault();
+                        const cellId = this.activeCell.getAttribute("data-cell");
+                        this.cells[cellId].rawInput = formulaBar.value;
+                        this.activeCell.blur();
+                        this.computeAll();
+                    }
+                    if (e.key === 'Escape' && this.activeCell) {
+                        this.activeCell.blur(); // Triggers blur which restores original
+                    }
+                });
+
+                // Format Engine Dropdown Sync
+                formatDropdown.addEventListener('change', () => {
+                    if (this.activeCell) {
+                        const cellId = this.activeCell.getAttribute("data-cell");
+                        this.cells[cellId].format = formatDropdown.value;
+                        this.cells[cellId].dom.setAttribute("data-format", formatDropdown.value);
+                        // Langsung blur untuk memperlihatkan display formatter bekerja
+                        this.activeCell.blur();
+                    }
+                });
+            },
+
+            // --- AUTOFILL DRAG ENGINE (SMART INCREMENT) ---
+            startAutofill(sourceCellId, sourceTd) {
+                let isFilling = true;
+                let targetTds = new Set();
+                const sourceRaw = this.cells[sourceCellId].rawInput;
+                const sourceFormat = this.cells[sourceCellId].format;
+
+                const onMove = (e) => {
+                    if (!isFilling) return;
+                    const hoverTd = e.target.closest('td');
+                    if (hoverTd && hoverTd !== sourceTd && hoverTd.querySelector('input.cell-input')) {
+                        hoverTd.classList.add('excel-selected');
+                        targetTds.add(hoverTd);
+                    }
+                };
+
+                const onUp = () => {
+                    isFilling = false;
+                    document.removeEventListener("mousemove", onMove);
+                    document.removeEventListener("mouseup", onUp);
+
+                    let rDiff = 0, cDiff = 0;
+                    
+                    targetTds.forEach(td => {
+                        td.classList.remove('excel-selected');
+                        const inp = td.querySelector('input.cell-input');
+                        if (!inp) return;
+                        const targetId = inp.getAttribute('data-cell');
+                        
+                        // Gunakan safeMatch untuk keamanan ekstra (Guard Parse Regex)
+                        const sMatch = safeMatch(sourceCellId, /^[A-Z]+/);
+                        const sRowMatchReg = safeMatch(sourceCellId, /\d+$/);
+                        const tMatch = safeMatch(targetId, /^[A-Z]+/);
+                        const tRowMatchReg = safeMatch(targetId, /\d+$/);
+
+                        if (!sMatch || !sRowMatchReg || !tMatch || !tRowMatchReg) return;
+
+                        const sColMatch = sMatch[0];
+                        const sRowMatch = parseInt(sRowMatchReg[0]);
+                        const tColMatch = tMatch[0];
+                        const tRowMatch = parseInt(tRowMatchReg[0]);
+                        
+                        rDiff = tRowMatch - sRowMatch;
+                        cDiff = excelColToIndex(tColMatch) - excelColToIndex(sColMatch);
+
+                        let newRaw = sourceRaw;
+
+                        if (typeof sourceRaw === "string" && sourceRaw.startsWith("=")) {
+                            // Smart Relocation (Geser Referensi Rumus)
+                            newRaw = sourceRaw.replace(/([A-Z]+)(\d+)/g, (match, col, row) => {
+                                const newCol = indexToExcelCol(excelColToIndex(col) + cDiff);
+                                const newRow = parseInt(row) + rDiff;
+                                return newCol + newRow;
+                            });
+                        } else if (!isNaN(this.parseRawInput(sourceRaw)) && sourceRaw !== "") {
+                            // Increment Auto Angka Baris
+                            newRaw = (this.parseRawInput(sourceRaw) + rDiff + cDiff).toString();
+                        }
+
+                        this.cells[targetId].rawInput = newRaw;
+                        this.cells[targetId].format = sourceFormat;
+                        this.cells[targetId].dom.setAttribute("data-format", sourceFormat);
+                    });
+
+                    if (targetTds.size > 0) {
+                        this.computeAll(); // Hitung massal semua hasil autofill
+                        if(typeof uxToast === 'function') uxToast(`Auto-fill diterapkan ke ${targetTds.size} sel`, "success");
+                    }
+                };
+
+                document.addEventListener("mousemove", onMove);
+                document.addEventListener("mouseup", onUp);
+            },
+
+            clearSelection() {
+                document.querySelectorAll('.excel-selected').forEach(el => el.classList.remove('excel-selected'));
+            },
+
+            updateSelectionUI() {
+                try {
+                    this.clearSelection();
+                    if(!this.selection.start || !this.selection.end) return;
+
+                    const startInput = this.selection.start.querySelector('input');
+                    const endInput = this.selection.end.querySelector('input');
+                    if(!startInput || !endInput) return;
+
+                    const sRef = startInput.getAttribute('data-cell');
+                    const eRef = endInput.getAttribute('data-cell');
+                    
+                    if (!sRef || !eRef) return;
+                    
+                    const rangeCells = this.expandRange(`${sRef}:${eRef}`);
+                    
+                    rangeCells.forEach(id => {
+                        if (this.cells[id]) {
+                            this.cells[id].dom.parentElement.classList.add('excel-selected');
+                        }
+                    });
+                } catch (e) {
+                    console.error("Selection UI error safely handled", e);
+                }
+            },
+
+            updateStatusBar() {
+                const selectedEl = document.querySelectorAll('.excel-selected input.cell-input');
+                const bar = document.getElementById("tbProStatusBar");
+                
+                if (selectedEl.length <= 1) {
+                    bar.style.display = "none";
+                    return;
+                }
+
+                let sum = 0, count = 0, max = -Infinity;
+
+                selectedEl.forEach(inp => {
+                    const id = inp.getAttribute('data-cell');
+                    if(this.cells[id]) {
+                        const val = this.cells[id].value;
+                        if (typeof val === "number" && !isNaN(val)) {
+                            sum += val;
+                            count++;
+                            if (val > max) max = val;
+                        }
+                    }
+                });
+
+                if (count > 0) {
+                    document.getElementById("statCount").innerText = count;
+                    document.getElementById("statSum").innerText = Math.round(sum * 1000)/1000;
+                    document.getElementById("statAvg").innerText = Math.round((sum/count) * 1000)/1000;
+                    document.getElementById("statMax").innerText = max;
+                    bar.style.display = "flex";
+                } else {
+                    bar.style.display = "none";
+                }
+            }
+        };
+
+        // Engine Builder Element 
+        function buildTableElement(isPreview = false) {
             const title = document.getElementById("tbProTitle").value.trim();
             const rawCols = document.getElementById("tbProCols").value;
             const rawWidths = document.getElementById("tbProColWidths").value;
@@ -8355,29 +9183,22 @@
             const lockWidth = document.getElementById("tbProLockWidth").checked;
             const rawData = document.getElementById("tbProData").value.trim();
 
-            // 1. Normalisasi Kolom
+            const isExcelMode = document.getElementById("tbProExcelMode")?.checked || false;
+            const autoTotal = document.getElementById("tbProAutoTotal")?.checked || false;
+
             const colNames = rawCols.split(',').map(s => s.trim()).filter(s => s !== "");
 
-            // 2. Validasi Ekstrem
             if(colNames.length === 0){
-                uxToast("Gagal: Harus ada minimal 1 nama kolom valid!", "error");
+                if (!isPreview) uxToast("Gagal: Harus ada minimal 1 nama kolom valid!", "error");
                 return null;
             }
-            if(isNaN(rowsCount) || rowsCount < 0){
-                rowsCount = 1;
-            }
+            if(isNaN(rowsCount) || rowsCount < 0) rowsCount = 1;
 
-            // Validasi Lebar Kolom
             let widthArray = [];
             if(rawWidths.trim() !== "") {
                 widthArray = rawWidths.split(',').map(s => s.trim()).filter(s => s !== "");
-                if(widthArray.length !== colNames.length) {
-                    uxToast(`Peringatan: Jumlah input lebar (${widthArray.length}) tidak sama dengan jumlah kolom (${colNames.length}). Lebar akan diabaikan.`, "warning");
-                    widthArray = [];
-                }
             }
 
-            // 3. Buat Elemen Tabel Super Stabil
             const table = document.createElement("table");
             table.className = `table-pro style-${styleOpt}`;
             table.style.textAlign = alignOpt;
@@ -8392,24 +9213,17 @@
                 table.style.width = "100%";
             }
 
-            // Penanda untuk split engine
             table.setAttribute("data-repeat-header", repeatHeader ? "true" : "false");
 
-            // 4. Buat Colgroup Presisi
             const colgroup = document.createElement("colgroup");
             for(let i = 0; i < colNames.length; i++){
                 const col = document.createElement("col");
-                if (widthArray.length > 0) {
-                    col.style.width = widthArray[i];
-                } else {
-                    // Auto width terbagi rata jika tidak diisi
-                    col.style.width = (100 / colNames.length) + "%";
-                }
+                if (widthArray.length > 0 && widthArray[i]) col.style.width = widthArray[i];
+                else col.style.width = (100 / colNames.length) + "%";
                 colgroup.appendChild(col);
             }
             table.appendChild(colgroup);
 
-            // 5. Buat Header (THEAD)
             const thead = document.createElement("thead");
             
             if(title !== ""){
@@ -8433,52 +9247,85 @@
             }
 
             const trHeader = document.createElement("tr");
-            colNames.forEach(name => {
+            colNames.forEach((name, idx) => {
                 const th = document.createElement("th");
-                th.innerHTML = name;
+                let colLetter = "";
+                if (isPreview && isExcelMode) {
+                    try { colLetter = indexToExcelCol(Number(idx)); } catch (e) {}
+                }
+                const refLabel = (isPreview && isExcelMode) ? `<span style="font-size:0.6rem; color:#10b981; float:right;">${colLetter}</span>` : '';
+                th.innerHTML = name + refLabel;
                 th.style.padding = paddingOpt;
                 th.style.fontSize = fontSizeOpt;
+                th.style.position = 'relative';
                 if(alignOpt === 'center') th.style.textAlign = "center";
                 trHeader.appendChild(th);
             });
             thead.appendChild(trHeader);
             table.appendChild(thead);
 
-            // 6. Parsing Data Textarea & Buat Isi (TBODY)
             const tbody = document.createElement("tbody");
             
             let dataLines = [];
-            if (rawData !== "") {
-                dataLines = rawData.split('\n').filter(line => line.trim() !== '');
-            }
+            if (rawData !== "") dataLines = rawData.split('\n').filter(line => line.trim() !== '');
             
-            // Hitung total baris yang perlu dibuat (terbesar antara input row count vs isi data)
             const totalRowsToGenerate = Math.max(rowsCount, dataLines.length);
 
             for(let r = 0; r < totalRowsToGenerate; r++){
                 const tr = document.createElement("tr");
                 
                 let lineData = [];
-                if (dataLines[r]) {
-                    lineData = dataLines[r].split(',').map(s => s.trim());
-                }
+                if (dataLines[r]) lineData = dataLines[r].split(',').map(s => s.trim());
 
                 for(let c = 0; c < colNames.length; c++){
                     const td = document.createElement("td");
                     td.style.padding = paddingOpt;
                     td.style.fontSize = fontSizeOpt;
-                    
-                    if (autoNum && c === 0) {
-                        td.innerHTML = (r + 1).toString();
-                        td.style.textAlign = "center";
-                    } else {
-                        // Offset index data jika autonum aktif (karena data di text area mungkin tidak nyebut nomor)
-                        let dataIndex = autoNum ? c - 1 : c;
+                    td.style.position = 'relative'; 
+
+                    if (isPreview && isExcelMode) {
+                        let colLetter = "";
+                        try { colLetter = indexToExcelCol(Number(c)); } catch (e) {}
+                        const cellRef = colLetter + (r + 1);
+
+                        const inp = document.createElement("input");
+                        inp.type = "text";
+                        inp.className = "cell-input";
+                        inp.setAttribute("data-cell", cellRef);
+                        // Coba mendeteksi dan memberi format default (teks akan diformat general)
+                        inp.setAttribute("data-format", "general");
                         
-                        if (dataLines[r] && lineData[dataIndex] !== undefined) {
-                            td.innerHTML = lineData[dataIndex] || "&nbsp;";
+                        if (autoNum && c === 0) {
+                            inp.value = (r + 1).toString();
+                            inp.style.textAlign = "center";
+                            inp.readOnly = true; 
                         } else {
-                            td.innerHTML = "&nbsp;";
+                            let dataIndex = autoNum ? c - 1 : c;
+                            if (dataLines[r] && lineData[dataIndex] !== undefined) {
+                                inp.value = lineData[dataIndex];
+                            }
+                        }
+                        
+                        if (c === 0) {
+                            const rowLabel = document.createElement("span");
+                            rowLabel.innerText = (r+1);
+                            rowLabel.style.cssText = "position:absolute; left:-25px; top:50%; transform:translateY(-50%); font-size:0.6rem; color:#10b981; font-weight:bold;";
+                            td.appendChild(rowLabel);
+                        }
+
+                        td.appendChild(inp);
+
+                    } else {
+                        if (autoNum && c === 0) {
+                            td.innerHTML = (r + 1).toString();
+                            td.style.textAlign = "center";
+                        } else {
+                            let dataIndex = autoNum ? c - 1 : c;
+                            if (dataLines[r] && lineData[dataIndex] !== undefined) {
+                                td.innerHTML = lineData[dataIndex] || "&nbsp;";
+                            } else {
+                                td.innerHTML = "&nbsp;";
+                            }
                         }
                     }
                     tr.appendChild(td);
@@ -8487,32 +9334,113 @@
             }
             table.appendChild(tbody);
 
+            // FOOTER (SMART TOTAL)
+            if (isPreview && isExcelMode && autoTotal) {
+                const tfoot = document.createElement("tfoot");
+                const trTfoot = document.createElement("tr");
+                trTfoot.style.fontWeight = "bold";
+                trTfoot.style.background = "#f1f5f9";
+                
+                for(let c = 0; c < colNames.length; c++){
+                    const td = document.createElement("td");
+                    td.style.padding = paddingOpt;
+                    td.style.fontSize = fontSizeOpt;
+                    td.style.position = "relative";
+                    
+                    if (c === 0 || (autoNum && c === 1)) {
+                        td.innerHTML = (c === 0 && !autoNum) || (c===1 && autoNum) ? "TOTAL" : "&nbsp;";
+                        td.style.textAlign = "center";
+                    } else {
+                        let colLetter = "";
+                        try { colLetter = indexToExcelCol(Number(c)); } catch (e) {}
+                        const cellRef = colLetter + "Total"; // ID unik untuk baris total
+                        
+                        const inp = document.createElement("input");
+                        inp.type = "text";
+                        inp.className = "cell-input";
+                        inp.setAttribute("data-cell", cellRef);
+                        inp.setAttribute("data-format", "general"); // Bisa diubah user via UI format
+                        inp.value = `=SUM(${colLetter}1:${colLetter}${totalRowsToGenerate})`;
+                        
+                        td.appendChild(inp);
+                    }
+                    trTfoot.appendChild(td);
+                }
+                tfoot.appendChild(trTfoot);
+                table.appendChild(tfoot);
+            }
+
             return table;
         }
 
-        // Handler tombol Preview
         function previewProfessionalTable() {
-            const table = buildTableElement();
+            const isExcelMode = document.getElementById("tbProExcelMode")?.checked;
+            const formulaBar = document.getElementById("tbProFormulaBarContainer");
+            const modeBadge = document.getElementById("tbProModeBadge");
+            
+            if(isExcelMode) {
+                formulaBar.style.display = "flex";
+                modeBadge.innerText = "Spreadsheet Engine (Active)";
+                modeBadge.style.color = "#10b981";
+            } else {
+                formulaBar.style.display = "none";
+                modeBadge.innerText = "Standard Static Mode";
+                modeBadge.style.color = "#3b82f6";
+            }
+
+            const table = buildTableElement(true); 
             if (!table) return;
 
             const container = document.getElementById("tbProPreviewContainer");
             container.innerHTML = "";
             container.appendChild(table);
+
+            if(isExcelMode) {
+                SpreadsheetEngine.init(container);
+            }
         }
 
-        // Handler Insert/Generate Utama
         function generateProfessionalTable() {
-            const table = buildTableElement();
-            if (!table) return;
+            const container = document.getElementById("tbProPreviewContainer");
+            const previewTable = container.querySelector("table");
+            
+            if (!previewTable) {
+                uxToast("Tabel kosong. Mohon atur dan preview terlebih dahulu.", "warning");
+                return;
+            }
 
-            insertElementSmartly(table);
+            const finalTable = previewTable.cloneNode(true);
 
+            // BAKE PROCESS: Evaluasi dan panggang format final ke DOM!
+            const isExcelMode = document.getElementById("tbProExcelMode")?.checked;
+            if (isExcelMode) {
+                finalTable.querySelectorAll("input.cell-input").forEach(inp => {
+                    const td = inp.parentElement;
+                    const cellId = inp.getAttribute("data-cell");
+                    const cellData = SpreadsheetEngine.cells[cellId];
+
+                    // Bersihkan UI penanda Excel
+                    td.querySelectorAll('span, .excel-drag-handle, .fx-indicator').forEach(el => el.remove());
+                    td.classList.remove('excel-active', 'excel-selected', 'excel-ref-highlight', 'cell-error');
+                    
+                    // Inject format statis final ke dalam sel (Aman dimasukkan ke halaman)
+                    td.innerHTML = cellData ? SpreadsheetEngine.formatValue(cellData.value, cellData.format) : inp.value; 
+                });
+                
+                finalTable.querySelectorAll("thead th span").forEach(span => span.remove());
+            }
+
+            finalTable.removeAttribute("data-repeat-header");
+
+            insertElementSmartly(finalTable);
             closeTableBuilder();
             saveToStorage();
+            
             if (typeof debouncedAutoFlow === 'function') {
-                setTimeout(() => debouncedAutoFlow(), 50);
+                setTimeout(() => debouncedAutoFlow(), 100);
             }
-            uxToast("Tabel Profesional berhasil dibuat!", "success");
+            
+            uxToast("Tabel Profesional berhasil dipanggang dan disisipkan!", "success");
         }
 
         // =========================================
