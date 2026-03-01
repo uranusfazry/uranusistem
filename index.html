@@ -1766,6 +1766,79 @@
             width: 1123px !important;
             min-height: 794px !important;
         }
+
+        /* =========================================
+           MOBILE RESPONSIVE FULL TEXT EDITOR
+           ========================================= */
+        .mobile-tabs { display: none; }
+
+        @media (max-width: 768px) {
+            /* 5. Modal Fullscreen */
+            .fulltext-modal {
+                width: 100% !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                max-width: 100% !important;
+                border-radius: 0 !important;
+                padding: 15px !important;
+                margin: 0 !important;
+            }
+
+            /* 6. Mode Tab & Layout Column */
+            .mobile-tabs.no-desktop {
+                display: flex !important;
+            }
+            .fulltext-body {
+                flex-direction: column !important;
+                gap: 15px !important;
+            }
+            
+            /* Tampilkan satu panel saja sesuai tab yang aktif */
+            .editor-panel,
+            .preview-panel {
+                display: none !important;
+                width: 100% !important;
+                flex: 1; /* Mengambil sisa layar */
+            }
+            .editor-panel.active,
+            .preview-panel.active {
+                display: flex !important;
+            }
+
+            /* 2. Preview Mode Mobile (Full Width Scroll) */
+            .live-preview-container {
+                padding: 10px !important;
+                justify-content: flex-start !important;
+            }
+            .live-preview-container .sheet {
+                width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                transform: scale(1) !important;
+                margin-bottom: 20px !important;
+            }
+
+            /* 3. Toolbar Mobile Friendly */
+            .editor-toolbar-ft {
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+            .editor-toolbar-ft > button.btn-edit {
+                flex: 1 1 auto !important;
+                text-align: center;
+                justify-content: center;
+            }
+            .font-select-ft {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* 4. Editor Dynamic Height */
+            .rich-editor-ft {
+                min-height: 300px !important;
+                padding: 15px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2222,7 +2295,7 @@
 
     <!-- NEW MODAL: FULL PAGE TEXT EDITOR (ADDITIVE) -->
     <div id="fullTextEditorModal" class="modal no-print-in-pdf">
-      <div class="modal-box modal-large" style="max-width: 1400px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-box modal-large fulltext-modal" style="max-width: 1400px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
             <h3 style="margin:0;"><i class="ph ph-article" style="color:#4f46e5"></i> Edit Full Text Halaman <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">(Real-Time Engine)</span></h3>
             <span style="font-size:0.8rem; background:#eef2ff; color:#4f46e5; padding:4px 8px; border-radius:4px;"><i class="ph ph-shield-check"></i> Struktur Terlindungi</span>
@@ -2231,13 +2304,19 @@
         <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman Target:</label>
         <select id="fullTextPageSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;"></select>
 
-        <div style="display:flex; flex:1; gap:20px; overflow:hidden;">
+        <!-- TABS MOBILE (Tampil hanya di layar kecil) -->
+        <div class="mobile-tabs no-desktop" style="margin-bottom: 15px; gap: 10px;">
+           <button type="button" id="tabEditorBtn" onclick="FullTextEngine.showEditor()" style="flex:1; padding:10px; border-radius:8px; border:1px solid #3b82f6; background:#3b82f6; color:white; font-weight:bold; transition:all 0.2s;">✏️ Editor</button>
+           <button type="button" id="tabPreviewBtn" onclick="FullTextEngine.showPreview()" style="flex:1; padding:10px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-weight:bold; transition:all 0.2s;">👁️ Preview</button>
+        </div>
+
+        <div class="fulltext-body" style="display:flex; flex:1; gap:20px; overflow:hidden;">
             <!-- PANEL KIRI: EDITOR TEKS RICH HTML -->
-            <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="editor-panel active" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
                 <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Rich Text Editor</label>
                 
                 <!-- TOOLBAR ALA MS WORD -->
-                <div class="editor-toolbar" style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; padding:8px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; align-items:center;">
+                <div class="editor-toolbar editor-toolbar-ft" style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; padding:8px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; align-items:center;">
                     <!-- Prevent default on mousedown keeps the focus on the editor when clicking tools -->
                     <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; font-weight:bold; width:auto;" onclick="FullTextEngine.formatText('bold')">B</button>
                     <button onmousedown="event.preventDefault()" class="btn-edit" style="margin:0; padding:6px 12px; font-style:italic; font-family:serif; width:auto;" onclick="FullTextEngine.formatText('italic')">I</button>
@@ -2260,7 +2339,7 @@
                         </div>
                     </div>
                     
-                    <select id="fullTextFontSelect" onchange="FullTextEngine.changePageFont(this.value)" style="padding:6px; border:1px solid #cbd5e1; border-radius:4px; outline:none; max-width:200px; font-family:inherit; font-weight: 600; color: #3b82f6;">
+                    <select id="fullTextFontSelect" class="font-select-ft" onchange="FullTextEngine.changePageFont(this.value)" style="padding:6px; border:1px solid #cbd5e1; border-radius:4px; outline:none; max-width:200px; font-family:inherit; font-weight: 600; color: #3b82f6;">
                         <option value="__default__">➜ Default (Mengikuti Halaman)</option>
                         <option value="Times New Roman">Times New Roman</option>
                         <option value="Arial">Arial</option>
@@ -2277,11 +2356,11 @@
                     </label>
                 </div>
 
-                <div id="fullTextEditor" contenteditable="true" style="flex:1; width:100%; padding:30px; border:1px solid #cbd5e1; border-radius:8px; font-family:'Times New Roman', serif; font-size:12pt; line-height:1.5; outline:none; overflow:auto; background:white; color:#000; box-shadow:inset 0 2px 5px rgba(0,0,0,0.05);"></div>
+                <div id="fullTextEditor" class="rich-editor-ft" contenteditable="true" style="flex:1; width:100%; padding:30px; border:1px solid #cbd5e1; border-radius:8px; font-family:'Times New Roman', serif; font-size:12pt; line-height:1.5; outline:none; overflow:auto; background:white; color:#000; box-shadow:inset 0 2px 5px rgba(0,0,0,0.05);"></div>
             </div>
             
             <!-- PANEL KANAN: LIVE PREVIEW -->
-            <div style="flex:1; display:flex; flex-direction:column; background:#f1f5f9; border-radius:8px; border:1px dashed #cbd5e1; padding:15px; overflow:hidden; position: relative;">
+            <div class="preview-panel" style="flex:1; display:flex; flex-direction:column; background:#f1f5f9; border-radius:8px; border:1px dashed #cbd5e1; padding:15px; overflow:hidden; position: relative;">
                 <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
                     <label style="font-size:0.8rem; color:#3b82f6; display:block; font-weight:bold; text-transform:uppercase;"><i class="ph ph-eye"></i> Live Preview</label>
                     <span style="font-size:0.7rem; color:#64748b;">DOM Terisolasi</span>
@@ -9647,6 +9726,9 @@
                     return;
                 }
 
+                // Default ke Editor view jika dibuka di perangkat Mobile
+                this.showEditor();
+
                 const select = document.getElementById('fullTextPageSelect');
                 select.innerHTML = '';
                 
@@ -9664,6 +9746,185 @@
                 
                 document.getElementById('fullTextEditorModal').style.display = 'flex';
                 this.loadPage(0);
+            },
+
+            // --- TAB ENGINE UNTUK MOBILE ---
+            showEditor() {
+                const editorPanel = document.querySelector('.editor-panel');
+                const previewPanel = document.querySelector('.preview-panel');
+                if(editorPanel && previewPanel) {
+                    editorPanel.classList.add('active');
+                    previewPanel.classList.remove('active');
+                }
+                
+                const btnEd = document.getElementById('tabEditorBtn');
+                const btnPr = document.getElementById('tabPreviewBtn');
+                if(btnEd && btnPr) {
+                    btnEd.style.background = '#3b82f6'; 
+                    btnEd.style.color = 'white'; 
+                    btnEd.style.borderColor = '#3b82f6';
+                    
+                    btnPr.style.background = '#f8fafc'; 
+                    btnPr.style.color = '#475569'; 
+                    btnPr.style.borderColor = '#cbd5e1';
+                }
+            },
+
+            showPreview() {
+                const editorPanel = document.querySelector('.editor-panel');
+                const previewPanel = document.querySelector('.preview-panel');
+                if(editorPanel && previewPanel) {
+                    editorPanel.classList.remove('active');
+                    previewPanel.classList.add('active');
+                }
+
+                const btnEd = document.getElementById('tabEditorBtn');
+                const btnPr = document.getElementById('tabPreviewBtn');
+                if(btnEd && btnPr) {
+                    btnPr.style.background = '#3b82f6'; 
+                    btnPr.style.color = 'white'; 
+                    btnPr.style.borderColor = '#3b82f6';
+                    
+                    btnEd.style.background = '#f8fafc'; 
+                    btnEd.style.color = '#475569'; 
+                    btnEd.style.borderColor = '#cbd5e1';
+                }
+            },
+
+            close() {
+                document.getElementById('fullTextEditorModal').style.display = 'none';
+                this.currentIndex = -1;
+                this.cloneContentNode = null;
+                this.previewClone = null;
+                window.previewClone = null; // Clean up global reference
+                const wrapper = document.getElementById('fullTextLivePreviewWrapper');
+                if (wrapper) wrapper.innerHTML = ''; // Bersihkan memory preview
+                document.getElementById('fullTextEditor').innerHTML = ''; // Bersihkan editor
+            },
+
+            loadPage(index) {
+                this.currentIndex = index;
+                
+                const sheets = document.querySelectorAll('.sheet');
+                const original = sheets[index];
+                if (!original) return;
+
+                // --- 1. SETUP LIVE PREVIEW (ISOLATED FULL CLONE SYSTEM) ---
+                const previewWrapper = document.getElementById('fullTextLivePreviewWrapper');
+                previewWrapper.innerHTML = ''; // Bersihkan preview lama
+                
+                // Clone Penuh Halaman
+                this.previewClone = original.cloneNode(true);
+                
+                // Bersihkan elemen sistem UI pada preview agar bersih
+                this.previewClone.querySelectorAll(
+                    '.no-print-in-pdf, .edit-badge, .zoom-controls, .duplicate-controls, .landscape-marker, .zoom-indicator, .paper-size-badge, .sheet-controls'
+                ).forEach(el => el.remove());
+
+                // Reset transform/scale/box-shadow agar tidak invisible atau melebar
+                this.previewClone.style.transform = 'none';
+                this.previewClone.style.margin = '0';
+                this.previewClone.style.boxShadow = 'none';
+                this.previewClone.style.pointerEvents = 'none'; // Lock interaksi user langsung di preview
+                
+                // WAJIB: Reset posisi layout drag agar konten tidak terlempar keluar dari koordinat
+                const movableClone = this.previewClone.querySelector('.layout-movable');
+                if (movableClone) {
+                    movableClone.style.transform = 'none';
+                    movableClone.style.outline = 'none';
+                    movableClone.style.left = '0';
+                    movableClone.style.top = '0';
+                    movableClone.style.position = 'relative'; // Stabilkan layout jika sebelumnya absolute
+                }
+
+                // ORIENTATION SUPPORT (Portrait & Landscape) class injection untuk CSS
+                if (original.classList.contains('landscape')) {
+                    this.previewClone.classList.add('landscape');
+                    this.previewClone.classList.remove('portrait');
+                } else {
+                    this.previewClone.classList.add('portrait');
+                    this.previewClone.classList.remove('landscape');
+                }
+
+                // Inject ke container preview
+                previewWrapper.appendChild(this.previewClone);
+
+                // Simpan reference global sesuai standard
+                window.previewClone = this.previewClone;
+
+                // --- 2. PAGE-SCOPED FONT ENGINE ---
+                const originalContent = original.querySelector('.page-content') || original.querySelector('.layout-movable') || original;
+                this.cloneContentNode = this.previewClone.querySelector('.page-content') || this.previewClone.querySelector('.layout-movable') || this.previewClone;
+                
+                // Ambil font asli/computed dari halaman target
+                this.currentPageDefaultFont = window.getComputedStyle(originalContent).fontFamily;
+                
+                // Cek data style persisten di memory untuk halaman ini
+                const pageData = pagesDB[index] || {};
+                let activeFont = '__default__';
+                if (pageData.pageStyle && pageData.pageStyle.font) {
+                    activeFont = pageData.pageStyle.font;
+                }
+
+                // Siapkan Dropdown Selector
+                const fontSelect = document.getElementById('fullTextFontSelect');
+                let fontExists = Array.from(fontSelect.options).some(opt => opt.value.replace(/['"]/g, '') === activeFont.replace(/['"]/g, ''));
+                if (!fontExists && activeFont !== '__default__') {
+                     const opt = document.createElement("option");
+                     opt.value = activeFont;
+                     opt.textContent = activeFont + " (Custom)";
+                     fontSelect.appendChild(opt);
+                }
+                fontSelect.value = activeFont;
+                this.selectedPageFont = activeFont;
+
+                // --- 3. SINKRONKAN EDITOR DENGAN ISI HALAMAN 1:1 MIRROR ---
+                const editor = document.getElementById('fullTextEditor');
+                
+                if (original.dataset.pageType === 'embed') {
+                    editor.innerHTML = "<div style='color:red; text-align:center; padding:50px;'>Halaman Embed HTML tidak bisa diedit via panel teks ini. Silakan gunakan tombol <strong>Edit HTML Halaman</strong> di sidebar.</div>";
+                    editor.contentEditable = "false";
+                    editor.style.background = "#f8fafc";
+                } else {
+                    // Sync penuh HTML awal untuk editor
+                    editor.innerHTML = originalContent.innerHTML;
+                    editor.contentEditable = "true";
+                    editor.style.background = "white";
+                }
+
+                // Terapkan font yang sedang aktif ke layer editor & preview
+                this.applyFontToViews();
+
+                // --- 4. BINDING REAL-TIME LISTENER ---
+                editor.removeEventListener('input', this.handleInputBinding); 
+                this.handleInputBinding = () => this.handleLivePreview();
+                editor.addEventListener('input', this.handleInputBinding);
+
+                // Kalkulasi Scale agar responsif mengikuti ukuran layar preview panel
+                setTimeout(() => {
+                    // Cek jika layar kecil (Mobile), jangan di-scale. CSS akan menanganinya via width: 100%
+                    if (window.innerWidth <= 768) {
+                        this.previewClone.style.transform = 'scale(1)';
+                        this.previewClone.style.transformOrigin = 'top left';
+                        this.previewClone.style.marginBottom = '0px';
+                        return;
+                    }
+
+                    const wrapperWidth = previewWrapper.clientWidth - 40; // 40px padding
+                    const sheetWidth = this.previewClone.offsetWidth || (original.classList.contains('landscape') ? 1123 : 794);
+                    
+                    if (sheetWidth > 0) {
+                        const scale = wrapperWidth / sheetWidth;
+                        const finalScale = Math.min(1, scale); // Max 100% scale
+                        
+                        this.previewClone.style.transform = `scale(${finalScale})`;
+                        this.previewClone.style.transformOrigin = 'top center';
+                        
+                        // Kompensasi ruang kosong di bawah akibat CSS transform scale
+                        const scaledHeightDiff = this.previewClone.offsetHeight * (1 - finalScale);
+                        this.previewClone.style.marginBottom = `-${scaledHeightDiff}px`;
+                    }
+                }, 50);
             },
 
             close() {
