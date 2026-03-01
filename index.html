@@ -659,6 +659,16 @@
             pointer-events: none;
             z-index: 20;
         }
+        
+        /* NEW: FULL HTML EMBED IFRAME */
+        .embed-full-html {
+            width: 100%;
+            height: 100%;
+            min-height: 950px; /* Setara dengan tinggi kertas F4 bersih */
+            border: none;
+            display: block;
+            background: transparent;
+        }
     </style>
 
     <!-- =========================================
@@ -1411,10 +1421,43 @@
             opacity: 0.5;
         }
 
+        /* --- 2️⃣ NEW: BACKGROUND LOCK OVERLAY --- */
+        body.hf-editing::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(3px);
+            z-index: 35; /* Di atas main content, di bawah halaman yang aktif diedit */
+            pointer-events: auto; /* Kunci klik liar dari user */
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Lock sidebar saat mode edit agar tidak terklik tidak sengaja */
+        body.hf-editing aside, 
+        body.hf-editing .menu-toggle {
+            pointer-events: none;
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+
+        body.hf-editing .sheet {
+            z-index: 30; /* Di bawah overlay */
+        }
+
+        body.hf-editing .sheet.hf-active {
+            z-index: 40 !important; /* Angkat halaman yang sedang diedit ke atas overlay */
+            position: relative;
+        }
+
         body.hf-editing .sheet.hf-active .layout-stage {
             opacity: 0.3;
             pointer-events: none; /* Kunci konten utama saat edit HF */
         }
+
+        /* --- 2️⃣ NEW: KUNCI SCROLL LAYAR SAAT MODE EDIT --- */
+        body.hf-editing { overflow: hidden !important; touch-action: none; }
+        body.hf-editing main { overflow: hidden !important; }
 
         /* HIGHLIGHT VISUAL SAAT EDIT */
         body.hf-editing .page-header, 
@@ -1424,13 +1467,40 @@
             z-index: 100;
         }
 
+        /* --- 1️⃣ & 3️⃣ NEW: UI EDIT PROFESSIONAL & ANIMASI --- */
         body.hf-editing .page-header.active, 
         body.hf-editing .page-footer.active {
-            border: 2px dashed #3b82f6;
-            background: rgba(239, 246, 255, 0.9);
+            border: 2px solid #3b82f6 !important;
+            background: rgba(239, 246, 255, 0.95) !important;
             cursor: text;
             box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
-            overflow: visible; /* Izinkan scroll/lihat penuh saat sedang diedit jika kepanjangan */
+            overflow: visible; 
+            min-height: 80px; /* Perbesar area tap (Mobile Friendly) */
+            padding: 25px 15px 15px 15px; /* Tambahan padding agar mudah disentuh */
+            animation: hfHighlight 1.5s ease-out; /* Animasi Glow */
+        }
+
+        body.hf-editing .page-header.active::before,
+        body.hf-editing .page-footer.active::before {
+            content: attr(data-edit-label);
+            position: absolute;
+            top: -2px; /* Rapat ke ujung atas */
+            left: -2px;
+            background: #3b82f6;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-bottom-right-radius: 8px;
+            z-index: 101;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        @keyframes hfHighlight {
+            0% { background: rgba(59, 130, 246, 0.3); box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.4); }
+            100% { background: rgba(239, 246, 255, 0.95); box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1); }
         }
 
         /* PERINGATAN OVERFLOW TINGGI */
@@ -1464,23 +1534,37 @@
             left: 50%;
             transform: translateX(-50%);
             background: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 12px 18px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
             display: none;
-            gap: 10px;
+            flex-direction: column; /* Flex wrap untuk mobile */
+            gap: 12px;
             z-index: 100000;
             align-items: center;
             border: 1px solid #cbd5e1;
             animation: slideDown 0.3s ease;
+            transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease; 
         }
         .hf-toolbar.active { display: flex; }
         
+        .hf-toolbar-header {
+            display: flex; flex-direction: column; width: 100%; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; gap: 6px;
+        }
+        .hf-toolbar-header-top {
+            display: flex; justify-content: space-between; align-items: center; width: 100%;
+        }
+        .hf-toolbar-actions {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px;
+        }
+
+        /* --- 4️⃣ NEW: TINGKATKAN UX TOMBOL MOBILE --- */
         .hf-toolbar button {
             background: #f1f5f9;
             border: 1px solid #cbd5e1;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 10px 14px; /* Padding ditingkatkan agar mudah disentuh */
+            min-height: 42px; /* Standard aman jari Apple/Android */
+            border-radius: 8px;
             cursor: pointer;
             font-size: 0.85rem;
             font-weight: 600;
@@ -1490,11 +1574,48 @@
             gap: 6px;
             transition: all 0.2s;
         }
-        .hf-toolbar button:hover { background: #e2e8f0; }
+        .hf-toolbar button:hover { background: #e2e8f0; transform: translateY(-1px); }
         .hf-toolbar button.primary { background: #3b82f6; color: white; border-color: #2563eb; }
         .hf-toolbar button.primary:hover { background: #2563eb; }
         .hf-toolbar button.success { background: #10b981; color: white; border-color: #059669; }
         .hf-toolbar button.success:hover { background: #059669; }
+
+        /* --- 3️⃣ NEW: INDIKATOR STATUS GLOBAL (BADGE) --- */
+        .hf-badge {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: #475569;
+            font-weight: 700;
+            display: none; /* Sembunyi default */
+            letter-spacing: 0.5px;
+            border: 1px solid #cbd5e1;
+            align-items: center;
+            gap: 4px;
+        }
+        .hf-badge.active {
+            display: inline-flex;
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        /* --- 2️⃣ NEW: FIX TOOLBAR MOBILE & REPOSISI --- */
+        @media (max-width: 768px) {
+            .hf-toolbar {
+                width: 95%;
+                padding: 15px;
+                gap: 15px;
+            }
+            .hf-toolbar button {
+                font-size: 0.75rem;
+                padding: 8px 10px;
+                min-height: 44px; /* Area sentuh maksimal */
+                flex: 1 1 30%; /* Rapikan layout flex multi-baris */
+                justify-content: center;
+            }
+        }
     </style>
 
     <!-- =========================================
@@ -1672,7 +1793,7 @@
             </button>
 
             <!-- NEW: BUTTON HEADER & FOOTER (ADDITIVE) -->
-            <button class="btn btn-edit" style="background:#f1f5f9; color:#0f172a; border-color:#cbd5e1;" onclick="uxToast('Klik ganda (Double-Click) di area paling atas atau paling bawah dokumen untuk mengedit Header & Footer.', 'info')">
+            <button class="btn btn-edit" style="background:#f1f5f9; color:#0f172a; border-color:#cbd5e1;" onclick="openHfActionModal()">
                 <i class="ph ph-text-align-top"></i> 📄 Edit Header & Footer
             </button>
 
@@ -1761,6 +1882,11 @@
             <!-- NEW: WRAPPED SAFE WORD EXPORT HANDLER -->
             <button class="btn btn-print" style="background:#2563eb; margin-top:10px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);" onclick="handleExportWordWrapper(this)">
                 <i class="ph ph-file-doc"></i> Download Word (.docx)
+            </button>
+
+            <!-- NEW: BUTTON HD IMAGE EXPORT (ADDITIVE) -->
+            <button class="btn btn-print" style="background:#8b5cf6; margin-top:10px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);" onclick="openHdImageExportModal()">
+                <i class="ph ph-image"></i> Export Image HD (Per Hal)
             </button>
 
             <!-- WRAPPED RESET HANDLER -->
@@ -2029,25 +2155,80 @@
       </div>
     </div>
 
+    <!-- NEW MODAL: HD IMAGE EXPORT (ADDITIVE) -->
+    <div id="hdImageExportModal" class="modal no-print-in-pdf">
+      <div class="modal-box">
+        <h3><i class="ph ph-image" style="color:#8b5cf6"></i> Export Image HD (8K)</h3>
+        <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Pilih 1 halaman spesifik untuk diunduh sebagai gambar resolusi tinggi.</p>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman Target:</label>
+        <select id="hdImagePageSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 25px; outline:none;"></select>
+
+        <div class="alert-box" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:10px; border-radius:6px; font-size:0.8rem; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-info" style="font-size:1.2rem;"></i>
+            Output berupa gambar PNG tanpa kompresi dengan target lebar hingga ~7000px (8K Level).
+        </div>
+
+        <div class="modal-actions" style="flex-wrap: wrap; gap: 8px;">
+          <button onclick="executeHdImageExport()" style="background:#8b5cf6; color:white; flex: 1 1 100%; justify-content: center;">⬇️ Download HD (Standard)</button>
+          <button onclick="window.HDImageExportEngine.exportFullHtmlImage(this)" style="background:#0f172a; color:white; flex: 1 1 100%; justify-content: center;">
+             <i class="ph ph-code"></i> Export Full HTML (Anti White)
+          </button>
+          <button onclick="window.HDImageExportEngine.exportFullHtmlInteractive(this)" style="background:#1e293b; color:#38bdf8; border: 1px solid #38bdf8; flex: 1 1 100%; justify-content: center;">
+             <i class="ph ph-browser"></i> Export Full HTML (Interactive)
+          </button>
+          <button onclick="closeHdImageExportModal()" style="flex: 1 1 100%; justify-content: center;">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW MODAL: HF ACTION SELECTOR (ADDITIVE) -->
+    <div id="hfActionModal" class="modal no-print-in-pdf">
+      <div class="modal-box">
+        <h3><i class="ph ph-text-align-top" style="color:#0f172a"></i> Edit Header & Footer</h3>
+        <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Pilih bagian yang ingin diedit tanpa perlu double-click (Optimal untuk Mobile).</p>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman Target:</label>
+        <select id="hfActionPageSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 20px; outline:none;"></select>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+            <button onclick="triggerHfEdit('header')" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:10px; border-radius:8px; font-weight:600; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; transition:all 0.2s;">
+                <i class="ph ph-arrow-line-up"></i> Edit Header (Atas)
+            </button>
+            <button onclick="triggerHfEdit('footer')" style="background:#fdf4ff; color:#a21caf; border:1px solid #f5d0fe; padding:10px; border-radius:8px; font-weight:600; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; transition:all 0.2s;">
+                <i class="ph ph-arrow-line-down"></i> Edit Footer (Bawah)
+            </button>
+        </div>
+
+        <div class="modal-actions">
+          <button onclick="closeHfActionModal()" style="background:#e2e8f0; color:#475569;">Tutup</button>
+        </div>
+      </div>
+    </div>
+
     <!-- NEW MODAL: HEADER FOOTER SETTINGS -->
     <div id="hfSettingsModal" class="modal no-print-in-pdf">
       <div class="modal-box">
-        <h3><i class="ph ph-gear" style="color:#475569"></i> Opsi Header & Footer</h3>
-        <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Atur preferensi spesifik untuk dokumen ini.</p>
+        <!-- 4️⃣ NEW: STICKY HEADER MOBILE -->
+        <div style="position: sticky; top: -30px; background: white; z-index: 10; padding: 15px 0 10px 0; margin: -15px 0 15px 0; border-bottom: 1px solid #e2e8f0;">
+            <h3 style="margin:0;"><i class="ph ph-gear" style="color:#475569"></i> Opsi Header & Footer</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin: 5px 0 0 0;">Atur preferensi spesifik untuk dokumen ini.</p>
+        </div>
         
-        <label style="display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer;">
-            <input type="checkbox" id="hfSettingFirstPage"> 
-            <span style="font-size: 0.9rem;">Beda di Halaman Pertama (Different First Page)</span>
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor:pointer; transition: background 0.2s;">
+            <input type="checkbox" id="hfSettingFirstPage" style="width: 18px; height: 18px; accent-color: #3b82f6;"> 
+            <span style="font-size: 0.95rem; font-weight: 500; color: #334155;">Beda di Halaman Pertama <br><small style="color: #64748b; font-weight: normal;">(Different First Page)</small></span>
         </label>
         
-        <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer;">
-            <input type="checkbox" id="hfSettingOddEven"> 
-            <span style="font-size: 0.9rem;">Beda di Halaman Ganjil & Genap (Different Odd/Even)</span>
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom:25px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor:pointer; transition: background 0.2s;">
+            <input type="checkbox" id="hfSettingOddEven" style="width: 18px; height: 18px; accent-color: #3b82f6;"> 
+            <span style="font-size: 0.95rem; font-weight: 500; color: #334155;">Beda di Hal Ganjil & Genap <br><small style="color: #64748b; font-weight: normal;">(Different Odd/Even)</small></span>
         </label>
 
         <div class="modal-actions">
           <button onclick="HeaderFooterManager.handleOptions()" style="background:#3b82f6; color:white;">💾 Simpan Opsi</button>
-          <button onclick="document.getElementById('hfSettingsModal').style.display='none'">Batal</button>
+          <!-- 1️⃣ NEW: CANCEL MEMANGGIL ENGINE AGAR OVERLAY AMAN -->
+          <button onclick="HeaderFooterManager.cancelSettings()">Batal</button>
         </div>
       </div>
     </div>
@@ -2871,9 +3052,18 @@
         // ================= EMBED HTML PRO ENGINE =================
 
         const EmbedManager = {
+            // DETEKSI FULL HTML (Mendeteksi keberadaan struktur dokumen utuh)
+            isFullHtml: function(str) {
+                const lower = str.toLowerCase();
+                return lower.includes('<!doctype') || lower.includes('<html') || lower.includes('<head') || lower.includes('<body');
+            },
+
             sanitize: function(htmlString) {
                 if (!htmlString || typeof htmlString !== 'string') return "";
                 
+                // DEBUG: Pastikan input asli masuk
+                console.log("Raw Embed Code (Partial Mode):", htmlString);
+
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlString, 'text/html');
 
@@ -2881,13 +3071,14 @@
                     throw new Error("Struktur HTML tidak valid");
                 }
 
-                // Hapus tag berbahaya yang tidak boleh dieksekusi browser
-                const bannedTags = ['script', 'iframe', 'object', 'embed', 'form', 'style', 'meta', 'link']; 
+                // PERBAIKAN: Melonggarkan aturan sanitizer.
+                // Mengizinkan tag iframe, style, dan script agar fitur embed Youtube / Custom Widget berfungsi.
+                const bannedTags = ['object', 'embed', 'form', 'meta', 'link']; 
                 bannedTags.forEach(tag => {
                     doc.querySelectorAll(tag).forEach(el => el.remove());
                 });
 
-                // Hapus event handler inline (onclick, onmouseover, dll) & javascript: URL
+                // Hapus event handler inline (onclick, onmouseover, dll) & javascript: URL untuk mencegah instant-XSS
                 doc.body.querySelectorAll('*').forEach(el => {
                     Array.from(el.attributes).forEach(attr => {
                         const name = attr.name.toLowerCase();
@@ -2898,42 +3089,86 @@
                     });
                 });
 
-                return doc.body.innerHTML;
+                const safeHtml = doc.body.innerHTML;
+                console.log("Sanitized Embed Code:", safeHtml); // DEBUG
+                return safeHtml;
+            },
+
+            injectFullHtml: function(rawHtml) {
+                // 1️⃣ WAJIB: SELALU BUAT HALAMAN BARU (STANDARD PAGE)
+                const newSheet = createNewCustomSheet();
+                
+                // Masukkan ke DOM
+                document.getElementById('document-area').appendChild(newSheet);
+                
+                // 2️⃣ WAJIB: BUNGKUS DENGAN IFRAME SANDBOX
+                const targetContent = newSheet.querySelector('.page-content');
+                
+                if (targetContent) {
+                    targetContent.innerHTML = '';
+                    
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'embed-full-html';
+                    
+                    // SANDBOX SECURITY: Mengizinkan JS dan Origin tapi memblokir Top Navigation/Popups
+                    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                    
+                    // BINDING SUMBER DATA: Menggunakan srcdoc agar terisolasi dengan aman
+                    iframe.setAttribute('srcdoc', rawHtml);
+                    
+                    targetContent.appendChild(iframe);
+                }
+
+                // 3️⃣ Tambahkan ke pagesDB agar persisten (disimpan)
+                pagesDB.push({
+                    id: newSheet.dataset.id,
+                    type: 'standard',
+                    html: newSheet.innerHTML,
+                    layoutX: 0, layoutY: 0, layoutScale: 1,
+                    orientation: 'portrait',
+                    headerHtml: newSheet.querySelector('.page-header')?.innerHTML || '',
+                    footerHtml: newSheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
+                });
             },
 
             inject: function(safeHtml) {
-                // Bungkus menggunakan div dengan class embed-wrapper
-                const wrapper = document.createElement('div');
-                wrapper.className = 'embed-wrapper';
-                wrapper.innerHTML = safeHtml;
-
-                // Gunakan sistem Smart Insert dari Table Builder agar penempatan presisi
-                if (typeof insertElementSmartly === 'function') {
-                    insertElementSmartly(wrapper);
-                } else {
-                    // Fallback jika tidak ada fungsi smart insert
-                    const newSheet = createNewCustomSheet();
-                    newSheet.querySelector('.page-content').appendChild(wrapper);
-                    document.getElementById('document-area').appendChild(newSheet);
+                // 1️⃣ WAJIB: SELALU BUAT HALAMAN BARU (STANDARD PAGE)
+                const newSheet = createNewCustomSheet();
+                
+                // Masukkan ke DOM
+                document.getElementById('document-area').appendChild(newSheet);
+                
+                // 2️⃣ WAJIB: MASUKKAN HTML KE DALAM .page-content SAJA
+                const targetContent = newSheet.querySelector('.page-content');
+                
+                if (targetContent) {
+                    // Kosongkan isi bawaan dari createNewCustomSheet (seperti teks "Silakan ketik...")
+                    targetContent.innerHTML = '';
                     
-                    pagesDB.push({
-                        id: newSheet.dataset.id,
-                        type: 'standard',
-                        html: newSheet.innerHTML,
-                        layoutX: 0, layoutY: 0, layoutScale: 1
-                    });
-                    
-                    setTimeout(() => {
-                        newSheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
+                    // Gunakan createContextualFragment agar tag <script> atau <style> benar-benar tereksekusi di DOM
+                    const fragment = document.createRange().createContextualFragment(safeHtml);
+                    targetContent.appendChild(fragment);
                 }
+
+                // 3️⃣ Tambahkan ke pagesDB agar persisten (disimpan)
+                pagesDB.push({
+                    id: newSheet.dataset.id,
+                    type: 'standard',
+                    html: newSheet.innerHTML,
+                    layoutX: 0, layoutY: 0, layoutScale: 1,
+                    orientation: 'portrait',
+                    headerHtml: newSheet.querySelector('.page-header')?.innerHTML || '',
+                    footerHtml: newSheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
+                });
             },
 
             insert: function() {
                 const textarea = document.getElementById('embedInput');
                 if (!textarea) return;
 
-                const code = textarea.value;
+                const code = textarea.value; // Pastikan menggunakan .value
+
+                console.log("Tombol Embed Ditekan!"); // DEBUG
 
                 // 1. Validasi Kosong
                 if (!code || code.trim() === '') {
@@ -2942,24 +3177,42 @@
                 }
 
                 try {
-                    // 2. Sanitasi HTML
-                    const safeContent = this.sanitize(code);
+                    const isFull = this.isFullHtml(code);
                     
-                    if (!safeContent || safeContent.trim() === '') {
-                        if (typeof uxToast === 'function') uxToast("HTML tidak valid atau berisi script terlarang", "error");
-                        return;
+                    if (isFull) {
+                        console.log("Mode Aktif: FULL HTML (Iframe Sandbox)");
+                        this.injectFullHtml(code);
+                    } else {
+                        console.log("Mode Aktif: PARTIAL HTML (Injeksi Langsung)");
+                        const safeContent = this.sanitize(code);
+                        if (!safeContent || safeContent.trim() === '') {
+                            if (typeof uxToast === 'function') uxToast("Error: HTML tidak valid atau seluruh tag diblokir", "error");
+                            return;
+                        }
+                        this.inject(safeContent);
                     }
 
-                    // 3. Inject ke Dokumen
-                    this.inject(safeContent);
-
-                    // 4. Post-process (Save, Flow, Clear, Close, Toast)
+                    // 4. Tutup modal & bersihkan form
                     closeEmbedModal();
-                    textarea.value = ''; // Bersihkan input setelah berhasil
+                    textarea.value = ''; 
                     
+                    // 5. Eksekusi Engine Inti (Save, History, Numbering, Rerender)
                     if (typeof saveToStorage === 'function') saveToStorage();
                     if (typeof pushHistoryState === 'function') pushHistoryState();
+                    if (typeof updatePageNumbers === 'function') updatePageNumbers();
 
+                    // Render ulang agar semua listener, margin, dan marker menempel ke node baru
+                    if (typeof renderPages === 'function') renderPages();
+
+                    // 6. Fokus scroll ke halaman terbaru yang baru saja dicetak
+                    setTimeout(() => {
+                        const sheets = document.querySelectorAll('.sheet');
+                        if (sheets.length > 0) {
+                            sheets[sheets.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 100);
+
+                    // 7. Panggil Smart Auto Flow untuk merapikan tabel / teks panjang
                     if (typeof debouncedAutoFlow === 'function') {
                         if (typeof uxShowLoader === 'function') uxShowLoader("Menyesuaikan tata letak...");
                         setTimeout(() => {
@@ -2968,7 +3221,9 @@
                         }, 500);
                     }
 
-                    if (typeof uxToast === 'function') uxToast("HTML berhasil ditambahkan!", "success");
+                    if (typeof uxToast === 'function') {
+                        uxToast(isFull ? "Full HTML berhasil di-embed ke halaman baru!" : "Halaman baru berhasil dibuat dengan HTML!", "success");
+                    }
 
                 } catch (error) {
                     console.error("Embed Execution Error:", error);
@@ -3074,6 +3329,50 @@
             document.body.classList.remove('show-margin-guides');
             void document.body.offsetHeight; // force reflow
 
+            // ADDITIVE: Tweak Full HTML Iframe for PDF Canvas Support (REAL DOM)
+            // html2canvas gagal merender iframe srcdoc (blank putih).
+            // Solusi: Kita swap sementara iframe dengan div berisi RAW HTML langsung di DOM asli.
+            const tempEmbedWrappers = [];
+            sheets.forEach((sheet, idx) => {
+                const isSmartFull = sheet.getAttribute('data-smart-embed-mode') === 'full-html';
+                const isLegacyFull = sheet.getAttribute('data-embed-mode') === 'full-html';
+                
+                if (isSmartFull || isLegacyFull) {
+                    const iframe = sheet.querySelector('.embed-full-html');
+                    const smartStorage = sheet.querySelector('.smart-embed-raw');
+                    const rawStorage = sheet.querySelector('.raw-storage');
+                    
+                    const rawVal = pagesDB[idx]?.smartEmbedRawHTML 
+                                || pagesDB[idx]?.fullEmbedRaw 
+                                || (smartStorage ? smartStorage.value : null) 
+                                || (rawStorage ? rawStorage.value : null) 
+                                || "";
+                    
+                    if (iframe && rawVal) {
+                        const div = document.createElement('div');
+                        div.className = 'temp-pdf-render-div';
+                        div.style.width = '100%';
+                        div.style.height = '100%';
+                        div.style.background = 'white';
+                        div.style.overflow = 'hidden';
+                        
+                        // Menggunakan innerHTML agar style teraplikasikan secara visual, 
+                        // namun script tidak tereksekusi ulang (aman untuk print)
+                        div.innerHTML = rawVal;
+                        
+                        iframe.style.display = 'none';
+                        iframe.parentNode.insertBefore(div, iframe);
+                        
+                        tempEmbedWrappers.push({ iframe, div });
+                    }
+                }
+            });
+
+            // Beri waktu browser untuk merender div sementara sebelum dipotret html2canvas
+            if (tempEmbedWrappers.length > 0) {
+                await new Promise(r => setTimeout(r, 600));
+            }
+
             try {
                 const firstIsLandscape = sheets[0].classList.contains('landscape');
                 
@@ -3105,10 +3404,12 @@
                         onclone: (clonedDoc) => {
                             // PENGATURAN WAJIB 5 & 8: Pastikan presisi canvas saat diclone
                             const clonedSheets = clonedDoc.querySelectorAll('.sheet');
-                            clonedSheets.forEach(s => {
+                            clonedSheets.forEach((s, idx) => {
                                 s.style.transform = "none";
                                 s.style.boxShadow = "none";
                                 s.style.margin = "0";
+
+                                // (Logic pemindahan iframe ke div sudah dipindah ke Real DOM sebelum html2canvas berjalan agar tidak blank)
                             });
                         }
                     });
@@ -3139,6 +3440,12 @@
                 console.error("PDF Generation Error:", error);
                 alert("Gagal membuat PDF. Coba refresh halaman.");
             } finally {
+                // Restore Iframe ke tampilan semula (Hapus element div temporary)
+                tempEmbedWrappers.forEach(item => {
+                    item.iframe.style.display = 'block';
+                    item.div.remove();
+                });
+
                 document.body.classList.remove('exporting');
             }
         }
@@ -4472,6 +4779,142 @@
     </script>
 
     <!-- =========================================
+       13B. NEW: HD IMAGE EXPORT ENGINE (ADDITIVE)
+       ========================================= -->
+    <script id="hd-image-export-engine">
+        function openHdImageExportModal() {
+            const dropdown = document.getElementById('hdImagePageSelect');
+            dropdown.innerHTML = '';
+            
+            const sheets = document.querySelectorAll('.sheet');
+            if (sheets.length === 0) {
+                uxToast("Tidak ada halaman untuk diekspor.", "error");
+                return;
+            }
+
+            sheets.forEach((sheet, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                
+                let title = `Halaman ${i + 1}`;
+                const isEmbed = sheet.dataset.pageType === 'embed';
+                if (isEmbed) title += " [EMBED/HTML]";
+                else if (sheet.textContent.includes('CUSTOM PAGE')) title += " (Custom)";
+                
+                option.textContent = title;
+                dropdown.appendChild(option);
+            });
+
+            document.getElementById('hdImageExportModal').style.display = 'flex';
+        }
+
+        function closeHdImageExportModal() {
+            document.getElementById('hdImageExportModal').style.display = 'none';
+        }
+
+        async function executeHdImageExport() {
+            const pageIndex = parseInt(document.getElementById('hdImagePageSelect').value);
+            const sheets = document.querySelectorAll('.sheet');
+            const targetSheet = sheets[pageIndex];
+
+            if (!targetSheet) {
+                uxToast("Halaman tidak ditemukan.", "error");
+                return;
+            }
+
+            closeHdImageExportModal();
+            uxShowLoader("Mengekspor Gambar 8K (Mohon tunggu)...");
+
+            // 1. Persiapan: Gunakan kelas exporting yang sudah ada untuk menyembunyikan UI (zoom, duplicate, dll)
+            document.body.classList.add('exporting');
+            document.body.classList.remove('show-margin-guides');
+
+            // 2. Proteksi Full HTML (Mencegah Blank Iframe)
+            let tempEmbedWrapper = null;
+            const isSmartFull = targetSheet.getAttribute('data-smart-embed-mode') === 'full-html';
+            const isLegacyFull = targetSheet.getAttribute('data-embed-mode') === 'full-html';
+            const isDataEmbedType = targetSheet.dataset.pageType === 'embed';
+            
+            if (isSmartFull || isLegacyFull || isDataEmbedType) {
+                const iframe = targetSheet.querySelector('iframe.embed-full-html');
+                const smartStorage = targetSheet.querySelector('.smart-embed-raw');
+                const rawStorage = targetSheet.querySelector('.raw-storage');
+                
+                const rawVal = (pagesDB[pageIndex] && pagesDB[pageIndex].rawHTML) 
+                            || (smartStorage ? smartStorage.value : null) 
+                            || (rawStorage ? rawStorage.value : null) 
+                            || "";
+                
+                // Ganti iframe dengan div berisi real DOM sesaat sebelum html2canvas beraksi
+                if (iframe && rawVal) {
+                    const div = document.createElement('div');
+                    div.className = 'temp-hd-export-div';
+                    div.style.width = '100%';
+                    div.style.height = '100%';
+                    div.style.background = 'white';
+                    div.style.overflow = 'hidden';
+                    div.innerHTML = rawVal;
+                    
+                    iframe.style.display = 'none';
+                    iframe.parentNode.insertBefore(div, iframe);
+                    
+                    tempEmbedWrapper = { iframe, div };
+                }
+            }
+
+            // Beri waktu sejenak agar browser merender div pengganti dan membuang elemen UI
+            await new Promise(r => setTimeout(r, 500));
+
+            try {
+                // 3. Render Canvas Kualitas Ekstrem (Scale 8x = target 8K)
+                const canvas = await html2canvas(targetSheet, {
+                    scale: 8, // Setara 8K width pada kertas standar F4 (215mm)
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: "#ffffff",
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        // Pastikan tidak ada transform atau shadow yang merusak cropping
+                        const clonedSheet = clonedDoc.querySelectorAll('.sheet')[pageIndex] || clonedDoc.querySelector('.sheet');
+                        if (clonedSheet) {
+                            clonedSheet.style.transform = "none";
+                            clonedSheet.style.boxShadow = "none";
+                            clonedSheet.style.margin = "0";
+                        }
+                    }
+                });
+
+                // 4. Konversi ke Blob PNG
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        saveAs(blob, `document-page-${pageIndex + 1}-8k.png`);
+                        uxToast(`Gambar HD Halaman ${pageIndex + 1} berhasil diunduh!`, "success");
+                    } else {
+                        throw new Error("Gagal mengonversi canvas ke blob.");
+                    }
+                    cleanup();
+                }, 'image/png');
+
+            } catch (error) {
+                console.error("HD Image Export Error:", error);
+                uxToast("Gagal mengekspor gambar HD. Browser mungkin kehabisan memori.", "error");
+                cleanup();
+            }
+
+            function cleanup() {
+                // Kembalikan Iframe jika ada
+                if (tempEmbedWrapper) {
+                    tempEmbedWrapper.iframe.style.display = 'block';
+                    tempEmbedWrapper.div.remove();
+                }
+                // Lepaskan class exporting
+                document.body.classList.remove('exporting');
+                uxHideLoader();
+            }
+        }
+    </script>
+
+    <!-- =========================================
        14. TAB INDENTATION LOGIC (PRESERVED)
        ========================================= -->
     <script id="tab-indent-logic">
@@ -4668,29 +5111,6 @@
             } else {
                  if (pagesDB[pageIndex]) pagesDB[pageIndex].html = cleanSheetForSave(sheet);
             }
-            } else if (mode === 'portrait') {
-                sheet.classList.remove('landscape');
-                sheet.classList.add('portrait');
-
-                // Hilangkan marker jika ada
-                const markers = sheet.querySelectorAll('.landscape-marker');
-                markers.forEach(m => m.remove());
-            }
-
-            // Integrasi ke RawHTML khusus halaman embed agar marker tidak hilang
-            if (sheet.dataset.pageType === 'embed') {
-                const storage = sheet.querySelector('.raw-storage');
-                if (storage) {
-                    if (mode === 'landscape' && !storage.value.includes('landscape-marker')) {
-                         storage.value = '<div class="landscape-marker" style="display:none;"></div>\n' + storage.value;
-                    } else if (mode === 'portrait') {
-                         storage.value = storage.value.replace(/<div class="landscape-marker" style="display:none;"><\/div>\n?/g, '');
-                    }
-                    if (pagesDB[pageIndex]) pagesDB[pageIndex].rawHTML = storage.value;
-                }
-            } else {
-                 if (pagesDB[pageIndex]) pagesDB[pageIndex].html = sheet.innerHTML;
-            }
 
             // Simpan status ke penyimpanan database agar tidak hilang saat direfresh
             saveToStorage();
@@ -4701,6 +5121,8 @@
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 300);
         }
+        
+        console.log("Orientation Logic Engine loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -5015,6 +5437,8 @@
                 }
             }
         }, { passive: false });
+        
+        console.log("Zoom & Layout Drag Engine loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -5061,8 +5485,8 @@
                 paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
                 margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 }, // Additive property clone
                 pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined, // Additive property clone
-                headerHtml: original.headerHtml || '',
-                footerHtml: original.footerHtml || ''
+                headerHtml: original.headerHtml !== undefined ? original.headerHtml : '',
+                footerHtml: original.footerHtml !== undefined ? original.footerHtml : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
             };
 
             // Insert tepat setelah halaman yang di-duplicate
@@ -5190,15 +5614,19 @@
                             type: original.type,
                             html: original.html,
                             rawHTML: original.rawHTML,
+                            embedMode: original.embedMode,
+                            fullEmbedRaw: original.fullEmbedRaw,
+                            smartEmbedMode: original.smartEmbedMode,
+                            smartEmbedRawHTML: original.smartEmbedRawHTML,
                             layoutX: original.layoutX,
                             layoutY: original.layoutY,
                             layoutScale: original.layoutScale,
                             orientation: original.orientation,
-                            paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 }, // Additive property clone
-                            margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 }, // Additive property clone
-                            pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined, // Additive property clone
-                            headerHtml: original.headerHtml || '',
-                            footerHtml: original.footerHtml || ''
+                            paperSize: original.paperSize ? JSON.parse(JSON.stringify(original.paperSize)) : { preset: "F4", width: 215, height: 330 },
+                            margin: original.margin ? JSON.parse(JSON.stringify(original.margin)) : { top: 20, right: 20, bottom: 20, left: 20 },
+                            pageStyle: original.pageStyle ? JSON.parse(JSON.stringify(original.pageStyle)) : undefined,
+                            headerHtml: original.headerHtml !== undefined ? original.headerHtml : '',
+                            footerHtml: original.footerHtml !== undefined ? original.footerHtml : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                         });
                     }
                 });
@@ -5222,6 +5650,8 @@
 
             }, 500);
         }
+        
+        console.log("Duplicate Engine loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -5438,25 +5868,37 @@
                 if (sheet.classList.contains('landscape')) {
                     nextSheet.classList.add('landscape');
                     const marker = document.createElement('div');
-                    marker.className = 'landscape-marker';
+                    marker.className = 'landscape-marker no-doc-ui no-save no-export no-edit';
                     marker.style.display = 'none';
                     nextSheet.insertBefore(marker, nextSheet.firstChild);
                 } else if (sheet.classList.contains('portrait')) {
                     nextSheet.classList.add('portrait');
                 }
 
+                // Wariskan atribut (Orientasi, Paper Size, Margin)
+                nextSheet.setAttribute('data-paper-preset', sheet.getAttribute('data-paper-preset') || 'F4');
+                nextSheet.setAttribute('data-paper-width', sheet.getAttribute('data-paper-width') || 215);
+                nextSheet.setAttribute('data-paper-height', sheet.getAttribute('data-paper-height') || 330);
+                nextSheet.setAttribute('data-margin-top', sheet.getAttribute('data-margin-top') || 20);
+                nextSheet.setAttribute('data-margin-right', sheet.getAttribute('data-margin-right') || 20);
+                nextSheet.setAttribute('data-margin-bottom', sheet.getAttribute('data-margin-bottom') || 20);
+                nextSheet.setAttribute('data-margin-left', sheet.getAttribute('data-margin-left') || 20);
+
                 // Sisipkan tepat di bawah halaman saat ini di DOM
                 sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
                 
                 // Sinkronisasi DB untuk menampung halaman baru
+                const prevHeader = sheet.querySelector('.page-header');
+                const prevFooter = sheet.querySelector('.page-footer');
+
                 const newPageObj = {
                     id: nextSheet.dataset.id,
                     type: 'standard',
                     html: nextSheet.innerHTML,
                     layoutX: 0, layoutY: 0, layoutScale: 1,
                     orientation: sheet.classList.contains('landscape') ? 'landscape' : 'portrait',
-                    headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
-                    footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
+                    headerHtml: prevHeader ? prevHeader.innerHTML : '',
+                    footerHtml: prevFooter ? prevFooter.innerHTML : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                 };
                 pagesDB.splice(currentIndex + 1, 0, newPageObj);
             }
@@ -5559,6 +6001,8 @@
 
             return targetTable;
         }
+        
+        console.log("Auto Flow Engine loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -5699,6 +6143,8 @@
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 300);
         }
+        
+        console.log("Paper Size Logic loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -5803,6 +6249,8 @@
                 sheet.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 300);
         }
+        
+        console.log("Margin Logic loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -6040,6 +6488,9 @@
 
                 sheet.parentNode.insertBefore(targetSheet, sheet.nextSibling);
 
+                const prevHeader = sheet.querySelector('.page-header');
+                const prevFooter = sheet.querySelector('.page-footer');
+
                 // Update Array Memory (pagesDB)
                 pagesDB.splice(
                     getSheetIndex(sheet) + 1,
@@ -6061,8 +6512,8 @@
                             bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
                             left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
                         },
-                        headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
-                        footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
+                        headerHtml: prevHeader ? prevHeader.innerHTML : '',
+                        footerHtml: prevFooter ? prevFooter.innerHTML : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                     }
                 );
             }
@@ -6114,6 +6565,8 @@
             
             uxToast("Baris meluber! Dilanjutkan otomatis di halaman baru.", "info");
         }
+        
+        console.log("Table Setup Engine loaded successfully.");
     </script>
 
     <!-- =========================================
@@ -7252,6 +7705,9 @@
 
                 sheet.parentNode.insertBefore(nextSheet, sheet.nextSibling);
 
+                const prevHeader = sheet.querySelector('.page-header');
+                const prevFooter = sheet.querySelector('.page-footer');
+
                 pagesDB.splice(
                     Array.from(document.querySelectorAll('.sheet')).indexOf(sheet) + 1,
                     0,
@@ -7274,8 +7730,8 @@
                             bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
                             left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
                         },
-                        headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
-                        footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
+                        headerHtml: prevHeader ? prevHeader.innerHTML : '',
+                        footerHtml: prevFooter ? prevFooter.innerHTML : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                     }
                 );
             }
@@ -7454,6 +7910,9 @@
 
                     sheet.parentNode.insertBefore(newSheet, sheet.nextSibling);
 
+                    const prevHeader = sheet.querySelector('.page-header');
+                    const prevFooter = sheet.querySelector('.page-footer');
+
                     pagesDB.splice(
                         Array.from(document.querySelectorAll('.sheet')).indexOf(sheet) + 1,
                         0,
@@ -7474,8 +7933,8 @@
                                 bottom: parseFloat(sheet.getAttribute('data-margin-bottom')) || 20,
                                 left: parseFloat(sheet.getAttribute('data-margin-left')) || 20
                             },
-                            headerHtml: sheet.querySelector('.page-header')?.innerHTML || '',
-                            footerHtml: sheet.querySelector('.page-footer')?.innerHTML || '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
+                            headerHtml: prevHeader ? prevHeader.innerHTML : '',
+                            footerHtml: prevFooter ? prevFooter.innerHTML : '<div style="text-align:center;"><span class="hf-field" data-field="pageNumber"></span></div>'
                         }
                     );
                 }
@@ -8263,6 +8722,9 @@
                     try { this.settings = JSON.parse(savedSettings); } catch(e) {}
                 }
 
+                // FIX ANTI-DUPLIKAT: Cegah toolbar menumpuk jika init terpanggil ganda oleh reload
+                if (document.getElementById('hfToolbar')) return;
+
                 // 2. Event Listener: Double Click untuk Edit
                 document.addEventListener('dblclick', (e) => {
                     if (document.body.classList.contains('layout-drag-mode')) return;
@@ -8273,9 +8735,14 @@
                     }
                 });
 
-                // 3. Event Listener: Auto Lock saat klik di luar
+                // 3. Event Listener: Auto Lock saat klik di luar (Background click catch)
                 document.addEventListener('click', (e) => {
                     if (document.body.classList.contains('hf-editing')) {
+                        // FIX EVENT CONFLICT: Jangan tutup jika klik berasal dari modal aksi, sidebar, atau tombol
+                        if (e.target.closest('#hfActionModal') || 
+                            e.target.closest('.btn-edit') || 
+                            e.target.closest('.modal-box')) return;
+
                         if (!e.target.closest('.page-header, .page-footer') && 
                             !e.target.closest('.hf-toolbar') && 
                             !e.target.closest('#hfSettingsModal')) {
@@ -8284,20 +8751,31 @@
                     }
                 });
 
-                // 4. Injeksi Toolbar UI secara dinamis
+                // 4. Injeksi Toolbar UI secara dinamis (Ditambah Status Badge Indikator)
                 const toolbar = document.createElement('div');
                 toolbar.className = 'hf-toolbar no-print-in-pdf';
                 toolbar.id = 'hfToolbar';
                 toolbar.innerHTML = `
-                    <span style="font-weight:bold; color:#0f172a; margin-right:10px;"><i class="ph ph-text-align-top"></i> HF Editor</span>
-                    <button onclick="HeaderFooterManager.insertField('pageNumber')">{ Hal }</button>
-                    <button onclick="HeaderFooterManager.insertField('totalPages')">{ Total }</button>
-                    <button onclick="HeaderFooterManager.insertField('date')">{ Tgl }</button>
-                    <button onclick="HeaderFooterManager.insertField('time')">{ Waktu }</button>
-                    <div style="width:1px; height:20px; background:#cbd5e1; margin:0 5px;"></div>
-                    <button class="primary" onclick="HeaderFooterManager.applyToAll()"><i class="ph ph-copy"></i> Terapkan ke Semua</button>
-                    <button onclick="HeaderFooterManager.openSettings()"><i class="ph ph-gear"></i> Opsi</button>
-                    <button class="success" onclick="HeaderFooterManager.toggleEditMode(null, false)"><i class="ph ph-lock-key"></i> Selesai</button>
+                    <div class="hf-toolbar-header">
+                        <div class="hf-toolbar-header-top">
+                            <span style="font-weight:bold; color:#0f172a;" id="hfToolbarTitle"><i class="ph ph-text-align-top"></i> HF Editor</span>
+                            <button onclick="HeaderFooterManager.toggleEditMode(null, false)" style="background:transparent; border:none; color:#ef4444; padding:2px; font-size:1.6rem; box-shadow:none; min-height:auto;" title="Keluar Cepat"><i class="ph ph-x-circle"></i></button>
+                        </div>
+                        <div id="hfStatusBadges" style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <span id="badgeHfFirst" class="hf-badge"><i class="ph ph-check-circle"></i> Diff First Page</span>
+                            <span id="badgeHfOddEven" class="hf-badge"><i class="ph ph-check-circle"></i> Odd/Even Mode</span>
+                        </div>
+                    </div>
+                    <div class="hf-toolbar-actions">
+                        <button onclick="HeaderFooterManager.insertField('pageNumber')">{ Hal }</button>
+                        <button onclick="HeaderFooterManager.insertField('totalPages')">{ Total }</button>
+                        <button onclick="HeaderFooterManager.insertField('date')">{ Tgl }</button>
+                        <button onclick="HeaderFooterManager.insertField('time')">{ Waktu }</button>
+                        <div style="width:1px; height:24px; background:#cbd5e1; margin:0 5px;"></div>
+                        <button class="primary" onclick="HeaderFooterManager.applyToAll()"><i class="ph ph-copy"></i> Terapkan Semua</button>
+                        <button onclick="HeaderFooterManager.openSettings()"><i class="ph ph-gear"></i> Opsi</button>
+                        <button class="success" onclick="HeaderFooterManager.toggleEditMode(null, false)"><i class="ph ph-check-circle"></i> Selesai</button>
+                    </div>
                 `;
                 document.body.appendChild(toolbar);
 
@@ -8305,27 +8783,52 @@
                 this.restore();
             },
 
+            // --- 3️⃣ NEW: UPDATE BADGE INDICATOR ---
+            updateBadges() {
+                const badgeFirst = document.getElementById('badgeHfFirst');
+                const badgeOddEven = document.getElementById('badgeHfOddEven');
+                if (badgeFirst) {
+                    if (this.settings.differentFirstPage) badgeFirst.classList.add('active');
+                    else badgeFirst.classList.remove('active');
+                }
+                if (badgeOddEven) {
+                    if (this.settings.differentOddEven) badgeOddEven.classList.add('active');
+                    else badgeOddEven.classList.remove('active');
+                }
+            },
+
             toggleEditMode(element, isActivating) {
-                // Proses Deaktivasi
+                // Proses Deaktivasi (Keluar dari Mode Edit)
                 if (!isActivating || !element) {
-                    if (this.activeElement) {
-                        this.activeElement.classList.remove('active');
-                        this.activeElement.removeAttribute('contenteditable');
-                        const oldSheet = this.activeElement.closest('.sheet');
-                        if (oldSheet) oldSheet.classList.remove('hf-active');
-                    }
+                    // FIX SAFE SWEEP: Bersihkan semua elemen aktif secara global agar tidak ada state yg nyangkut
+                    document.querySelectorAll('.page-header.active, .page-footer.active').forEach(el => {
+                        el.classList.remove('active');
+                        el.removeAttribute('contenteditable');
+                        el.removeAttribute('data-edit-label');
+                    });
+                    
+                    document.querySelectorAll('.sheet.hf-active').forEach(sheet => {
+                        sheet.classList.remove('hf-active');
+                    });
                     
                     document.body.classList.remove('hf-editing');
                     this.activeElement = null;
-                    document.getElementById('hfToolbar').classList.remove('active');
+                    
+                    const tb = document.getElementById('hfToolbar');
+                    if (tb) {
+                        tb.classList.remove('active');
+                        tb.style.display = 'none'; // FIX UTAMA: Hard-hide, timpa inline display flex agar toolbar benar-benar hilang
+                        tb.style.opacity = '0';
+                        tb.style.pointerEvents = 'none';
+                    }
                     
                     this.updateDynamicFields(); 
                     if (typeof saveToStorage === "function") saveToStorage();
                     return;
                 }
 
-                // Proses Aktivasi
-                this.toggleEditMode(null, false); // Bersihkan sisa state lama
+                // Proses Aktivasi (Masuk Mode Edit)
+                this.toggleEditMode(null, false); // Bersihkan sisa state lama dengan aman
                 
                 document.body.classList.add('hf-editing');
                 const sheet = element.closest('.sheet');
@@ -8333,13 +8836,71 @@
                 
                 element.classList.add('active');
                 element.setAttribute('contenteditable', 'true');
+
+                // --- 1️⃣ & 3️⃣ NEW: Labeling Pintar & Identifikasi Halaman ---
+                const isHeader = element.classList.contains('page-header');
+                const sheets = Array.from(document.querySelectorAll('.sheet'));
+                const pageIndex = sheets.indexOf(sheet) + 1;
+                const labelText = isHeader ? `Editing Header - Halaman ${pageIndex}` : `Editing Footer - Halaman ${pageIndex}`;
+                element.setAttribute('data-edit-label', labelText);
+                
                 element.focus();
 
                 this.activeElement = element;
-                document.getElementById('hfToolbar').classList.add('active');
+                this.updateBadges(); // Segarkan badge status
+
+                const tb = document.getElementById('hfToolbar');
+                
+                // Sembunyikan UI toolbar sementara sampai auto-scroll selesai agar pandangan tidak terhalang
+                if(tb) {
+                    tb.style.display = 'flex'; 
+                    tb.style.opacity = '0'; 
+                    tb.style.pointerEvents = 'none';
+                    tb.classList.add('active');
+                    const titleSpan = document.getElementById('hfToolbarTitle');
+                    if (titleSpan) titleSpan.innerHTML = `<i class="ph ph-text-align-top"></i> ${labelText}`;
+                }
                 
                 this.checkOverflowHeight(element);
-                if(typeof uxToast === "function") uxToast("Mode Edit Header & Footer", "info");
+
+                // --- FIX UI POSITIONING: Auto-Scroll SEBELUM Smart Positioning ---
+                // 1. Gulung secara visual ke posisi area yang akan diedit
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // 2. Tambahkan efek glow ekstra halus dan kuat sebagai feedback pandangan
+                element.style.transition = "box-shadow 0.3s ease";
+                element.style.boxShadow = "0 0 0 5px rgba(59, 130, 246, 0.5), inset 0 0 15px rgba(59, 130, 246, 0.2)";
+                
+                setTimeout(() => {
+                    if(element.classList.contains('active')) {
+                        element.style.boxShadow = "inset 0 0 10px rgba(59, 130, 246, 0.1)"; // Kembali ke gaya standar .active
+                    }
+                }, 1500);
+
+                // 3. Tunggu transisi scroll selesai (sekitar 400ms), ukur viewport, lalu tampilkan Toolbar secara presisi
+                setTimeout(() => {
+                    if (tb && this.activeElement === element) {
+                        const rect = element.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+
+                        // SMART POSITIONING ENGINE: 
+                        // Cek apakah elemen saat ini sedang berada di paruh atas layar atau bawah.
+                        // Jika di atas, Toolbar taruh di bawah layar, begitu juga sebaliknya agar tidak menutupi.
+                        if (rect.top < (viewportHeight / 2)) {
+                            tb.style.top = 'auto';
+                            tb.style.bottom = '30px';
+                        } else {
+                            tb.style.bottom = 'auto';
+                            tb.style.top = '30px';
+                        }
+
+                        // Fade-in memunculkan UI
+                        tb.style.opacity = '1';
+                        tb.style.pointerEvents = 'auto';
+                    }
+                }, 400);
+
+                if(typeof uxToast === "function") uxToast("Mode Edit " + (isHeader ? "Header" : "Footer") + " Aktif", "info");
             },
 
             checkOverflowHeight(element) {
@@ -8472,7 +9033,29 @@
             syncWithMargins() {
                 // Sinkronisasi tinggi dan posisi otomatis tertangani melalui warisan variabel 
                 // lokal CSS (--m-top, --m-bottom) yang dikelola oleh Margin Logic utama.
-                // Fungsi ini dipanggil untuk antisipasi hook di masa mendatang.
+            },
+
+            openSettings() {
+                document.getElementById('hfSettingFirstPage').checked = this.settings.differentFirstPage;
+                document.getElementById('hfSettingOddEven').checked = this.settings.differentOddEven;
+                document.getElementById('hfSettingsModal').style.display = 'flex';
+                
+                // --- 1️⃣ FIX: HINDARI MODAL BERTUMPUK (Sembunyikan Sementara Toolbar Edit) ---
+                const tb = document.getElementById('hfToolbar');
+                if (tb) tb.style.display = 'none';
+            },
+
+            cancelSettings() {
+                document.getElementById('hfSettingsModal').style.display = 'none';
+                
+                // --- 1️⃣ FIX: KEMBALIKAN TOOLBAR EDIT JIKA DIBATALKAN ---
+                const tb = document.getElementById('hfToolbar');
+                if (tb && this.activeElement) {
+                    tb.style.display = 'flex';
+                    tb.style.opacity = '1';
+                    tb.style.pointerEvents = 'auto';
+                    tb.classList.add('active'); // Pastikan UI muncul
+                }
             },
 
             handleOptions() {
@@ -8482,13 +9065,18 @@
                 localStorage.setItem('school_hf_settings', JSON.stringify(this.settings));
                 document.getElementById('hfSettingsModal').style.display = 'none';
                 
+                // --- 1️⃣ FIX: KEMBALIKAN TOOLBAR EDIT SETELAH SIMPAN PENGATURAN ---
+                const tb = document.getElementById('hfToolbar');
+                if (tb && this.activeElement) {
+                    tb.style.display = 'flex';
+                    tb.style.opacity = '1';
+                    tb.style.pointerEvents = 'auto';
+                    tb.classList.add('active');
+                }
+                
+                this.updateBadges(); // Sinkronkan UI badge dengan status terbaru
+                
                 if(typeof uxToast === "function") uxToast("Aturan Header & Footer berhasil diperbarui", "success");
-            },
-
-            openSettings() {
-                document.getElementById('hfSettingFirstPage').checked = this.settings.differentFirstPage;
-                document.getElementById('hfSettingOddEven').checked = this.settings.differentOddEven;
-                document.getElementById('hfSettingsModal').style.display = 'flex';
             },
 
             restore() {
@@ -8501,6 +9089,438 @@
         document.addEventListener('DOMContentLoaded', () => {
             HeaderFooterManager.init();
         });
+    </script>
+
+    <!-- =========================================
+         34. NEW: HF ACTION MODAL LOGIC (ADDITIVE)
+         ========================================= -->
+    <script id="hf-action-modal-logic">
+        function openHfActionModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if (sheets.length === 0) {
+                if (typeof uxToast === 'function') uxToast("Tidak ada halaman.", "error");
+                return;
+            }
+
+            const dropdown = document.getElementById('hfActionPageSelect');
+            if (dropdown) {
+                dropdown.innerHTML = '';
+
+                let targetIndex = 0;
+                let minDistance = Infinity;
+                const windowCenter = window.innerHeight / 2;
+
+                sheets.forEach((sheet, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    let title = "Halaman " + (i+1);
+                    if(sheet.textContent.includes('CUSTOM PAGE')) title += " (Custom)";
+                    opt.textContent = title;
+                    dropdown.appendChild(opt);
+
+                    // Deteksi otomatis halaman yang sedang ditatap pengguna (paling tengah di layar)
+                    const rect = sheet.getBoundingClientRect();
+                    const sheetCenter = rect.top + (rect.height / 2);
+                    const distance = Math.abs(windowCenter - sheetCenter);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        targetIndex = i;
+                    }
+                });
+
+                // Set default dropdown ke halaman yang sedang aktif/terlihat
+                dropdown.value = targetIndex;
+            }
+
+            document.getElementById('hfActionModal').style.display = 'flex';
+            
+            // Tutup sidebar otomatis jika user menggunakan HP
+            const sidebar = document.querySelector('aside');
+            if (sidebar && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        }
+
+        function closeHfActionModal() {
+            document.getElementById('hfActionModal').style.display = 'none';
+        }
+
+        function triggerHfEdit(type) {
+            const index = document.getElementById('hfActionPageSelect').value;
+            const sheet = document.querySelectorAll('.sheet')[index];
+            if (!sheet) return;
+
+            let targetElement = null;
+
+            if (type === 'header') {
+                targetElement = sheet.querySelector('.page-header');
+            } else if (type === 'footer') {
+                targetElement = sheet.querySelector('.page-footer');
+            }
+
+            if (!targetElement) {
+                if (typeof uxToast === 'function') uxToast("Elemen Header/Footer tidak ditemukan di halaman ini.", "error");
+                return;
+            }
+
+            // Gulung/scroll perlahan ke posisi elemen secara visual
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Tunggu animasi scroll selesai (400ms), lalu trigger mode edit
+            setTimeout(() => {
+                if (typeof HeaderFooterManager !== 'undefined' && typeof HeaderFooterManager.toggleEditMode === 'function') {
+                    // Panggil engine aslinya tanpa modifikasi double click
+                    HeaderFooterManager.toggleEditMode(targetElement, true);
+                } else {
+                    // Fallback aman: trigger synthetic event jika module belum load
+                    const dblClickEvent = new MouseEvent('dblclick', { bubbles: true, cancelable: true, view: window });
+                    targetElement.dispatchEvent(dblClickEvent);
+                }
+                
+                closeHfActionModal();
+                
+                let msg = (type === 'header') ? "Mode Edit Header Aktif" : "Mode Edit Footer Aktif";
+                if (typeof uxToast === 'function') uxToast(msg, "success");
+            }, 400);
+        }
+    </script>
+
+    <!-- =========================================
+         35. NEW: INLINE 8K EXPORT ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="inline-8k-export-engine">
+        const HDImageExportEngine = {
+            async exportSheet(btn) {
+                // Cari sheet induk dari tombol yang diklik
+                const sheet = btn.closest('.sheet');
+                if (!sheet) return;
+
+                const sheets = Array.from(document.querySelectorAll('.sheet'));
+                const pageIndex = sheets.indexOf(sheet);
+
+                if (typeof uxShowLoader === "function") uxShowLoader("Mengekspor Gambar 8K (Mohon tunggu, memproses aset)...");
+
+                const isSmartFull = sheet.getAttribute('data-smart-embed-mode') === 'full-html';
+                const isLegacyFull = sheet.getAttribute('data-embed-mode') === 'full-html';
+                const isDataEmbedType = sheet.dataset.pageType === 'embed';
+                const isFullHtmlPage = isSmartFull || isLegacyFull || isDataEmbedType;
+
+                try {
+                    let canvas;
+
+                    if (isFullHtmlPage) {
+                        // ==========================================
+                        // OFFSCREEN RENDER ENGINE FOR FULL HTML
+                        // ==========================================
+                        const smartStorage = sheet.querySelector('.smart-embed-raw');
+                        const rawStorage = sheet.querySelector('.raw-storage');
+                        
+                        const rawVal = (pagesDB[pageIndex] && (pagesDB[pageIndex].rawHTML || pagesDB[pageIndex].smartEmbedRawHTML || pagesDB[pageIndex].fullEmbedRaw)) 
+                                    || (smartStorage ? smartStorage.value : null) 
+                                    || (rawStorage ? rawStorage.value : null) 
+                                    || "";
+
+                        // Menggunakan fixed positioning ultra-safe untuk mencegah blank render oleh html2canvas 
+                        // (Tetap berada di viewport browser namun tidak terlihat)
+                        const offscreenContainer = document.createElement('div');
+                        offscreenContainer.style.position = 'fixed';
+                        offscreenContainer.style.top = '0';
+                        offscreenContainer.style.left = '0';
+                        offscreenContainer.style.zIndex = '-9999';
+                        offscreenContainer.style.opacity = '0.01'; 
+                        offscreenContainer.style.pointerEvents = 'none';
+                        
+                        const clonedSheet = sheet.cloneNode(true);
+                        
+                        // Bersihkan elemen sistem UI agar tidak ikut terfoto
+                        clonedSheet.querySelectorAll('.zoom-controls, .zoom-indicator, .duplicate-controls, .edit-badge, .sheet-controls, .landscape-marker, .paper-size-badge').forEach(el => el.remove());
+                        
+                        // Hapus manipulasi transisi & zoom dari layout-movable agar canvas merender utuh
+                        clonedSheet.style.transform = 'none';
+                        clonedSheet.style.margin = '0';
+                        clonedSheet.style.boxShadow = 'none';
+                        
+                        const movable = clonedSheet.querySelector('.layout-movable');
+                        if(movable) movable.style.transform = 'none';
+
+                        // Ganti Iframe dengan div asli (Anti-Putih Layer)
+                        const clonedIframe = clonedSheet.querySelector('iframe.embed-full-html') || clonedSheet.querySelector('iframe');
+                        if (clonedIframe && rawVal) {
+                            const contentDiv = document.createElement('div');
+                            contentDiv.style.width = '100%';
+                            contentDiv.style.height = '100%';
+                            contentDiv.style.background = 'transparent';
+                            contentDiv.style.overflow = 'hidden';
+                            contentDiv.innerHTML = rawVal;
+                            clonedIframe.replaceWith(contentDiv);
+                        }
+
+                        offscreenContainer.appendChild(clonedSheet);
+                        document.body.appendChild(offscreenContainer);
+
+                        // Preload semua aset gambar di offscreen agar tidak hilang
+                        const images = Array.from(clonedSheet.querySelectorAll('img'));
+                        await Promise.all(images.map(img => {
+                            if (img.complete) return Promise.resolve();
+                            return new Promise(resolve => {
+                                img.onload = resolve;
+                                img.onerror = resolve; // Abaikan error, lanjutkan render
+                            });
+                        }));
+                        
+                        // Extra buffer waktu untuk file CSS eksternal/Web Fonts me-render utuh
+                        await new Promise(r => setTimeout(r, 1500));
+
+                        canvas = await html2canvas(clonedSheet, {
+                            scale: 6, // Target ~6000px-8000px (Sangat Tajam / 8K)
+                            useCORS: true,
+                            allowTaint: true,
+                            backgroundColor: null,
+                            logging: false
+                        });
+
+                        offscreenContainer.remove();
+
+                    } else {
+                        // ==========================================
+                        // STANDARD RENDER ENGINE (DIRECT)
+                        // ==========================================
+                        document.body.classList.add('exporting');
+                        document.body.classList.remove('show-margin-guides');
+                        
+                        // Tunggu transisi CSS menghilang (Mode Export aktif)
+                        await new Promise(r => setTimeout(r, 300)); 
+
+                        canvas = await html2canvas(sheet, {
+                            scale: 6, // Target ~6000px-8000px (Sangat Tajam / 8K)
+                            useCORS: true,
+                            allowTaint: true,
+                            backgroundColor: null,
+                            logging: false,
+                            onclone: (clonedDoc) => {
+                                // Bersihkan visual scale & transform di dokumen tiruan html2canvas
+                                const cs = clonedDoc.querySelectorAll('.sheet')[pageIndex] || clonedDoc.querySelector('.sheet');
+                                if (cs) {
+                                    cs.style.transform = "none";
+                                    cs.style.boxShadow = "none";
+                                    cs.style.margin = "0";
+                                    
+                                    // Reset zoom skala dalam pada mode movable saat diclone
+                                    const mv = cs.querySelector('.layout-movable');
+                                    if(mv) mv.style.transform = 'none';
+                                }
+                            }
+                        });
+
+                        document.body.classList.remove('exporting');
+                    }
+
+                    // Konversi & Auto Download
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            saveAs(blob, `document-page-${pageIndex + 1}-8k.png`);
+                            if (typeof uxToast === "function") uxToast(`Gambar 8K Halaman ${pageIndex + 1} berhasil diunduh!`, "success");
+                        } else {
+                            throw new Error("Gagal mengonversi canvas ke blob.");
+                        }
+                        if (typeof uxHideLoader === "function") uxHideLoader();
+                    }, 'image/png');
+
+                } catch (error) {
+                    console.error("8K Image Export Error:", error);
+                    if (typeof uxToast === "function") uxToast("Gagal mengekspor gambar 8K. Memori browser mungkin penuh.", "error");
+                    document.body.classList.remove('exporting');
+                    
+                    // Bersihkan offscreen jika terjadi crash
+                    const off = document.querySelector('div[style*="z-index: -9999"]');
+                    if (off) off.remove();
+                    
+                    if (typeof uxHideLoader === "function") uxHideLoader();
+                }
+            }
+        };
+
+        // --- NEW: EXPORT FULL HTML IMAGE (ANTI-WHITE DOM REPLACEMENT) ---
+        window.HDImageExportEngine = typeof HDImageExportEngine !== 'undefined' ? HDImageExportEngine : {};
+
+        window.HDImageExportEngine.exportFullHtmlImage = async function(btn) {
+            // Adaptasi dinamis: mencari sheet jika dipanggil dari modal atau dari dalam sheet
+            let sheet = btn ? btn.closest('.sheet') : null;
+            let index;
+
+            if (!sheet) {
+                const select = document.getElementById('hdImagePageSelect');
+                if (select) {
+                    index = parseInt(select.value);
+                    sheet = document.querySelectorAll('.sheet')[index];
+                }
+            } else {
+                const sheets = Array.from(document.querySelectorAll('.sheet'));
+                index = sheets.indexOf(sheet);
+            }
+
+            if (!sheet) return;
+
+            // Tutup modal export agar UI bersih
+            if (typeof closeHdImageExportModal === "function") closeHdImageExportModal();
+
+            // Ekstraksi RAW HTML menggunakan fallback berlapis
+            const rawVal =
+                (typeof pagesDB !== 'undefined' && pagesDB[index] && (
+                    pagesDB[index].rawHTML ||
+                    pagesDB[index].smartEmbedRawHTML ||
+                    pagesDB[index].fullEmbedRaw
+                )) ||
+                (sheet.querySelector('.smart-embed-raw') ? sheet.querySelector('.smart-embed-raw').value : null) ||
+                (sheet.querySelector('.raw-storage') ? sheet.querySelector('.raw-storage').value : null) ||
+                (sheet.querySelector('iframe') ? sheet.querySelector('iframe').srcdoc : null);
+
+            if (!rawVal) {
+                if (typeof uxToast === "function") {
+                    uxToast("Raw HTML tidak ditemukan / Halaman bukan Full HTML.", "warning");
+                }
+                return;
+            }
+
+            if (typeof uxShowLoader === "function") {
+                uxShowLoader("Rendering Full HTML 8K (Engine)...");
+            }
+
+            let iframe; // Simpan rujukan ke iframe agar bisa dibersihkan pada finally
+
+            try {
+                // 🔥 Buat iframe terpisah untuk merender document secara native
+                iframe = document.createElement("iframe");
+                iframe.style.position = "fixed";
+                iframe.style.left = "-99999px";
+                iframe.style.top = "0";
+                iframe.style.width = sheet.offsetWidth + "px";
+                iframe.style.height = sheet.offsetHeight + "px";
+                iframe.style.border = "none";
+                iframe.id = "full-html-export-iframe";
+
+                document.body.appendChild(iframe);
+
+                iframe.srcdoc = rawVal;
+
+                // Tunggu iframe merender kontennya
+                await new Promise(resolve => {
+                    iframe.onload = resolve;
+                    // Fallback waktu jika onload macet
+                    setTimeout(resolve, 5000);
+                });
+
+                // Tunggu font & aset lain di dalam iframe selesai termuat
+                if (iframe.contentDocument && iframe.contentDocument.fonts) {
+                    await iframe.contentDocument.fonts.ready;
+                }
+                
+                // Tambahan delay untuk aset eksternal seperti gambar dari CDN
+                await new Promise(r => setTimeout(r, 1500)); 
+
+                // 🔥 Ambil DocumentElement dari dalam Iframe (Akar HTML murni)
+                const target = iframe.contentDocument.documentElement;
+
+                // Skala keamanan berdasarkan lebar & tinggi agar tidak overload memory
+                const rect = target.getBoundingClientRect();
+                const basePixels = rect.width * rect.height;
+                const maxPixels = 40000000;
+                const safeScale = Math.min(6, Math.max(3, Math.sqrt(maxPixels / basePixels)));
+
+                // 🔥 Render DOM dari dalam iframe langsung
+                const canvas = await html2canvas(target, {
+                    scale: safeScale,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    logging: false
+                });
+
+                const blob = await new Promise(resolve =>
+                    canvas.toBlob(resolve, "image/png")
+                );
+
+                if (blob) {
+                    saveAs(blob, `full-html-page-${index+1}-8k.png`);
+                    if (typeof uxToast === "function") {
+                        uxToast("Export Full HTML berhasil!", "success");
+                    }
+                } else {
+                    throw new Error("Gagal mengonversi canvas ke blob.");
+                }
+
+                iframe.remove();
+
+            } catch (err) {
+                console.error(err);
+                if (typeof uxToast === "function") {
+                    uxToast("Gagal export Full HTML.", "error");
+                }
+                if (iframe) iframe.remove();
+            } finally {
+                if (typeof uxHideLoader === "function") {
+                    uxHideLoader();
+                }
+            }
+        };
+
+        // --- NEW: EXPORT FULL HTML INTERACTIVE (ADDITIVE) ---
+        window.HDImageExportEngine.exportFullHtmlInteractive = async function(btn) {
+            // Adaptasi dinamis: mencari sheet jika dipanggil dari modal atau dari dalam sheet
+            let sheet = btn ? btn.closest('.sheet') : null;
+            let index;
+
+            if (!sheet) {
+                const select = document.getElementById('hdImagePageSelect');
+                if (select) {
+                    index = parseInt(select.value);
+                    sheet = document.querySelectorAll('.sheet')[index];
+                }
+            } else {
+                const sheets = Array.from(document.querySelectorAll('.sheet'));
+                index = sheets.indexOf(sheet);
+            }
+
+            if (!sheet) return;
+
+            // Tutup modal export agar UI bersih
+            if (typeof closeHdImageExportModal === "function") closeHdImageExportModal();
+
+            // Ekstraksi RAW HTML menggunakan fallback berlapis persis seperti engine 8K
+            const rawVal =
+                (typeof pagesDB !== 'undefined' && pagesDB[index] && (
+                    pagesDB[index].rawHTML ||
+                    pagesDB[index].smartEmbedRawHTML ||
+                    pagesDB[index].fullEmbedRaw
+                )) ||
+                (sheet.querySelector('.smart-embed-raw') ? sheet.querySelector('.smart-embed-raw').value : null) ||
+                (sheet.querySelector('.raw-storage') ? sheet.querySelector('.raw-storage').value : null) ||
+                (sheet.querySelector('iframe') ? sheet.querySelector('iframe').srcdoc : null);
+
+            if (!rawVal) {
+                if (typeof uxToast === "function") {
+                    uxToast("Raw HTML tidak ditemukan / Halaman bukan Full HTML.", "warning");
+                }
+                return;
+            }
+
+            try {
+                // Bungkus string HTML ke dalam Blob tipe dokumen HTML
+                const blob = new Blob([rawVal], { type: "text/html;charset=utf-8" });
+                
+                // Gunakan saveAs untuk langsung men-download tanpa perlu merender
+                saveAs(blob, `full-html-page-${index+1}-interactive.html`);
+
+                if (typeof uxToast === "function") {
+                    uxToast("Export HTML Interaktif berhasil diunduh!", "success");
+                }
+            } catch (err) {
+                console.error("Interactive Export Error:", err);
+                if (typeof uxToast === "function") {
+                    uxToast("Gagal mengunduh file HTML.", "error");
+                }
+            }
+        };
     </script>
 </body>
 </html>
