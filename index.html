@@ -19,6 +19,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
+    <!-- NEW: LIBRARY FOR PDF MERGE ENGINE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
     <!-- PHOSPHOR ICONS (Premium Icons) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -1417,6 +1420,61 @@
     </style>
 
     <!-- =========================================
+         NEW: MERGE PDF STYLES (ADDITIVE)
+         ========================================= -->
+    <style id="merge-pdf-styles">
+        .dropzone-pdf {
+            border: 2px dashed #3b82f6;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 8px;
+            background: #eff6ff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 15px;
+        }
+        .dropzone-pdf:hover, .dropzone-pdf.dragover {
+            background: #dbeafe;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .merge-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .merge-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+            cursor: grab;
+            transition: background 0.2s;
+        }
+        .merge-item:last-child { border-bottom: none; }
+        .merge-item:hover { background: #f1f5f9; }
+        .merge-item.dragging { opacity: 0.4; background: #e2e8f0; cursor: grabbing; }
+        .merge-item-info { display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden; }
+        .merge-item-title { font-weight: 600; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .merge-item-meta { font-size: 0.75rem; color: #64748b; }
+        
+        .merge-progress-container {
+            margin-top: 15px;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+        .merge-progress-bar-bg { width: 100%; background: #cbd5e1; border-radius: 6px; height: 8px; overflow: hidden; margin-top: 8px; }
+        .merge-progress-bar-fill { width: 0%; height: 100%; background: #10b981; transition: width 0.3s ease; }
+    </style>
+
+    <!-- =========================================
          NEW: HEADER & FOOTER STYLES (UPGRADED)
          ========================================= -->
     <style id="header-footer-styles">
@@ -1976,6 +2034,11 @@
                 <i class="ph ph-copy"></i> 📄 Duplicate Multi Halaman
             </button>
 
+            <!-- NEW: BUTTON MOVE PAGE (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;" onclick="openMovePageModal()">
+                <i class="ph ph-arrows-down-up"></i> ↕️ Pindah Posisi Halaman
+            </button>
+
             <!-- NEW: BUTTON ORIENTASI (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#fef08a; color:#854d0e; border-color:#fde047;" onclick="openOrientationModal()">
                 <i class="ph ph-arrows-left-right"></i> 🔄 Ubah Orientasi
@@ -2036,6 +2099,11 @@
             <!-- NEW: BUTTON HD IMAGE EXPORT (ADDITIVE) -->
             <button class="btn btn-print" style="background:#8b5cf6; margin-top:10px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);" onclick="openHdImageExportModal()">
                 <i class="ph ph-image"></i> Export Image HD (Per Hal)
+            </button>
+
+            <!-- NEW: BUTTON MERGE PDF (ADDITIVE) -->
+            <button class="btn btn-print" style="background:#0f172a; margin-top:10px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);" onclick="PdfMergeEngine.openModal()">
+                <i class="ph ph-intersect"></i> Gabungkan File PDF
             </button>
 
             <!-- WRAPPED RESET HANDLER -->
@@ -2234,6 +2302,25 @@
        </div>
     </div>
 
+    <!-- NEW MODAL: MOVE PAGE SYSTEM (ADDITIVE) -->
+    <div id="movePageModal" class="modal no-print-in-pdf">
+       <div class="modal-box">
+           <h3><i class="ph ph-arrows-down-up" style="color:#0369a1"></i> Pindah Posisi Halaman</h3>
+           <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Pindahkan halaman beserta seluruh format dan layoutnya.</p>
+
+           <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pilih Halaman yang Dipindah:</label>
+           <select id="moveSourceSelect" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 15px; outline:none;"></select>
+
+           <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Pindah Menjadi Halaman Ke- (1 - <span id="moveMaxPage">?</span>):</label>
+           <input type="number" id="moveTargetInput" min="1" value="1" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom: 20px; outline:none;">
+
+           <div class="modal-actions">
+               <button onclick="confirmMovePage()" style="background:#0284c7; color:white;">🚀 Pindahkan</button>
+               <button onclick="closeMovePageModal()">Batal</button>
+           </div>
+       </div>
+    </div>
+
     <!-- MODAL EMBED HTML SYSTEM (EXISTING - PRESERVED) -->
     <div id="embedModal" class="modal">
        <div class="modal-box" style="width: 600px; max-width: 90vw;">
@@ -2329,6 +2416,52 @@
           <button onclick="closeHdImageExportModal()" style="flex: 1 1 100%; justify-content: center;">Batal</button>
         </div>
       </div>
+    </div>
+
+    <!-- NEW MODAL: MERGE PDF SYSTEM (ADDITIVE) -->
+    <div id="mergePdfModal" class="modal no-print-in-pdf">
+        <div class="modal-box" style="width: 600px; max-width: 95vw;">
+            <h3><i class="ph ph-intersect" style="color:#0f172a"></i> Gabungkan File PDF</h3>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Unggah beberapa file PDF untuk digabungkan menjadi satu dokumen. Tarik daftar file ke atas/bawah untuk mengubah urutan.</p>
+
+            <div id="pdfDropzone" class="dropzone-pdf" onclick="document.getElementById('pdfMergeInput').click()">
+                <i class="ph ph-file-pdf" style="font-size: 36px; color: #ef4444; margin-bottom: 10px;"></i>
+                <p style="margin: 0; font-weight: 700; color: #3b82f6;">Klik atau Seret (Drag & Drop) File PDF ke Sini</p>
+                <p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #64748b;">(Mendukung unggah massal tanpa batas)</p>
+            </div>
+            <input type="file" id="pdfMergeInput" multiple accept=".pdf,application/pdf" style="display:none;" onchange="PdfMergeEngine.handleFileSelect(event.target.files)">
+
+            <!-- Header Daftar -->
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:#64748b; font-weight:bold; margin-bottom:5px; padding:0 5px;">
+                <span>Urutan Dokumen (<span id="mergeFileCount">0</span> File)</span>
+                <span style="color:#ef4444; cursor:pointer;" onclick="PdfMergeEngine.clearAll()"><i class="ph ph-trash"></i> Bersihkan</span>
+            </div>
+
+            <!-- List Item Container -->
+            <div id="mergePdfList" class="merge-list">
+                <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                    Belum ada file PDF yang ditambahkan.
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="mergeProgressContainer" class="merge-progress-container">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#334155; font-weight:600;">
+                    <span id="mergeProgressText">Memproses file...</span>
+                    <span id="mergeProgressPct">0%</span>
+                </div>
+                <div class="merge-progress-bar-bg">
+                    <div id="mergeProgressBar" class="merge-progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="btnExecuteMergePdf" onclick="PdfMergeEngine.executeMerge()" style="background:#0f172a; color:white; display:flex; align-items:center; gap:6px;">
+                    <i class="ph ph-magic-wand"></i> Mulai Gabungkan
+                </button>
+                <button onclick="PdfMergeEngine.closeModal()">Tutup</button>
+            </div>
+        </div>
     </div>
 
     <!-- NEW MODAL: FULL PAGE TEXT EDITOR (ADDITIVE) -->
@@ -5908,6 +6041,120 @@
         }
         
         console.log("Duplicate Engine loaded successfully.");
+    </script>
+
+    <!-- =========================================
+         17B. NEW: MOVE PAGE ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="move-page-engine">
+        function openMovePageModal() {
+            const sheets = document.querySelectorAll('.sheet');
+            if (sheets.length <= 1) {
+                if (typeof uxToast === "function") uxToast("Dibutuhkan minimal 2 halaman untuk mengubah urutan.", "warning");
+                return;
+            }
+
+            const dropdown = document.getElementById('moveSourceSelect');
+            dropdown.innerHTML = '';
+            
+            sheets.forEach((sheet, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                let title = `Halaman ${i + 1}`;
+                
+                // Tambahkan identifikasi visual
+                const isEmbed = sheet.dataset.pageType === 'embed';
+                const isLandscape = sheet.classList.contains('landscape');
+                
+                if (isEmbed) title += " [EMBED]";
+                else if (sheet.textContent.includes('CUSTOM PAGE')) title += " (Custom)";
+                
+                if (isLandscape) title += " [Landscape]";
+
+                opt.textContent = title;
+                dropdown.appendChild(opt);
+            });
+
+            document.getElementById('moveMaxPage').innerText = sheets.length;
+            const targetInput = document.getElementById('moveTargetInput');
+            targetInput.max = sheets.length;
+            targetInput.value = ""; // Kosongkan agar siap diketik
+
+            document.getElementById('movePageModal').style.display = 'flex';
+            setTimeout(() => targetInput.focus(), 100);
+        }
+
+        function closeMovePageModal() {
+            document.getElementById('movePageModal').style.display = 'none';
+        }
+
+        function confirmMovePage() {
+            // Wajib sinkronisasi DOM ke memory array agar perubahan text/layout terakhir tidak hangus
+            if (typeof saveToStorage === "function") saveToStorage(); 
+
+            const sourceIndex = parseInt(document.getElementById('moveSourceSelect').value);
+            const targetInputVal = document.getElementById('moveTargetInput').value;
+
+            if (targetInputVal === "") {
+                if (typeof uxToast === "function") uxToast("Silakan isi nomor halaman tujuan.", "warning");
+                return;
+            }
+
+            let targetPageNum = parseInt(targetInputVal);
+
+            if (isNaN(targetPageNum)) {
+                if (typeof uxToast === "function") uxToast("Nomor halaman harus berupa angka valid.", "error");
+                return;
+            }
+
+            const totalPages = pagesDB.length;
+
+            // Fitur Keamanan Boundary: Cegah aplikasi crash akibat input yang berlebihan (Out of Bounds)
+            if (targetPageNum < 1) targetPageNum = 1;
+            if (targetPageNum > totalPages) targetPageNum = totalPages;
+
+            // Penyesuaian ke index array (dimulai dari 0)
+            const targetIndex = targetPageNum - 1;
+
+            if (sourceIndex === targetIndex) {
+                if (typeof uxToast === "function") uxToast("Halaman sudah berada di posisi tersebut.", "info");
+                closeMovePageModal();
+                return;
+            }
+
+            // --- INTI SISTEM PEMINDAHAN (SPLICE MEMORY ARRAY) ---
+            // 1. Cabut halaman beserta semua pengaturannya dari index asalnya
+            const [movedPage] = pagesDB.splice(sourceIndex, 1);
+            // 2. Sisipkan halaman tersebut ke index barunya
+            pagesDB.splice(targetIndex, 0, movedPage);
+
+            // Simpan status tatanan baru dan jalankan proses Render Ulang keseluruhan 
+            // agar engine Header/Footer dan Penomoran (Page Number) mengkalkulasi ulang urutannya
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(pagesDB));
+            renderPages();
+            
+            // Daftarkan ke sistem Undo/Redo Engine
+            if (typeof pushHistoryState === "function") pushHistoryState();
+
+            if (typeof uxToast === "function") uxToast(`Halaman berhasil dipindah ke urutan ${targetPageNum}`, "success");
+            closeMovePageModal();
+
+            // Navigasi Otomatis & Pemandu Visual: Gulir layar menuju halaman yang dipindahkan
+            setTimeout(() => {
+                const sheets = document.querySelectorAll('.sheet');
+                if (sheets[targetIndex]) {
+                    sheets[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Animasi Glow pada bingkai halaman untuk menegaskan letaknya
+                    sheets[targetIndex].style.transition = "box-shadow 0.5s ease";
+                    sheets[targetIndex].style.boxShadow = "0 0 0 5px #0369a1, 0 20px 50px -12px rgba(0,0,0,0.25)";
+                    
+                    setTimeout(() => {
+                        sheets[targetIndex].style.boxShadow = "0 20px 50px -12px rgba(0,0,0,0.25)";
+                    }, 1500);
+                }
+            }, 300);
+        }
     </script>
 
     <!-- =========================================
@@ -10625,6 +10872,294 @@
                 console.error("Interactive Export Error:", err);
                 if (typeof uxToast === "function") {
                     uxToast("Gagal mengunduh file HTML.", "error");
+                }
+            }
+        };
+    </script>
+
+    <!-- =========================================
+         35B. NEW: PDF MERGE ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="pdf-merge-engine">
+        const PdfMergeEngine = {
+            files: [],
+            draggedItemIndex: null,
+
+            openModal() {
+                document.getElementById('mergePdfModal').style.display = 'flex';
+                this.bindDropzone();
+            },
+
+            closeModal() {
+                document.getElementById('mergePdfModal').style.display = 'none';
+                document.getElementById('mergeProgressContainer').style.display = 'none';
+            },
+
+            clearAll() {
+                this.files = [];
+                this.renderList();
+                document.getElementById('pdfMergeInput').value = "";
+            },
+
+            bindDropzone() {
+                const dropzone = document.getElementById('pdfDropzone');
+                
+                // Mencegah duplicate binding
+                if (dropzone.dataset.bound) return;
+                dropzone.dataset.bound = "true";
+
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('dragover');
+                });
+
+                dropzone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dragover');
+                });
+
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dragover');
+                    if (e.dataTransfer.files) {
+                        this.handleFileSelect(e.dataTransfer.files);
+                    }
+                });
+            },
+
+            async handleFileSelect(fileList) {
+                if (!fileList || fileList.length === 0) return;
+
+                const newFiles = Array.from(fileList).filter(f => f.type === 'application/pdf');
+                if (newFiles.length !== fileList.length) {
+                    if(typeof uxToast === 'function') uxToast("Beberapa file diabaikan karena bukan PDF.", "warning");
+                }
+
+                if (newFiles.length === 0) return;
+
+                if(typeof uxShowLoader === 'function') uxShowLoader("Menganalisis file PDF...");
+
+                for (let file of newFiles) {
+                    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    
+                    const fileObj = {
+                        id: id,
+                        file: file,
+                        name: file.name,
+                        size: sizeMB,
+                        pageCount: "..." // Default while analyzing
+                    };
+                    
+                    this.files.push(fileObj);
+                    
+                    // Fire async analysis so it doesn't block UI entirely
+                    this.analyzePdfAsync(fileObj);
+                }
+
+                this.renderList();
+                document.getElementById('pdfMergeInput').value = ""; // Reset input
+                if(typeof uxHideLoader === 'function') uxHideLoader();
+            },
+
+            async analyzePdfAsync(fileObj) {
+                try {
+                    const arrayBuffer = await fileObj.file.arrayBuffer();
+                    // Load tanpa memuat detail konten agar cepat hanya untuk hitung halaman
+                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                    fileObj.pageCount = pdfDoc.getPageCount();
+                    
+                    // Update DOM jika elemennya sudah di-render
+                    const countEl = document.getElementById(`pg-count-${fileObj.id}`);
+                    if (countEl) countEl.innerText = `${fileObj.pageCount} Hal`;
+                } catch (e) {
+                    console.error("Gagal membaca metadata PDF:", e);
+                    fileObj.pageCount = "Error";
+                    const countEl = document.getElementById(`pg-count-${fileObj.id}`);
+                    if (countEl) {
+                        countEl.innerText = "Rusak/Terkunci";
+                        countEl.style.color = "#ef4444";
+                    }
+                }
+            },
+
+            removeFile(id) {
+                this.files = this.files.filter(f => f.id !== id);
+                this.renderList();
+            },
+
+            renderList() {
+                const container = document.getElementById('mergePdfList');
+                const countBadge = document.getElementById('mergeFileCount');
+                
+                countBadge.innerText = this.files.length;
+
+                if (this.files.length === 0) {
+                    container.innerHTML = `<div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">Belum ada file PDF yang ditambahkan.</div>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+
+                this.files.forEach((fileObj, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'merge-item';
+                    item.draggable = true;
+                    item.dataset.index = index;
+
+                    item.innerHTML = `
+                        <div class="merge-item-info">
+                            <i class="ph ph-dots-six-vertical" style="color:#94a3b8; cursor:grab; font-size:1.2rem;"></i>
+                            <div style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; background:#e0e7ff; color:#4f46e5; border-radius:50%; font-size:0.75rem; font-weight:bold; flex-shrink:0;">
+                                ${index + 1}
+                            </div>
+                            <div style="overflow:hidden;">
+                                <div class="merge-item-title" title="${fileObj.name}">${fileObj.name}</div>
+                                <div class="merge-item-meta">
+                                    ${fileObj.size} MB &bull; <span id="pg-count-${fileObj.id}">${fileObj.pageCount} Hal</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="PdfMergeEngine.removeFile('${fileObj.id}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; padding:5px; font-size:1.2rem;">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    `;
+
+                    // Drag & Drop HTML5 Events for Reordering
+                    item.addEventListener('dragstart', (e) => {
+                        this.draggedItemIndex = index;
+                        setTimeout(() => item.classList.add('dragging'), 0);
+                    });
+
+                    item.addEventListener('dragend', () => {
+                        this.draggedItemIndex = null;
+                        item.classList.remove('dragging');
+                    });
+
+                    item.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const draggingElem = container.querySelector('.dragging');
+                        if (!draggingElem) return;
+
+                        // Deteksi letak mouse untuk menentukan insert before/after
+                        const bounding = item.getBoundingClientRect();
+                        const offset = bounding.y + (bounding.height / 2);
+                        
+                        if (e.clientY - offset > 0) {
+                            item.style.borderBottom = "2px solid #3b82f6";
+                            item.style.borderTop = "";
+                        } else {
+                            item.style.borderTop = "2px solid #3b82f6";
+                            item.style.borderBottom = "";
+                        }
+                    });
+
+                    item.addEventListener('dragleave', () => {
+                        item.style.borderTop = "";
+                        item.style.borderBottom = "";
+                    });
+
+                    item.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        item.style.borderTop = "";
+                        item.style.borderBottom = "";
+
+                        const targetIndex = index;
+                        if (this.draggedItemIndex === null || this.draggedItemIndex === targetIndex) return;
+
+                        // Tentukan arah geser array
+                        const bounding = item.getBoundingClientRect();
+                        const offset = bounding.y + (bounding.height / 2);
+                        const isAfter = e.clientY - offset > 0;
+
+                        let finalTargetIndex = isAfter ? targetIndex + 1 : targetIndex;
+                        
+                        // Manipulasi Array
+                        const draggedFile = this.files.splice(this.draggedItemIndex, 1)[0];
+                        
+                        // Sesuaikan indeks setelah splice
+                        if (this.draggedItemIndex < finalTargetIndex) {
+                            finalTargetIndex--;
+                        }
+
+                        this.files.splice(finalTargetIndex, 0, draggedFile);
+                        this.renderList();
+                    });
+
+                    container.appendChild(item);
+                });
+            },
+
+            async executeMerge() {
+                if (this.files.length < 2) {
+                    if(typeof uxToast === 'function') uxToast("Tambahkan minimal 2 file PDF untuk digabungkan.", "warning");
+                    return;
+                }
+
+                if (!window.PDFLib) {
+                    if(typeof uxToast === 'function') uxToast("Library PDF Engine belum termuat. Cek koneksi internet.", "error");
+                    return;
+                }
+
+                const btn = document.getElementById('btnExecuteMergePdf');
+                const progContainer = document.getElementById('mergeProgressContainer');
+                const progText = document.getElementById('mergeProgressText');
+                const progPct = document.getElementById('mergeProgressPct');
+                const progBar = document.getElementById('mergeProgressBar');
+
+                if (typeof uxBtnLoad === 'function') uxBtnLoad(btn, true);
+                progContainer.style.display = 'block';
+
+                try {
+                    // Buat Dokumen Kosong Baru
+                    const mergedPdf = await PDFLib.PDFDocument.create();
+                    const totalFiles = this.files.length;
+
+                    for (let i = 0; i < totalFiles; i++) {
+                        const fileObj = this.files[i];
+                        
+                        // Update Progress UI
+                        const pct = Math.round((i / totalFiles) * 100);
+                        progText.innerText = `Menyalin Halaman: ${fileObj.name} (${i+1}/${totalFiles})`;
+                        progPct.innerText = `${pct}%`;
+                        progBar.style.width = `${pct}%`;
+
+                        try {
+                            const arrayBuffer = await fileObj.file.arrayBuffer();
+                            const pdfToMerge = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                            
+                            // Copy secara native (menjaga format vector, font, dll secara 1:1)
+                            const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+                            copiedPages.forEach((page) => {
+                                mergedPdf.addPage(page);
+                            });
+                        } catch(err) {
+                            console.error(`Gagal menggabungkan file ${fileObj.name}:`, err);
+                            if(typeof uxToast === 'function') uxToast(`Peringatan: File "${fileObj.name}" diabaikan karena rusak/terkunci.`, "warning");
+                        }
+                    }
+
+                    // Finalizing Progress
+                    progText.innerText = "Merakit File Akhir (Saving)...";
+                    progPct.innerText = "100%";
+                    progBar.style.width = "100%";
+
+                    // Kompresi Bytes 
+                    const mergedPdfBytes = await mergedPdf.save();
+                    const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+                    
+                    saveAs(blob, "Dokumen-Gabungan-Lengkap.pdf");
+                    
+                    if(typeof uxToast === 'function') uxToast("PDF Berhasil Digabungkan & Diunduh!", "success");
+                    this.closeModal();
+
+                } catch (error) {
+                    console.error("Fatal Merge Error:", error);
+                    if(typeof uxToast === 'function') uxToast("Gagal menggabungkan PDF. Memori browser mungkin tidak cukup.", "error");
+                } finally {
+                    if (typeof uxBtnLoad === 'function') uxBtnLoad(btn, false);
+                    progContainer.style.display = 'none';
+                    progBar.style.width = "0%";
                 }
             }
         };
