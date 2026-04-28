@@ -2009,9 +2009,13 @@
                 <i class="ph ph-text-t"></i> 🅰️ Gaya Teks (Per Kata)
             </button>
 
-            <!-- NEW: BUTTON IMAGE PRO (ADDITIVE) -->
-            <button class="btn btn-edit" style="background:#fdf2f8; color:#be185d; border-color:#fbcfe8;" onclick="openImageProModal()">
-                <i class="ph ph-image-square"></i> 🖼️ Image Insert Pro
+            <!-- UPGRADED: BUTTON IMAGE PRO (DEFAULT TO LOCAL FILE) -->
+            <button class="btn btn-edit" style="background:#fdf2f8; color:#be185d; border-color:#fbcfe8;" onclick="ImageManager.triggerInsertFile()">
+                <i class="ph ph-image-square"></i> 🖼️ Sisipkan Gambar (Pilih File)
+            </button>
+            <!-- SECONDARY: Opsi lama tetap dipertahankan sesuai prinsip additive -->
+            <button class="btn btn-edit" style="background:transparent; color:#9d174d; border:1px dashed #fbcfe8; font-size: 0.75rem; padding: 6px; margin-top: -5px; margin-bottom: 10px;" onclick="openImageProModal()">
+                <i class="ph ph-link"></i> Sisipkan dari URL (Legacy)
             </button>
 
             <!-- NEW: SMART AUTO CONVERT IMAGE TOGGLE (ADDITIVE & UPGRADED) -->
@@ -2678,7 +2682,11 @@
       </div>
     </div>
 
-    <!-- HIDDEN FILE INPUT FOR IMAGE REPLACEMENT -->
+    <!-- HIDDEN FILE INPUT FOR IMAGE REPLACEMENT & INSERTION (UPGRADED) -->
+    <input type="file" id="replaceImageFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;" onchange="ImageManager.handleReplaceFile(event)">
+    <input type="file" id="insertImageProFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;" onchange="ImageManager.handleInsertFile(event)">
+    <input type="file" id="globalImageReplaceInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;" onchange="handleGlobalImageReplace(event)">
+
     <!-- CONTEXT MENU UNTUK GAMBAR -->
     <div id="imageContextMenu" class="img-context-menu no-print-in-pdf">
         <button id="ctxLockToggleBtn" onclick="ImageManager.toggleLock()"><i class="ph ph-lock-key"></i> Lock Gambar</button>
@@ -9836,6 +9844,34 @@
                 'cdn.discordapp.com', window.location.hostname
             ],
 
+            // --- UPGRADED: ENGINE LOKAL (FILE READER) SEBAGAI UTAMA ---
+            triggerInsertFile() {
+                document.getElementById('insertImageProFileInput').click();
+            },
+
+            handleInsertFile(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (typeof uxShowLoader === "function") uxShowLoader("Memproses dan menanamkan gambar ke dokumen...");
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    // event.target.result berisi string base64 yang aman dan permanen
+                    this.insert(event.target.result); 
+                };
+                reader.onerror = () => {
+                    if (typeof uxToast === "function") uxToast("Gagal membaca file gambar.", "error");
+                };
+                reader.onloadend = () => {
+                    if (typeof uxHideLoader === "function") uxHideLoader();
+                    e.target.value = ''; // Reset input agar file yang sama bisa dipilih lagi jika perlu
+                };
+                // Baca sebagai Data URL (Base64)
+                reader.readAsDataURL(file);
+            },
+            // -----------------------------------------------------------
+
             // NEW: ENGINE KONVERSI URL KE BASE64 (DOUBLE FALLBACK SYSTEM)
             async urlToBase64(url) {
                 // Metode 1: Fetch API murni (Terbaik jika server mengizinkan CORS)
@@ -10250,16 +10286,16 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 
-                if (typeof uxShowLoader === "function") uxShowLoader("Memproses gambar resolusi tinggi...");
+                if (typeof uxShowLoader === "function") uxShowLoader("Mengganti gambar...");
                 
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = this.activeImage.querySelector('img');
                     if (img) {
-                        img.src = event.target.result;
+                        img.src = event.target.result; // Timpa src dengan base64 baru
                         img.removeAttribute('crossorigin'); // Hapus proteksi CORS karena format file adalah blob lokal
                         saveToStorage();
-                        if (typeof uxToast === "function") uxToast("Gambar berhasil diganti dari file!", "success");
+                        if (typeof uxToast === "function") uxToast("Gambar berhasil diganti secara permanen!", "success");
                     }
                 };
                 reader.onerror = () => {
@@ -10347,12 +10383,73 @@
             }
         });
 
-        document.addEventListener("click", function(e) {
+        // --- UPGRADED: GLOBAL IMAGE CLICK INTERCEPTOR (FILE REPLACEMENT) ---
+        let globalImageTarget = null;
+        
+        // 1. Klik Kiri Biasa: Untuk Logo/Kop Surat & Placeholder
+        document.addEventListener('click', function(e) {
             const menu = document.getElementById("imageContextMenu");
             if (menu && menu.style.display === "flex") {
                 menu.style.display = "none";
             }
+
+            // Abaikan jika sedang drag mode 
+            if (document.body.classList.contains('layout-drag-mode')) return;
+
+            const target = e.target;
+
+            // Deteksi jika yang diklik adalah gambar statis (Kop Surat atau Placeholder)
+            if (target.tagName === 'IMG' && (target.closest('.kop-img') || target.closest('.photo-placeholder'))) {
+                e.preventDefault();
+                e.stopPropagation(); // Mencegah memicu mode edit teks
+                
+                globalImageTarget = target;
+                document.getElementById('globalImageReplaceInput').click(); // Langsung buka file manager!
+            }
         });
+
+        // 2. Double Click: Cara pintas (shortcut) untuk mengganti gambar pro
+        document.addEventListener('dblclick', function(e) {
+            if (document.body.classList.contains('layout-drag-mode')) return;
+            
+            const target = e.target;
+            if (target.tagName === 'IMG' && target.closest('.image-wrapper-pro')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Set gambar aktif dan langsung trigger buka file manager
+                ImageManager.activeImage = target.closest('.image-wrapper-pro');
+                ImageManager.triggerReplaceFile(); 
+            }
+        });
+
+        // 3. Handler File Replacement Khusus Gambar Statis (Kop/Placeholder)
+        window.handleGlobalImageReplace = function(e) {
+            const file = e.target.files[0];
+            if (!file || !globalImageTarget) return;
+
+            if (typeof uxShowLoader === "function") uxShowLoader("Menanamkan gambar ke dokumen...");
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Tanamkan Base64 ke dalam SRC
+                globalImageTarget.src = event.target.result;
+                globalImageTarget.removeAttribute('crossorigin');
+                
+                if (typeof saveToStorage === "function") saveToStorage();
+                if (typeof uxToast === "function") uxToast("Gambar berhasil diubah secara permanen!", "success");
+            };
+            reader.onerror = () => {
+                if (typeof uxToast === "function") uxToast("Gagal memproses file gambar.", "error");
+            };
+            reader.onloadend = () => {
+                if (typeof uxHideLoader === "function") uxHideLoader();
+                e.target.value = ''; // Reset uploader
+                globalImageTarget = null; // Lepas target
+            };
+            reader.readAsDataURL(file);
+        };
+        // -------------------------------------------------------------------
 
         // LONG PRESS LOGIC UNTUK MOBILE (MENDUKUNG GANTI GAMBAR PROFESIONAL)
         let imageLongPressTimer;
