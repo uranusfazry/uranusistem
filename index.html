@@ -2014,6 +2014,11 @@
                 <i class="ph ph-image-square"></i> 🖼️ Image Insert Pro
             </button>
 
+            <!-- NEW: BUTTON AUTO CONVERT IMAGE (ADDITIVE) -->
+            <button class="btn btn-edit" style="background:#fff7ed; color:#ea580c; border-color:#fed7aa; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1);" onclick="ImageManager.convertAllToInternal()">
+                <i class="ph ph-arrows-clockwise"></i> 🔄 Auto Convert Gambar Embed
+            </button>
+
             <!-- NEW: BUTTON TABLE BUILDER (ADDITIVE) -->
             <button class="btn btn-edit" style="background:#f0fdfa; color:#047857; border-color:#a7f3d0;" onclick="openTableBuilder()">
                 <i class="ph ph-grid-nine"></i> 📊 Buat Tabel Otomatis
@@ -2651,16 +2656,41 @@
       </div>
     </div>
 
-    <!-- HIDDEN FILE INPUT FOR IMAGE REPLACEMENT -->
-    <input type="file" id="replaceImageFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;" onchange="ImageManager.handleReplaceFile(event)">
-
-    <!-- NEW MODAL: TABLE BUILDER PRO (UPGRADED V2) -->
-    <div id="tableBuilderModal" class="modal no-print-in-pdf">
-      <div class="modal-box modal-large" style="max-width: 900px; height: 90vh;">
+    <!-- NEW MODAL: CONVERT TO EXTERNAL URL (ADDITIVE) -->
+    <div id="convertImageUrlModal" class="modal no-print-in-pdf">
+      <div class="modal-box" style="width: 450px; max-width: 90vw;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
-            <h3 style="margin:0;"><i class="ph ph-grid-nine" style="color:#059669"></i> Table Builder Pro</h3>
-            <span style="font-size:0.8rem; background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px;">Enterprise Edition</span>
+            <h3 style="margin:0;"><i class="ph ph-cloud-arrow-up" style="color:#0ea5e9"></i> Convert ke External URL</h3>
+            <span style="font-size:0.8rem; background:#e0f2fe; color:#0284c7; padding:4px 8px; border-radius:4px;"><i class="ph ph-globe"></i> Cloud Embed</span>
         </div>
+        
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:15px;">Ubah gambar lokal ini menjadi format embed URL eksternal agar ukuran file dokumen lebih ringan.</p>
+
+        <label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">Paste Direct URL (Imgur, ImgHippo, CDN)</label>
+        <input type="text" id="convertImgUrlInput" placeholder="https://i.imghippo.com/..." style="width:100%; padding:10px; border-radius:6px; border:1px solid #cbd5e1; outline:none; margin-bottom:20px;">
+        
+        <div class="modal-actions">
+            <button onclick="ImageManager.executeConvertToExternal()" style="background:#0ea5e9; color:white; display:flex; align-items:center; gap:6px;">
+                <i class="ph ph-check-circle"></i> Konversi
+            </button>
+            <button onclick="ImageManager.closeConvertUrlModal()">Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HIDDEN FILE INPUT FOR IMAGE REPLACEMENT -->
+    <!-- CONTEXT MENU UNTUK GAMBAR -->
+    <div id="imageContextMenu" class="img-context-menu no-print-in-pdf">
+        <button id="ctxLockToggleBtn" onclick="ImageManager.toggleLock()"><i class="ph ph-lock-key"></i> Lock Gambar</button>
+        <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
+        <button onclick="ImageManager.triggerReplaceFile()"><i class="ph ph-folder-open" style="color:#3b82f6;"></i> Ganti dari File Saya</button>
+        <button onclick="ImageManager.openReplaceUrlModal()"><i class="ph ph-link" style="color:#059669;"></i> Ganti dari URL ImgHippo</button>
+        <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
+        <button onclick="ImageManager.convertCurrentToInternal()"><i class="ph ph-download-simple" style="color:#8b5cf6;"></i> Convert ke Internal Image</button>
+        <button onclick="ImageManager.openConvertUrlModal()"><i class="ph ph-cloud-arrow-up" style="color:#0ea5e9;"></i> Convert ke External URL</button>
+        <div style="height:1px; background:#e2e8f0; margin:5px 0;"></div>
+        <button onclick="ImageManager.delete()" class="danger"><i class="ph ph-trash"></i> Hapus Gambar</button>
+    </div>
 
         <div style="display: flex; gap: 20px; flex: 1; overflow: hidden;">
             
@@ -9805,6 +9835,173 @@
                 'ibb.co', 'i.ibb.co', 'googleusercontent.com', 'drive.google.com',
                 'cdn.discordapp.com', window.location.hostname
             ],
+
+            // NEW: ENGINE KONVERSI URL KE BASE64 (DOUBLE FALLBACK SYSTEM)
+            async urlToBase64(url) {
+                // Metode 1: Fetch API murni (Terbaik jika server mengizinkan CORS)
+                try {
+                    const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+                    if (!response.ok) throw new Error('Fetch gagal. Server mungkin memblokir CORS.');
+                    const blob = await response.blob();
+                    
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (err) {
+                    // Metode 2: Canvas Proxy (Fallback jika fetch gagal namun browser bisa merender crossOrigin)
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.crossOrigin = 'Anonymous';
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth || img.width;
+                            canvas.height = img.naturalHeight || img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            try {
+                                const dataURL = canvas.toDataURL('image/png');
+                                resolve(dataURL);
+                            } catch (e) {
+                                reject(new Error('Canvas terinfeksi CORS (Tainted)'));
+                            }
+                        };
+                        img.onerror = () => reject(new Error('Gagal memuat gambar fallback'));
+                        img.src = url;
+                    });
+                }
+            },
+
+            // NEW: CONVERT ALL EXTERNAL IMAGES TO INTERNAL
+            async convertAllToInternal() {
+                const images = document.querySelectorAll('.image-wrapper-pro img');
+                let targetImages = [];
+
+                images.forEach(img => {
+                    // Filter hanya gambar yang BUKAN base64
+                    if (img.src && !img.src.startsWith('data:image')) {
+                        targetImages.push(img);
+                    }
+                });
+
+                if (targetImages.length === 0) {
+                    if (typeof uxToast === "function") uxToast("Tidak ada gambar URL eksternal yang ditemukan.", "info");
+                    return;
+                }
+
+                if (typeof uxShowLoader === "function") uxShowLoader(`Mengonversi ${targetImages.length} gambar ke Internal...`);
+
+                let successCount = 0;
+                let failCount = 0;
+
+                for (let i = 0; i < targetImages.length; i++) {
+                    const img = targetImages[i];
+                    try {
+                        // Progress indikator manual jika ada loader text
+                        const loaderText = document.getElementById('uxLoaderText');
+                        if (loaderText) loaderText.innerText = `Mengonversi gambar (${i+1}/${targetImages.length})...`;
+
+                        const base64 = await this.urlToBase64(img.src);
+                        img.src = base64;
+                        img.removeAttribute('crossorigin'); // Hapus karena sudah lokal
+                        successCount++;
+                    } catch (e) {
+                        console.error("Gagal convert gambar:", img.src, e);
+                        failCount++;
+                    }
+                }
+
+                saveToStorage(); // Wajib Auto Save
+                if (typeof uxHideLoader === "function") uxHideLoader();
+
+                if (failCount === 0) {
+                    if (typeof uxToast === "function") uxToast(`${successCount} gambar embed berhasil dijadikan permanen!`, "success");
+                } else {
+                    if (typeof uxToast === "function") uxToast(`${successCount} berhasil, ${failCount} gagal (Diblokir CORS Server).`, "warning");
+                }
+            },
+
+            // NEW: CONVERT SINGLE IMAGE TO INTERNAL (CONTEXT MENU)
+            async convertCurrentToInternal() {
+                if (!this.activeImage) return;
+                const img = this.activeImage.querySelector('img');
+                if (!img) return;
+
+                const url = img.src;
+                if (url.startsWith('data:image')) {
+                    if (typeof uxToast === "function") uxToast("Gambar ini sudah berupa file internal (Permanen).", "info");
+                    return;
+                }
+
+                document.getElementById('imageContextMenu').style.display = 'none';
+                if (typeof uxShowLoader === "function") uxShowLoader("Mengunduh dan mengonversi gambar...");
+
+                try {
+                    const base64 = await this.urlToBase64(url);
+                    img.src = base64;
+                    img.removeAttribute('crossorigin');
+                    saveToStorage(); // Wajib Auto Save
+                    if (typeof uxToast === "function") uxToast("Gambar berhasil ditarik menjadi aset internal!", "success");
+                } catch (e) {
+                    console.error(e);
+                    if (typeof uxToast === "function") uxToast("Gagal konversi. Host gambar tidak mengizinkan penarikan data (CORS).", "error");
+                } finally {
+                    if (typeof uxHideLoader === "function") uxHideLoader();
+                }
+            },
+
+            // NEW: OPEN MODAL CONVERT TO EXTERNAL URL
+            openConvertUrlModal() {
+                if (!this.activeImage) return;
+                
+                const img = this.activeImage.querySelector('img');
+                if (img && !img.src.startsWith('data:image')) {
+                    if (typeof uxToast === "function") uxToast("Gambar ini sudah menggunakan URL Eksternal.", "info");
+                    document.getElementById('imageContextMenu').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('imageContextMenu').style.display = 'none';
+                document.getElementById('convertImgUrlInput').value = '';
+                document.getElementById('convertImageUrlModal').style.display = 'flex';
+                setTimeout(() => document.getElementById('convertImgUrlInput').focus(), 100);
+            },
+
+            closeConvertUrlModal() {
+                document.getElementById('convertImageUrlModal').style.display = 'none';
+            },
+
+            // NEW: EXECUTE CONVERT TO EXTERNAL URL
+            executeConvertToExternal() {
+                if (!this.activeImage) return;
+                const url = document.getElementById('convertImgUrlInput').value.trim();
+                
+                if (!url) { if (typeof uxToast === "function") uxToast("URL tidak boleh kosong", "warning"); return; }
+                if (url.startsWith('data:image')) {
+                    if (typeof uxToast === "function") uxToast("Tidak bisa diisi dengan Base64. Gunakan URL (HTTPS).", "error");
+                    return;
+                }
+                if (!url.startsWith('https://')) {
+                    if (typeof uxToast === "function") uxToast("URL harus menggunakan protokol aman HTTPS", "error");
+                    return;
+                }
+                if (!this.isWhitelisted(url)) {
+                    if (typeof uxToast === "function") uxToast("Domain Host ditolak! Gunakan Imgur, ImgHippo, atau host terpercaya.", "error");
+                    return;
+                }
+
+                const img = this.activeImage.querySelector('img');
+                if (img) {
+                    img.src = url;
+                    img.crossOrigin = "anonymous";
+                    saveToStorage(); // Wajib Auto Save
+                    if (typeof uxToast === "function") uxToast("Gambar internal berhasil dikonversi menjadi Cloud URL!", "success");
+                }
+                
+                this.closeConvertUrlModal();
+            },
 
             isWhitelisted(urlString) {
                 try {
