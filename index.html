@@ -2014,9 +2014,9 @@
                 <i class="ph ph-image-square"></i> 🖼️ Image Insert Pro
             </button>
 
-            <!-- NEW: BUTTON AUTO CONVERT IMAGE (ADDITIVE) -->
-            <button class="btn btn-edit" style="background:#fff7ed; color:#ea580c; border-color:#fed7aa; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1);" onclick="ImageManager.convertAllToInternal()">
-                <i class="ph ph-arrows-clockwise"></i> 🔄 Auto Convert Gambar Embed
+            <!-- NEW: SMART AUTO CONVERT IMAGE TOGGLE (ADDITIVE & UPGRADED) -->
+            <button class="btn btn-edit" id="btnAutoConvertToggle" style="background:#fff7ed; color:#ea580c; border-color:#fed7aa; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1);" onclick="ImageManager.toggleAutoConvert(this)">
+                <i class="ph ph-arrows-clockwise"></i> 🔄 Auto Convert Embed: OFF
             </button>
 
             <!-- NEW: BUTTON TABLE BUILDER (ADDITIVE) -->
@@ -12068,6 +12068,173 @@
         window.openFullPageTextEditor = function() { FullTextEngine.open(); }
         window.closeFullTextEditor = function() { FullTextEngine.close(); }
         window.saveFullTextChanges = function() { FullTextEngine.save(); }
+    </script>
+
+    <!-- =========================================
+         37. NEW: SMART AUTO CONVERT IMAGE ENGINE (ADDITIVE)
+         ========================================= -->
+    <script id="smart-auto-convert-image-engine">
+        // Extend ImageManager without destroying old code (Additive Pattern)
+        ImageManager.isAutoConvertActive = false;
+        ImageManager.autoConvertObserver = null;
+        ImageManager.isConverting = false;
+
+        // Core Toggle Controller
+        ImageManager.toggleAutoConvert = function(btn) {
+            this.isAutoConvertActive = !this.isAutoConvertActive;
+
+            if (this.isAutoConvertActive) {
+                // State: ON
+                btn.innerHTML = '<i class="ph ph-check-circle"></i> 🔄 Auto Convert Embed: ON';
+                btn.style.background = '#16a34a';
+                btn.style.color = 'white';
+                btn.style.borderColor = '#15803d';
+                if (typeof uxToast === 'function') uxToast("Auto Convert Gambar Otomatis Diaktifkan", "success");
+                
+                // Scan seketika saat diaktifkan
+                this.scanAndConvertAll();
+                
+                // Mulai pantau DOM untuk gambar-gambar baru di masa depan
+                this.startAutoConvertObserver();
+            } else {
+                // State: OFF
+                btn.innerHTML = '<i class="ph ph-arrows-clockwise"></i> 🔄 Auto Convert Embed: OFF';
+                btn.style.background = '#fff7ed';
+                btn.style.color = '#ea580c';
+                btn.style.borderColor = '#fed7aa';
+                if (typeof uxToast === 'function') uxToast("Auto Convert Gambar Otomatis Dimatikan", "info");
+                
+                // Hentikan pemantauan
+                if (this.autoConvertObserver) {
+                    this.autoConvertObserver.disconnect();
+                }
+            }
+        };
+
+        // Master Scanner & Converter Function
+        ImageManager.scanAndConvertAll = async function(isSilent = false) {
+            // Cegah tumpang tindih (Race Condition)
+            if (this.isConverting) return;
+            this.isConverting = true;
+
+            // Cari SEMUA gambar secara global (termasuk .kop-img, .photo-placeholder img, .image-wrapper-pro img, dll)
+            const images = document.querySelectorAll('.sheet img');
+            let targetImages = [];
+
+            images.forEach(img => {
+                const src = img.getAttribute('src'); // getAttribute agar URL relatif tetap murni
+                if (src && !src.startsWith('data:image') && (src.startsWith('http://') || src.startsWith('https://'))) {
+                    targetImages.push(img);
+                }
+            });
+
+            // Berhenti jika dokumen sudah bersih dari URL eksternal
+            if (targetImages.length === 0) {
+                this.isConverting = false;
+                return;
+            }
+
+            if (typeof uxShowLoader === "function" && !isSilent) {
+                uxShowLoader(`Sedang mengonversi gambar embed...`);
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < targetImages.length; i++) {
+                const img = targetImages[i];
+                try {
+                    const loaderText = document.getElementById('uxLoaderText');
+                    if (loaderText && !isSilent) {
+                        loaderText.innerText = `Mengonversi gambar (${i+1}/${targetImages.length})...`;
+                    }
+
+                    // Gunakan double-engine urlToBase64 dari ImageManager
+                    const base64 = await this.urlToBase64(img.src);
+                    
+                    // Ganti source ke lokal (base64). Ini TIDAK AKAN merusak posisi absolut, width, scale, dll.
+                    img.src = base64;
+                    img.removeAttribute('crossorigin');
+                    successCount++;
+                } catch (e) {
+                    console.error("Gagal convert gambar embed:", img.src, e);
+                    failCount++;
+                }
+            }
+
+            // Wajib Auto Save agar aman
+            if (successCount > 0 && typeof saveToStorage === "function") {
+                saveToStorage();
+            }
+            
+            if (typeof uxHideLoader === "function" && !isSilent) uxHideLoader();
+
+            if (!isSilent) {
+                if (failCount === 0) {
+                    if (typeof uxToast === "function") uxToast(`${successCount} gambar embed otomatis menjadi permanen!`, "success");
+                } else {
+                    if (typeof uxToast === "function") uxToast(`${successCount} berhasil, ${failCount} gagal (Diblokir CORS Server).`, "warning");
+                }
+            } else if (successCount > 0) {
+                // Toast sunyi jika berasal dari observer
+                if (typeof uxToast === "function") uxToast(`Auto Detect: ${successCount} gambar ditarik ke Internal.`, "success");
+            }
+
+            this.isConverting = false;
+        };
+
+        // Real-Time DOM Observer Engine
+        ImageManager.startAutoConvertObserver = function() {
+            if (this.autoConvertObserver) {
+                this.autoConvertObserver.disconnect();
+            }
+            
+            this.autoConvertObserver = new MutationObserver((mutations) => {
+                let hasNewExternalImages = false;
+                
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) { // NODE Element (bukan teks)
+                                // 1. Deteksi bila Node itu sendiri adalah tag <IMG>
+                                if (node.tagName === 'IMG') {
+                                    const src = node.getAttribute('src');
+                                    if (src && !src.startsWith('data:image') && src.startsWith('http')) {
+                                        hasNewExternalImages = true;
+                                    }
+                                }
+                                // 2. Deteksi bila Node adalah Kontainer (div/p/table) yang didalamnya memuat <IMG>
+                                if (node.querySelectorAll && !hasNewExternalImages) {
+                                    const imgs = node.querySelectorAll('img');
+                                    imgs.forEach(img => {
+                                        const src = img.getAttribute('src');
+                                        if (src && !src.startsWith('data:image') && src.startsWith('http')) {
+                                            hasNewExternalImages = true;
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Triggers Scanner
+                if (hasNewExternalImages && this.isAutoConvertActive) {
+                    // Beri jeda sangat singkat agar engine DOM selesai merender node, lalu sikat!
+                    setTimeout(() => {
+                        this.scanAndConvertAll(true); // mode isSilent=true agar loader tidak terus-terusan kedap kedip, hanya memunculkan success toast di background
+                    }, 50);
+                }
+            });
+            
+            const documentArea = document.getElementById('document-area');
+            if (documentArea) {
+                this.autoConvertObserver.observe(documentArea, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+        };
     </script>
 </body>
 </html>
